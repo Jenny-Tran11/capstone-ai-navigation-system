@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 30
+names: ['Dog ahead at', 'Door ahead at', 'Table ahead at', 'auto ahead at', 'barrier ahead at', 'bench ahead at', 'bicycle ahead at', 'bus ahead at', 'car ahead at', 'cattle ahead at', 'chair ahead at', 'dustbin ahead at', 'electric pole ahead at', 'footpath on', 'fridge ahead at', 'gate ahead at', 'motorcycle ahead at', 'pathole ahead at', 'person ahead at', 'pillar ahead at', 'plant ahead at', 'sign board ahead at', 'stairs ahead at', 'step ahead at', 'stones ahead at', 'traffic signal ahead at', 'tree ahead at', 'truck ahead at', 'wash basin ahead at', 'zebra crossing ahead at']
+
+roboflow:
+  workspace: all-mix
+  project: visually-impaired-dataset
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/all-mix/visually-impaired-dataset/dataset/2
