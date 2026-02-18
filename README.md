@@ -1,19 +1,19 @@
 # AI-Assisted Navigation System for the Visually Impaired (Group 11)
 
-## Project Overview
+## What this repo about
 
-This repository contains the Proof of Concept (PoC) implementation for the Group 11 Capstone Project. The system utilizes computer vision models (YOLOv12) to detect obstacles in real-time and provides spatial audio feedback, alongside turn-by-turn routing instructions, to assist visually impaired users in navigating their environment safely.
+This is a repo of Python scripts showing how to use yolo12 with voice and how to use open-source api to obtain navigation for group 12. The system utilizes computer vision models (aka YOLOv12) for image (you can modify it to deal with video later, right now for testing it is image) to detect obstacles in real-time and provides spatial audio feedback, alongside turn-by-turn routing instructions, to assist visually impaired users in navigating their environment safely.
 
 ### Current Features
 
-- **Advanced Object Detection**: Integration of the YOLOv12 architecture to identify specific urban obstacles (Person, Car, Traffic Light, etc.).
-- **Spatial Awareness Logic**: Custom algorithms that translate bounding box coordinates into natural language spatial descriptions (e.g., "Person on the left", "Car approaching").
+- **Object Detection**: Integration of the YOLOv12 architecture to identify specific urban obstacles (Person, Car, Traffic Light, etc.).
+- **Spatial Awareness Logic**: Translate bounding box coordinates into natural language spatial descriptions (e.g., "Person on the left", "Car approaching").
 - **Turn-by-Turn Navigation**: Integration with the OSRM (Open Source Routing Machine) API to fetch and parse walking directions into human-readable English instructions.
 - **Cross-Platform Audio Feedback**: Native system TTS (macOS) and pyttsx3 (Windows) integration for seamless auditory guidance.
 
 ## Technical Stack
 
-- **Language**: Python 3.9+
+- **Language**: Python
 - **Computer Vision Framework**: Ultralytics (YOLO)
 - **Image Processing**: OpenCV
 - **Routing Engine**: OSRM API (Public Foot Profile)
