@@ -54,37 +54,40 @@ class ObjectDetector:
         if not detections:
             return "Path is clear."
 
-        # Sort detections by box height (largest/closest first)
+        # Sort detections by box height (largest/closest/most prominent first)
         detections.sort(key=lambda x: (x['box'][3] - x['box'][1]), reverse=True)
-        
-        # Focus on the most critical object (the first one)
-        target = detections[0]
-        name = target['name']
-        
-        # Calculate Logic
-        box_h = target['box'][3] - target['box'][1]
-        center_x = (target['box'][0] + target['box'][2]) / 2
 
-        # Distance logic
-        if box_h > img_height * 0.6:
-            dist = "Critical! Very close"
-        elif box_h > img_height * 0.3:
-            dist = "Nearby"
-        else:
-            dist = "Detected"
+        top = detections[:3]
 
-        # Position logic
-        if center_x < img_width * 0.33:
-            pos = "on the left"
-        elif center_x > img_width * 0.66:
-            pos = "on the right"
-        else:
-            pos = "ahead"
+        def _distance_bucket(box_h: float, height: int) -> str:
+            if box_h > height * 0.6:
+                return "very close"
+            if box_h > height * 0.3:
+                return "nearby"
+            return "detected"
 
-        message = f"{dist} {name} {pos}."
-        
-        # Count others
-        if len(detections) > 1:
-            message += f" Plus {len(detections)-1} other objects."
+        def _position_bucket(center_x: float, width: int) -> str:
+            if center_x < width * 0.33:
+                return "on the left"
+            if center_x > width * 0.66:
+                return "on the right"
+            return "ahead"
 
+        phrases = []
+        for det in top:
+            name = det['name']
+            x1, y1, x2, y2 = det['box']
+            box_h = y2 - y1
+            center_x = (x1 + x2) / 2.0
+
+            dist = _distance_bucket(box_h, img_height)
+            pos = _position_bucket(center_x, img_width)
+
+            phrases.append(f"{name} {pos}, {dist}")
+
+        if not phrases:
+            return "Path is clear."
+
+        # Join phrases into short sentences suitable for TTS
+        message = ". ".join(phrases) + "."
         return message

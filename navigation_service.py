@@ -1,9 +1,78 @@
 import requests
+from typing import Optional, Tuple
+
+import config
+
 
 class NavigationEngine:
     def __init__(self):
         # Base URL for OSRM public routing API
         self.base_url = "http://router.project-osrm.org/route/v1/foot/"
+
+    def geocode_address(self, address: str) -> Optional[Tuple[float, float]]:
+        """
+        Resolves a human-readable address to (longitude, latitude) using
+        the Nominatim (OpenStreetMap) geocoding API.
+        """
+        if not address:
+            return None
+
+        url = "https://nominatim.openstreetmap.org/search"
+        params = {"q": address, "format": "json", "limit": 1}
+        headers = {"User-Agent": config.NOMINATIM_USER_AGENT}
+
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+        except Exception as e:
+            print(f"Geocoding error: {e}")
+            return None
+
+        if response.status_code != 200:
+            print(f"Geocoding failed with status {response.status_code}")
+            return None
+
+        try:
+            results = response.json()
+        except Exception as e:
+            print(f"Geocoding JSON parse error: {e}")
+            return None
+
+        if not results:
+            print("Geocoding returned no results.")
+            return None
+
+        first = results[0]
+        try:
+            lat = float(first["lat"])
+            lon = float(first["lon"])
+        except (KeyError, ValueError) as e:
+            print(f"Geocoding result parse error: {e}")
+            return None
+
+        return lon, lat
+
+    def parse_location(self, input_str: str) -> Optional[Tuple[float, float]]:
+        """
+        Parses a location string that may be either:
+        - a pair of coordinates: 'lon,lat'
+        - a free-form address, which is then geocoded.
+        Returns (lon, lat) or None on failure.
+        """
+        if not input_str:
+            return None
+
+        # Try 'lon,lat' coordinates first
+        parts = [p.strip() for p in input_str.split(",")]
+        if len(parts) == 2:
+            try:
+                lon = float(parts[0])
+                lat = float(parts[1])
+                return lon, lat
+            except ValueError:
+                pass
+
+        # Fallback to geocoding
+        return self.geocode_address(input_str)
 
     def _parse_maneuver(self, maneuver, street_name):
         """
