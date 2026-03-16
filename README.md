@@ -20,7 +20,7 @@ This is a repo of Python scripts showing how to use yolo12 with voice and how to
 - **Audio Engine**: System Native TTS (macOS) / pyttsx3 (Windows)
 - **Networking/GUI**: requests, Tkinter
 
-## Installation and Usage
+## Installation and Usage (Local Prototype)
 
 Follow these steps to set up the prototype environment.
 
