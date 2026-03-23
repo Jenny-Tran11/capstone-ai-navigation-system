@@ -1,6 +1,7 @@
 {
   "name": "capstone-ai-navigation-system",
   "private": true,
+  "packageManager": "npm@10.9.3",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -11,5 +12,8 @@
     "mobile:android": "npm run android -w @capstone/mobile",
     "lint:api": "npm run lint -w @capstone/api",
     "build:api": "npm run build -w @capstone/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.20"
   }
 }

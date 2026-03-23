@@ -14,7 +14,7 @@ Monorepo: **Python desktop prototype**, **AWS CDK** backends, **TypeScript user 
 
 ## Prerequisites
 
-- **Node.js 20+** (npm workspaces at repo root; run `npm install` before CDK Node bundling)
+- **Node.js 20+** (npm workspaces at repo root; run `npm install` or `npm ci` at the repo root before CDK `NodejsFunction` bundling)
 - **Python 3.9+** for desktop + CDK
 - **Docker Desktop** (detection Lambda image + optional Docker bundling for `NodejsFunction`)
 - **AWS CLI** (for deploy)
@@ -51,17 +51,25 @@ See [`apps/mobile/README.md`](apps/mobile/README.md).
 
 ### AWS CDK
 
+From the **repo root** (installs workspace deps for the user API Lambda bundle):
+
 ```bash
-cd apps/aws
-python -m venv .venv && .\.venv\Scripts\activate   # or source .venv/bin/activate
-pip install -r requirements.txt
-# Detection: copy model to apps/aws/lambda/detect/yolo12n.pt
-npx aws-cdk@latest deploy --all --require-approval never --context account=<ACCOUNT> --context region=<REGION>
+npm ci
 ```
 
-Or deploy stacks separately: `BlindNavDetectionStack`, `BlindNavUserApiStack`.
+Then **`apps/aws`**: venv, pip, model file for detection, bootstrap once per account/region, deploy.
 
-See [`apps/aws/README.md`](apps/aws/README.md) and [`scripts/aws_model_deploy.txt`](scripts/aws_model_deploy.txt).
+```bash
+cd apps/aws
+python -m venv .venv && .\.venv\Scripts\Activate.ps1   # or: source .venv/bin/activate
+pip install -r requirements.txt
+# Detection: copy model to lambda/detect/yolo12n.pt (see apps/aws/README.md)
+npx aws-cdk@2 deploy --all --require-approval never --context account=<ACCOUNT> --context region=<REGION>
+```
+
+Deploy stacks separately if you prefer: `BlindNavDetectionStack`, `BlindNavUserApiStack`.
+
+See [`apps/aws/README.md`](apps/aws/README.md), [`docs/AWS_CICD.md`](docs/AWS_CICD.md) (GitHub Actions + OIDC), and [`scripts/aws_model_deploy.txt`](scripts/aws_model_deploy.txt).
 
 ### API package (local typecheck)
 
@@ -103,7 +111,8 @@ aws apigateway get-api-keys --include-values --region ap-southeast-2 --query "it
 ## Monorepo tooling
 
 - **npm workspaces** (`package.json` `workspaces`: `apps/*`, `packages/*`).
-- **Turbo** ([`turbo.json`](turbo.json)) — optional; e.g. `npx turbo run lint` from root.
+- **Turbo** ([`turbo.json`](turbo.json)) — CI runs `npx turbo run lint` on pull requests and `main`; run the same locally from the repo root.
+- **GitHub Actions** — [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (lint + `cdk synth`); [`.github/workflows/deploy-aws.yml`](.github/workflows/deploy-aws.yml) (manual CDK deploy via OIDC). Setup: [`docs/AWS_CICD.md`](docs/AWS_CICD.md).
 - **`.npmrc`** uses `legacy-peer-deps=true` for Expo 55 peer resolution.
 
 ## Technical stack (summary)

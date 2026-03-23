@@ -1,59 +1,87 @@
 # AWS CDK
 
-Two stacks (same app — deploy with `--all` or by stack name):
+Two stacks (see [`app.py`](app.py)):
 
 | Stack | Contents |
-|-------|-----------|
-| **BlindNavDetectionStack** | Docker Lambda (YOLO), REST API `POST /detect`, API key, S3, CloudWatch |
-| **BlindNavUserApiStack** | Cognito User Pool + app client, DynamoDB users table, Node 20 Lambda ([`packages/api`](../../packages/api)), HTTP API (v2) with **JWT authorizer**, CORS |
+|-------|----------|
+| `BlindNavDetectionStack` | Docker Lambda `POST /detect`, S3, REST API + API key, CloudWatch ([`stacks/detection_stack.py`](stacks/detection_stack.py)) |
+| `BlindNavUserApiStack` | Cognito, DynamoDB, HTTP API (JWT), Node Lambda from [`packages/api`](../../packages/api) ([`stacks/user_stack.py`](stacks/user_stack.py)) |
 
-User-API layout is inspired by [Baseline-JS/core](https://github.com/Baseline-JS/core) (monorepo API package + serverless AWS services); deployment here is **CDK only** (no Serverless Framework).
+[`cdk.json`](cdk.json) sets `@aws-cdk/core:bootstrapQualifier` to **`blindnav`**. Use matching `--context account=` and `--context region=` for bootstrap and every deploy.
 
 ## Prerequisites
 
-- Node.js 20+ and **`npm install` at the monorepo root** (required for `NodejsFunction` to bundle `packages/api`)
-- Python 3.11+ and venv at `apps/aws/.venv`
-- Docker Desktop (detection image build; Node bundling may use Docker if local esbuild is unavailable)
-- AWS CLI configured
+- **Node.js 20+** (run `npm ci` from the **repo root** before deploy so `NodejsFunction` can bundle)
+- **Python 3.11+** and a venv under `apps/aws` (below)
+- **Docker Desktop** (detection Lambda image build)
+- **AWS CLI** configured (`aws sts get-caller-identity`)
 
 ## Setup
+
+From the **repository root**:
+
+```bash
+npm ci
+```
+
+From **`apps/aws`**:
 
 ```bash
 cd apps/aws
 python -m venv .venv
-# Windows: .\.venv\Scripts\activate
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Copy weights into `lambda/detect/yolo12n.pt` before deploying **BlindNavDetectionStack**.
+Copy trained weights to **`lambda/detect/yolo12n.pt`** before deploying detection (the Docker build copies this file; `*.pt` is gitignored).
 
-## Deploy
+## One-time bootstrap (per account + region)
 
-From `apps/aws`:
-
-```bash
-npx aws-cdk@latest bootstrap aws://<ACCOUNT>/<REGION> --context account=<ACCOUNT> --context region=<REGION>
-
-# Both stacks
-npx aws-cdk@latest deploy --all --require-approval never --context account=<ACCOUNT> --context region=<REGION>
-
-# Or individually
-npx aws-cdk@latest deploy BlindNavDetectionStack --require-approval never --context account=<ACCOUNT> --context region=<REGION>
-npx aws-cdk@latest deploy BlindNavUserApiStack --require-approval never --context account=<ACCOUNT> --context region=<REGION>
-```
-
-After **BlindNavUserApiStack**, note outputs: **UserHttpApiUrl**, **UserPoolId**, **UserPoolClientId**, **CognitoIssuer** — use them in the mobile app `.env`.
-
-See [`scripts/aws_model_deploy.txt`](../../scripts/aws_model_deploy.txt) at the repo root.
-
-## Synth only
+Run from **`apps/aws`** (replace account and region):
 
 ```bash
-npx aws-cdk@latest synth --context account=<ACCOUNT> --context region=<REGION>
+npx aws-cdk@2 bootstrap aws://<ACCOUNT>/<REGION> \
+  --context account=<ACCOUNT> \
+  --context region=<REGION>
 ```
 
-## User API routes
+## Deploy from terminal
 
-- `GET /me` — profile (or `profileExists: false` until first update)
-- `PUT /me` — JSON `{ "displayName": "..." }`  
-  Requires `Authorization: Bearer <Cognito ID token>` (HTTP API JWT authorizer).
+Always run **`npx aws-cdk@2`** from **`apps/aws`**, with the same context as bootstrap:
+
+```bash
+# Detection API only
+npx aws-cdk@2 deploy BlindNavDetectionStack --require-approval never \
+  --context account=<ACCOUNT> \
+  --context region=<REGION>
+
+# User API (Cognito + HTTP API + profile Lambda)
+npx aws-cdk@2 deploy BlindNavUserApiStack --require-approval never \
+  --context account=<ACCOUNT> \
+  --context region=<REGION>
+
+# Both (stacks are independent; order does not matter)
+npx aws-cdk@2 deploy --all --require-approval never \
+  --context account=<ACCOUNT> \
+  --context region=<REGION>
+```
+
+## Synth only (no deploy)
+
+```bash
+cd apps/aws
+npx aws-cdk@2 synth --all \
+  --context account=<ACCOUNT> \
+  --context region=<REGION>
+```
+
+Synth still builds the detection Docker asset locally; you need **`lambda/detect/yolo12n.pt`** present (or a placeholder file for a dry run).
+
+## GitHub Actions
+
+CI/CD setup, OIDC IAM trust, and required GitHub variables/secrets: [`docs/AWS_CICD.md`](../../docs/AWS_CICD.md).
+
+## See also
+
+- [`scripts/aws_model_deploy.txt`](../../scripts/aws_model_deploy.txt) — deploy notes and Docker troubleshooting
