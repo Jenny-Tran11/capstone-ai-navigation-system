@@ -6,7 +6,12 @@ cd D:\Capstone\new-repo\capstone-ai-navigation-system\apps\aws
 # One-time per account+region (skip if already bootstrapped):
 # npx aws-cdk@latest bootstrap aws://332144430542/ap-southeast-2 --context account=332144430542 --context region=ap-southeast-2
 
-npx aws-cdk@latest deploy BlindNavDetectionStack --require-approval never --context account=332144430542 --context region=ap-southeast-2
+# Deploy both stacks (detection + user API):
+npx aws-cdk@latest deploy --all --require-approval never --context account=332144430542 --context region=ap-southeast-2
+
+# Or only detection / only user API:
+# npx aws-cdk@latest deploy BlindNavDetectionStack ...
+# npx aws-cdk@latest deploy BlindNavUserApiStack ...
 
 # --- If deploy fails with Docker I/O / containerd / meta.db errors ---
 # 1) Quit Docker Desktop fully, then reopen. Wait until it says "Engine running".
