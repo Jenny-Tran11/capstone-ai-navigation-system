@@ -1,0 +1,13 @@
+{
+  "name": "capstone-ai-navigation-system",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start -w @capstone/mobile",
+    "mobile:ios": "npm run ios -w @capstone/mobile",
+    "mobile:android": "npm run android -w @capstone/mobile"
+  }
+}

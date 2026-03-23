@@ -2,6 +2,7 @@
 .DS_Store
 Thumbs.db
 Desktop.ini
+$RECYCLE.BIN/
 
 # --- Editors & tools ---
 .idea/
@@ -11,11 +12,13 @@ Desktop.ini
 .cursorignore
 .cursorindexingignore
 
-# --- Secrets & local env ---
+# --- Secrets & local env (keep *.example tracked) ---
 .env
 .env.*
 !.env.example
+!.env*.example
 .envrc
+*.pem
 
 # --- Python ---
 __pycache__/
@@ -27,14 +30,15 @@ build/
 develop-eggs/
 dist/
 downloads/
-eggs/
-.eggs/
 lib/
 lib64/
+eggs/
+.eggs/
 parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -72,11 +76,49 @@ coverage.xml
 # Jupyter
 .ipynb_checkpoints/
 
-# --- AWS CDK ---
+# --- Node / monorepo ---
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.tsbuildinfo
+
+# --- Expo / React Native ---
+.expo/
+expo-env.d.ts
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+apps/mobile/ios/
+apps/mobile/android/
+
+# EAS
+.eas/
+
+# --- Turbo ---
+.turbo/
+
+# --- Metro ---
+.metro-health-check*
+
+# --- AWS CDK (any app path) ---
 cdk.out/
 .cdk.staging/
 
-# --- ML / YOLO (large binaries & training junk) ---
+# --- Dataset (local only) ---
+# Roboflow exports use very long filenames; Windows/Git often hit MAX_PATH if tracked.
+# Export your dataset from Roboflow into this folder locally — do not commit.
+apps/python-desktop/img/
+
+# --- ML / YOLO (large binaries & training outputs) ---
 *.pt
 *.pth
 *.onnx
@@ -86,5 +128,8 @@ runs/
 wandb/
 *.weights
 
-# --- Logs ---
+# --- Logs & misc ---
 *.log
+*.tmp
+*.temp
+.cache/

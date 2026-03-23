@@ -1,118 +1,107 @@
 # AI-Assisted Navigation System for the Visually Impaired (Group 11)
 
-## What this repo about
+Monorepo: **Python desktop prototype**, **AWS CDK** backend, and **Expo** mobile client.
 
-This is a repo of Python scripts showing how to use yolo12 with voice and how to use open-source api to obtain navigation for group 12. The system utilizes computer vision models (aka YOLOv12) for image (you can modify it to deal with video later, right now for testing it is image) to detect obstacles in real-time and provides spatial audio feedback, alongside turn-by-turn routing instructions, to assist visually impaired users in navigating their environment safely.
+## Packages
 
-### Current Features
+| Path | Description |
+|------|-------------|
+| [`apps/python-desktop/`](apps/python-desktop/) | Local Tkinter + YOLO + TTS prototype; training scripts and `img/` dataset |
+| [`apps/aws/`](apps/aws/) | CDK stack: Lambda (Docker), API Gateway `POST /detect`, S3, CloudWatch |
+| [`apps/mobile/`](apps/mobile/) | Expo (React Native) + NativeWind + shadcn-style UI primitives |
+| [`scripts/`](scripts/) | Helper scripts (e.g. endpoint test, deploy notes) |
+| [`packages/`](packages/) | Reserved for shared code (e.g. future TS types) |
 
-- **Object Detection**: Integration of the YOLOv12 architecture to identify specific urban obstacles (Person, Car, Traffic Light, etc.).
-- **Spatial Awareness Logic**: Translate bounding box coordinates into natural language spatial descriptions (e.g., "Person on the left", "Car approaching").
-- **Turn-by-Turn Navigation**: Integration with the OSRM (Open Source Routing Machine) API to fetch and parse walking directions into human-readable English instructions.
-- **Cross-Platform Audio Feedback**: Native system TTS (macOS) and pyttsx3 (Windows) integration for seamless auditory guidance.
+## Prerequisites
 
-## Technical Stack
+- **Node.js 20+** (npm workspaces at repo root)
+- **Python 3.9+** for desktop + CDK
+- **Docker Desktop** (for Lambda image builds)
+- **AWS CLI** (for deploy)
 
-- **Language**: Python
-- **Computer Vision Framework**: Ultralytics (YOLO)
-- **Image Processing**: OpenCV
-- **Routing Engine**: OSRM API (Public Foot Profile)
-- **Audio Engine**: System Native TTS (macOS) / pyttsx3 (Windows)
-- **Networking/GUI**: requests, Tkinter
+## Quick start
 
-## Installation and Usage (Local Prototype)
-
-Follow these steps to set up the prototype environment.
-
-### 1. Prerequisite
-
-Ensure Python 3.9 or higher is installed.
-
-### 2. Environment Setup
-
-It is recommended to run this project in a virtual environment.
-
-**macOS / Linux:**
+### Install JS workspaces (mobile)
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-
+npm install
 ```
 
-**Windows:**
+### Python desktop
 
 ```bash
-python -m venv venv
-.\venv\Scripts\activate
-
-```
-
-### 3. Install Dependencies
-
-```bash
-pip install ultralytics opencv-python pyttsx3 tk requests
-
-```
-
-### 4. Download Model Weights
-
-Ensure the YOLO model weight file (e.g., yolov12n.pt) is placed in the project root directory. The script is configured to look for this file automatically.
-
-### 5. Run the Application
-
-```bash
+cd apps/python-desktop
+python -m venv .venv
+# Windows: .\.venv\Scripts\activate
+pip install -r requirements.txt
 python main.py
-
 ```
 
-**Usage Instructions:**
+See [`apps/python-desktop/README.md`](apps/python-desktop/README.md).
 
-1. The terminal will display "System Ready".
-2. A file dialog window will open. Select a test image from your dataset.
-3. The system will analyze the image, display detection results with bounding boxes, and play the corresponding audio guidance.
-4. Close the image window or press any key to proceed to the next image.
-5. (Optional) Run `python navigation_service.py` to test the standalone routing engine.
+### Mobile app
 
-## Project Structure
+```bash
+cp apps/mobile/.env.example apps/mobile/.env
+# Edit .env: EXPO_PUBLIC_DETECT_API_URL, EXPO_PUBLIC_DETECT_API_KEY
+npm run mobile
+```
 
-The codebase is organized into modular services to facilitate future cloud migration.
+See [`apps/mobile/README.md`](apps/mobile/README.md).
 
-- **config.py**: Central configuration file for model paths, confidence thresholds, and target class IDs.
-- **main.py**: The entry point of the application, handling the GUI loop and user interaction.
-- **vision_service.py**: Encapsulates the computer vision logic, including model loading, inference, and spatial analysis.
-- **navigation_service.py**: Handles external API calls to OSRM and translates raw JSON routing data into natural English instructions.
-- **voice_service.py**: Handles text-to-speech synthesis, including specific compatibility fixes for macOS.
+### AWS CDK
 
-## Roadmap: Migration to AWS Cloud
+```bash
+cd apps/aws
+python -m venv .venv && .\.venv\Scripts\activate   # or source .venv/bin/activate
+pip install -r requirements.txt
+# Copy model to apps/aws/lambda/detect/yolo12n.pt before deploy
+npx aws-cdk@latest deploy BlindNavDetectionStack --require-approval never --context account=<ACCOUNT> --context region=<REGION>
+```
 
-This local prototype serves as the logic verification step. The architecture is designed to be migrated to Amazon Web Services (AWS) in the next phase.
+See [`apps/aws/README.md`](apps/aws/README.md) and [`scripts/aws_model_deploy.txt`](scripts/aws_model_deploy.txt).
 
-### Phase 1: Local Logic Validation (Completed)
+## What this project does
 
-- Validated YOLO inference accuracy on street view data.
-- Refined the logic for converting visual data and routing data into spoken instructions.
+- **Object detection**: YOLOv12-style model for urban obstacles; spatial descriptions for audio feedback.
+- **Navigation**: OSRM-based walking directions (desktop prototype).
+- **Cloud**: Container Lambda exposes `/detect` with JSON `{ "image_base64": "..." }`.
 
-### Phase 2: Cloud Deployment (Next Step)
+### Deployed API (example — URLs change per deploy)
 
-The Python modules developed here will be mapped to AWS services:
+**Result — deploy succeeded** (example in `ap-southeast-2`; yours may differ).
 
-1. **vision_service.py -> AWS EC2 / Lambda**:
+- **API base URL:**  
+  `https://br5i405uf7.execute-api.ap-southeast-2.amazonaws.com/prod/`
+- **Detect endpoint:**  
+  `POST https://br5i405uf7.execute-api.ap-southeast-2.amazonaws.com/prod/detect`
+- **Auth:** header `x-api-key` (required).
 
-- The object detection logic will be containerized (Docker) and deployed to an AWS EC2 instance (e.g., g4dn series) to handle heavy inference loads, or optimized for AWS Lambda for a serverless approach.
+**Get your API key**
 
-2. **navigation_service.py -> AWS Lambda**:
+- **Console:** API Gateway → **API keys** → key for **BlindNavUsagePlan**.
+- **CLI:**
 
-- The routing request and parsing logic will be hosted on Lambda as a lightweight microservice to offload computation from the mobile client.
+```bash
+aws apigateway get-api-keys --include-values --region ap-southeast-2 --query "items[?name=='BlindNavApiKey'].value" --output text
+```
 
-3. **voice_service.py -> Amazon Polly**:
+The **mobile app** should read the base URL and key from `EXPO_PUBLIC_*` env vars (see `apps/mobile/.env.example`). Never commit real keys.
 
-- The local TTS engine will be replaced by Amazon Polly APIs to generate high-quality, neural audio files that can be streamed to mobile devices.
+## Monorepo tooling
 
-4. **App Integration -> AWS API Gateway**:
+- **npm workspaces** (`package.json` `workspaces`: `apps/*`, `packages/*`).
+- **Turbo** ([`turbo.json`](turbo.json)) — optional; e.g. `npx turbo run lint` from root.
+- **`.npmrc`** uses `legacy-peer-deps=true` to tolerate current React Native / Reanimated peer ranges with Expo 55.
 
-- A REST API will be set up using AWS API Gateway to receive requests (images and GPS coordinates) from the mobile app and return the audio response.
+## Technical stack (summary)
 
-### Phase 3: Mobile Client
+- **Desktop:** Python, Ultralytics, OpenCV, pyttsx3, Tkinter, OSRM API.
+- **AWS:** CDK, Lambda (container), API Gateway, S3.
+- **Mobile:** Expo, React Native, NativeWind, CVA, `@rn-primitives/slot` (extend with [React Native Reusables](https://reactnativereusables.com/) CLI).
 
-- Development of a lightweight mobile application (React Native) that captures images, tracks location, and communicates with the AWS backend.
+## Roadmap notes
+
+- **Phase 1:** Local logic validation (desktop).
+- **Phase 2:** Cloud detection API (CDK) — in place.
+- **Phase 3:** Mobile client — Expo app scaffolded; wire camera + `/detect` calls next.
