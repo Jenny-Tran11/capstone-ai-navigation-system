@@ -1,0 +1,21 @@
+{
+  "name": "@capstone/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/lambda.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.750.0",
+    "@aws-sdk/lib-dynamodb": "^3.750.0",
+    "hono": "^4.7.4"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.10.0",
+    "typescript": "~5.9.2"
+  }
+}

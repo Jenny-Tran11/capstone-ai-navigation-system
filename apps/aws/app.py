@@ -1,19 +1,19 @@
 import aws_cdk as cdk
 
 from stacks.detection_stack import DetectionStack
+from stacks.user_stack import UserApiStack
 
 
 def main() -> None:
     app = cdk.App()
 
-    DetectionStack(
-        app,
-        "BlindNavDetectionStack",
-        env=cdk.Environment(
-            account=app.node.try_get_context("account"),
-            region=app.node.try_get_context("region"),
-        ),
+    env = cdk.Environment(
+        account=app.node.try_get_context("account"),
+        region=app.node.try_get_context("region"),
     )
+
+    DetectionStack(app, "BlindNavDetectionStack", env=env)
+    UserApiStack(app, "BlindNavUserApiStack", env=env)
 
     app.synth()
 

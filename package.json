@@ -8,6 +8,8 @@
   "scripts": {
     "mobile": "npm run start -w @capstone/mobile",
     "mobile:ios": "npm run ios -w @capstone/mobile",
-    "mobile:android": "npm run android -w @capstone/mobile"
+    "mobile:android": "npm run android -w @capstone/mobile",
+    "lint:api": "npm run lint -w @capstone/api",
+    "build:api": "npm run build -w @capstone/api"
   }
 }
