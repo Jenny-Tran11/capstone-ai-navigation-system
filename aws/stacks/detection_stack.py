@@ -46,7 +46,7 @@ class DetectionStack(Stack):
             self,
             "DetectFunction",
             code=_lambda.DockerImageCode.from_image_asset(
-                directory="aws/lambda/detect"
+                directory="lambda/detect"
             ),
             memory_size=2048,
             timeout=Duration.seconds(30),
