@@ -19,10 +19,10 @@ npm install
 
 Copy `.env.example` to `.env` and set:
 
-- `EXPO_PUBLIC_DETECT_API_URL` — API Gateway stage URL (no trailing slash required; code can normalize).
-- `EXPO_PUBLIC_DETECT_API_KEY` — `x-api-key` value.
+- **Detection:** `EXPO_PUBLIC_DETECT_API_URL`, `EXPO_PUBLIC_DETECT_API_KEY` (`x-api-key` for REST `/detect`).
+- **Users (optional until you wire auth):** `EXPO_PUBLIC_USER_API_URL`, `EXPO_PUBLIC_COGNITO_*`, `EXPO_PUBLIC_AWS_REGION` — values from **BlindNavUserApiStack** outputs (`UserHttpApiUrl`, pool id, client id, issuer, region).
 
-Restart `expo start` after changing `.env`.
+See [`lib/env.ts`](lib/env.ts) (`isDetectConfigured`, `isUserApiConfigured`). Restart `expo start` after changing `.env`.
 
 ## Run
 
