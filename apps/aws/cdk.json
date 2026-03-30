@@ -1,0 +1,9 @@
+{
+  "app": "python app.py",
+  "context": {
+    "@aws-cdk/core:bootstrapQualifier": "blindnav",
+    "account": "123456789012",
+    "region": "ap-southeast-1"
+  }
+}
+

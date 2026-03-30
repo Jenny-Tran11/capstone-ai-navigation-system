@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (TypeScript)
+        run: npx turbo run lint
+
+  cdk-synth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/aws/requirements.txt
+
+      - name: Install JS workspaces (NodejsFunction bundling)
+        run: npm ci
+
+      - name: Install CDK app Python dependencies
+        run: pip install -r apps/aws/requirements.txt
+
+      - name: Placeholder YOLO weights (CI synth only)
+        run: |
+          mkdir -p apps/aws/lambda/detect
+          python -c "open('apps/aws/lambda/detect/yolo12n.pt','wb').write(b'ci-placeholder-not-a-valid-model')"
+
+      - name: CDK synth
+        working-directory: apps/aws
+        env:
+          AWS_ACCOUNT: ${{ vars.AWS_ACCOUNT }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          ACCOUNT="${AWS_ACCOUNT:-123456789012}"
+          REGION="${AWS_REGION:-ap-southeast-1}"
+          npx aws-cdk@2 synth --all \
+            --context "account=${ACCOUNT}" \
+            --context "region=${REGION}"
