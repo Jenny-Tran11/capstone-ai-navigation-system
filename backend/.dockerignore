@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.git/
+.gitignore
+img/
+aws/
+scripts/
+*.md
+train.py
+main.py
+voice_service.py
+navigation_service.py
+.venv/
+venv/
+.env
+.env.*
+*.log
