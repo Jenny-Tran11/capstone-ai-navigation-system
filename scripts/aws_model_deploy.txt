@@ -1,0 +1,23 @@
+# Deploy detection Lambda + API (CDK)
+# Prereqs: from repo root run `npm ci` (Node bundling for user API), Docker RUNNING, AWS CLI configured,
+#          model at apps\aws\lambda\detect\yolo12n.pt
+
+cd D:\Capstone\new-repo\capstone-ai-navigation-system\apps\aws
+
+# One-time per account+region (skip if already bootstrapped):
+# npx aws-cdk@2 bootstrap aws://332144430542/ap-southeast-2 --context account=332144430542 --context region=ap-southeast-2
+
+# Deploy both stacks (detection + user API):
+npx aws-cdk@2 deploy --all --require-approval never --context account=332144430542 --context region=ap-southeast-2
+
+# Or only detection / only user API:
+# npx aws-cdk@2 deploy BlindNavDetectionStack ...
+# npx aws-cdk@2 deploy BlindNavUserApiStack ...
+
+# --- If deploy fails with Docker I/O / containerd / meta.db errors ---
+# 1) Quit Docker Desktop fully, then reopen. Wait until it says "Engine running".
+# 2) PowerShell: wsl --shutdown   (then start Docker again)
+# 3) Free disk space on C: (Docker VM disk); in Docker Desktop: Settings -> Resources -> Disk image size
+# 4) Still broken: Docker Desktop -> Troubleshoot -> Clean / Purge data (last resort; removes local images)
+# 5) Sanity check before redeploy:
+#    docker run --rm hello-world

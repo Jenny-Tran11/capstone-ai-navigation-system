@@ -1,0 +1,73 @@
+name: Deploy AWS (CDK)
+
+on:
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: Stack to deploy
+        type: choice
+        options:
+          - all
+          - BlindNavDetectionStack
+          - BlindNavUserApiStack
+        default: all
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/aws/requirements.txt
+
+      - name: Install JS workspaces (NodejsFunction bundling)
+        run: npm ci
+
+      - name: Install CDK app Python dependencies
+        run: pip install -r apps/aws/requirements.txt
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Download YOLO weights (detection Docker build)
+        if: ${{ inputs.stack == 'BlindNavDetectionStack' || inputs.stack == 'all' }}
+        run: |
+          mkdir -p apps/aws/lambda/detect
+          curl -fL -o apps/aws/lambda/detect/yolo12n.pt \
+            "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo12n.pt"
+
+      - name: CDK deploy
+        working-directory: apps/aws
+        env:
+          AWS_ACCOUNT: ${{ vars.AWS_ACCOUNT }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          if [ -z "${AWS_ACCOUNT}" ] || [ -z "${AWS_REGION}" ]; then
+            echo "Set repository variables AWS_ACCOUNT and AWS_REGION (Settings → Secrets and variables → Actions → Variables)."
+            exit 1
+          fi
+          if [ "${{ inputs.stack }}" = "all" ]; then
+            npx aws-cdk@2 deploy --all --require-approval never \
+              --context "account=${AWS_ACCOUNT}" \
+              --context "region=${AWS_REGION}"
+          else
+            npx aws-cdk@2 deploy "${{ inputs.stack }}" --require-approval never \
+              --context "account=${AWS_ACCOUNT}" \
+              --context "region=${AWS_REGION}"
+          fi

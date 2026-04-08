@@ -1,0 +1,7 @@
+# Container image: torch/torchvision come from the PyTorch base image — do not pin here.
+ultralytics==8.4.21
+opencv-python-headless==4.13.0.92
+numpy>=1.24,<3
+fastapi>=0.115,<1
+uvicorn[standard]>=0.32,<1
+boto3>=1.35,<2
