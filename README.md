@@ -37,7 +37,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-See [`apps/python-desktop/README.md`](apps/python-desktop/README.md).
+See [`apps/python-desktop/README.md`](apps/python-desktop/README.md). Custom fine-tuned weights and team handoff: [`docs/FINE_TUNING_HANDOFF.md`](docs/FINE_TUNING_HANDOFF.md).
 
 ### Mobile app
 

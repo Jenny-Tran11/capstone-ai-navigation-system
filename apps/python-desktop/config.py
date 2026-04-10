@@ -1,10 +1,12 @@
 # Configuration settings for the Blind Navigation System
 
-# Model settings (current YOLO model path)
-# NOTE: This points to the existing yolo12n.pt file in the project root
-#       (same directory as this config.py). Update this path to your
-#       custom-trained weights (e.g. best.pt) once FR1.1 is complete.
-MODEL_PATH = 'yolo12n.pt'
+from pathlib import Path
+
+_HERE = Path(__file__).resolve().parent
+_ROOT = _HERE.parent.parent  # monorepo root (apps/python-desktop -> apps -> repo)
+
+# Fine-tuned weights tracked in Git (see models/yolo/). Override locally if needed.
+MODEL_PATH = str(_ROOT / "models" / "yolo" / "best.pt")
 CONFIDENCE_THRESHOLD = 0.4
 
 # Custom model: 30 domain-specific classes — must match training data.yaml (order + spelling)

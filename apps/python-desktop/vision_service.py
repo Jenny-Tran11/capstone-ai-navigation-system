@@ -73,9 +73,18 @@ class ObjectDetector:
                 return "on the right"
             return "ahead"
 
+        def _speech_label(raw: str) -> str:
+            """Shorten Roboflow names like 'Dog ahead at' for TTS (avoid 'Dog ahead at ahead')."""
+            n = raw.strip()
+            if n.endswith(" ahead at"):
+                return n[: -len(" ahead at")].strip()
+            if n.endswith(" on"):  # e.g. footpath on
+                return n[: -len(" on")].strip()
+            return n
+
         phrases = []
         for det in top:
-            name = det['name']
+            name = _speech_label(det["name"])
             x1, y1, x2, y2 = det['box']
             box_h = y2 - y1
             center_x = (x1 + x2) / 2.0
