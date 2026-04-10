@@ -117,6 +117,8 @@ cdk.out/
 # Roboflow exports use very long filenames; Windows/Git often hit MAX_PATH if tracked.
 # Export your dataset from Roboflow into this folder locally — do not commit.
 apps/python-desktop/img/
+# Repo-root Roboflow export (images/labels are large; optionally track data.yaml only with git add -f)
+img/
 
 # --- ML / YOLO (large binaries & training outputs) ---
 *.pt

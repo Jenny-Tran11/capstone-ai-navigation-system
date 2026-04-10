@@ -7,14 +7,18 @@
 MODEL_PATH = 'yolo12n.pt'
 CONFIDENCE_THRESHOLD = 0.4
 
-# Custom model: 30 domain-specific classes (see data.yaml / train.py)
+# Custom model: 30 domain-specific classes — must match training data.yaml (order + spelling)
 TARGET_CLASS_IDS = list(range(30))
 CLASS_NAMES = [
-    'Dog', 'Door', 'Table', 'Auto', 'Barrier', 'Bench', 'Bicycle', 'Bus',
-    'Car', 'Cattle', 'Chair', 'Dustbin', 'Electric pole', 'Footpath',
-    'Fridge', 'Gate', 'Motorcycle', 'Pothole', 'Person', 'Pillar', 'Plant',
-    'Sign board', 'Stairs', 'Step', 'Stones', 'Traffic signal', 'Tree',
-    'Truck', 'Wash basin', 'Zebra crossing',
+    'Dog ahead at', 'Door ahead at', 'Table ahead at', 'auto ahead at',
+    'barrier ahead at', 'bench ahead at', 'bicycle ahead at', 'bus ahead at',
+    'car ahead at', 'cattle ahead at', 'chair ahead at', 'dustbin ahead at',
+    'electric pole ahead at', 'footpath on', 'fridge ahead at', 'gate ahead at',
+    'motorcycle ahead at', 'pathole ahead at', 'person ahead at',
+    'pillar ahead at', 'plant ahead at', 'sign board ahead at',
+    'stairs ahead at', 'step ahead at', 'stones ahead at',
+    'traffic signal ahead at', 'tree ahead at', 'truck ahead at',
+    'wash basin ahead at', 'zebra crossing ahead at',
 ]
 
 # Voice settings

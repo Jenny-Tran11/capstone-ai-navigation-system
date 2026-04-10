@@ -7,13 +7,21 @@ from pathlib import Path
 import torch
 from ultralytics import YOLO
 
-# Absolute path to data.yaml so training works regardless of cwd
+# Absolute path to data.yaml (repo root `img/`, or legacy `apps/python-desktop/img/`)
+_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_YAML = (
-    Path(__file__).resolve().parent
+    _ROOT
     / "img"
     / "Visually impaired dataset.v2i.yolov12"
     / "data.yaml"
 )
+if not DATA_YAML.exists():
+    DATA_YAML = (
+        Path(__file__).resolve().parent
+        / "img"
+        / "Visually impaired dataset.v2i.yolov12"
+        / "data.yaml"
+    )
 
 
 def train():

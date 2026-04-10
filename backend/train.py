@@ -7,13 +7,21 @@ from pathlib import Path
 import torch
 from ultralytics import YOLO
 
-# Absolute path to data.yaml so training works regardless of cwd
+# Absolute path to data.yaml (repo root `img/`, or legacy `backend/img/`)
+_ROOT = Path(__file__).resolve().parent.parent
 DATA_YAML = (
-    Path(__file__).resolve().parent
+    _ROOT
     / "img"
     / "Visually impaired dataset.v2i.yolov12"
     / "data.yaml"
 )
+if not DATA_YAML.exists():
+    DATA_YAML = (
+        Path(__file__).resolve().parent
+        / "img"
+        / "Visually impaired dataset.v2i.yolov12"
+        / "data.yaml"
+    )
 
 
 def train():
@@ -21,10 +29,15 @@ def train():
         raise FileNotFoundError(f"Dataset config not found: {DATA_YAML}")
 
     device = 0 if torch.cuda.is_available() else "cpu"
-    # Use the same default weights location as runtime (backend/ folder).
-    from pathlib import Path
-    base_weights = Path(__file__).resolve().parent / "yolov12n.pt"
-    model = YOLO(str(base_weights))
+    # Prefer local file if present; otherwise Ultralytics downloads yolo12n.pt.
+    _here = Path(__file__).resolve().parent
+    for candidate in ("yolov12n.pt", "yolo12n.pt"):
+        p = _here / candidate
+        if p.exists():
+            model = YOLO(str(p))
+            break
+    else:
+        model = YOLO("yolo12n.pt")
     model.train(
         data=str(DATA_YAML),
         epochs=100,
