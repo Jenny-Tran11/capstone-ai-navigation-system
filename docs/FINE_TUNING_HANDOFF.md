@@ -48,9 +48,62 @@ Fill in final metrics from your Kaggle `results.csv` or notebook logs here if ne
 3. **Class IDs:** 0–29 map to the same order as `names` in `data.yaml` (and `CLASS_NAMES` in this repo’s configs).
 4. **Confidence threshold:** Tune per product (this repo’s desktop demo uses `CONFIDENCE_THRESHOLD` in `config.py`; default `0.4`).
 
+## Quick model test steps (for teammates)
+
+Use this if you want to quickly sanity-check `best.pt` locally before cloud integration.
+
+1. **Get latest branch**
+   - Checkout `local-model` and pull latest changes.
+   - Confirm these files exist:
+     - `models/yolo/best.pt`
+     - `apps/python-desktop/main.py`
+     - `apps/python-desktop/config.py`
+
+2. **Set up Python env**
+   ```bash
+   cd apps/python-desktop
+   python -m venv .venv
+   source .venv/bin/activate   # Windows: .venv\Scripts\activate
+   pip install -U pip
+   pip install -r requirements.txt
+   ```
+
+3. **Run with fine-tuned model (`best.pt`)**
+   ```bash
+   cd apps/python-desktop
+   python main.py
+   ```
+   - Expected startup line includes `models/yolo/best.pt`.
+   - Press `q` (or `Esc`) to exit.
+
+4. **Optional baseline comparison (`yolo12n.pt`)**
+   - Put baseline weights at `models/yolo/yolo12n.pt` (if not already present).
+   - Run:
+   ```bash
+   cd apps/python-desktop
+   MODEL_FILE=yolo12n.pt python main.py
+   ```
+   - Compare behavior vs `best.pt` on the same camera scene/video.
+
+5. **Optional video-file test (repeatable)**
+   ```bash
+   cd apps/python-desktop
+   python main.py --video /absolute/path/to/test_video.mp4
+   ```
+   - Use the same file for both models to compare outputs fairly.
+
+### What to record when testing
+
+- Which model was used (`best.pt` or `yolo12n.pt`)
+- Test source (webcam or video filename)
+- Notable false positives/false negatives (especially `person` vs `Dog`)
+- Approximate FPS shown in the app
+- Any startup/runtime errors
+
 ## Known limitations (sanity expectations)
 
-- **Misclassification:** Indoor / webcam tests may show false positives (e.g. person vs. “Dog” at class 0). Mitigations: raise confidence threshold, more representative training data, or longer training with validation review.
+- **Dataset-driven class confusion:** Fine-tuned `best.pt` may misclassify people as class 0 (`"Dog ahead at"`) even in outdoor checks. This points to dataset composition/label quality and class imbalance rather than runtime environment.
+- **Person coverage is relatively low:** Current labels contain `person ahead at` in about 7-8% of all instances (train: 491/6376, val: 94/1258, test: 49/704). Follow-up training should increase representative person samples and re-check per-class metrics.
 - **TTS wording:** Desktop app shortens Roboflow-style labels (e.g. `"Dog ahead at"`) for speech in `vision_service.py`; other clients should apply their own UX rules.
 
 ## Branch policy (team agreement)

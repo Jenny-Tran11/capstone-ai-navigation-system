@@ -1,12 +1,16 @@
 # Configuration settings for the Blind Navigation System
 
+import os
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
 _ROOT = _HERE.parent.parent  # monorepo root (apps/python-desktop -> apps -> repo)
 
-# Fine-tuned weights tracked in Git (see models/yolo/). Override locally if needed.
-MODEL_PATH = str(_ROOT / "models" / "yolo" / "best.pt")
+# Select which model file to load from `models/yolo/`.
+# - Default: fine-tuned weights (`best.pt`)
+# - To test base model: set env `MODEL_FILE=yolo12n.pt`
+MODEL_FILE = os.getenv("MODEL_FILE", "best.pt")
+MODEL_PATH = str(_ROOT / "models" / "yolo" / MODEL_FILE)
 CONFIDENCE_THRESHOLD = 0.4
 
 # Custom model: 30 domain-specific classes — must match training data.yaml (order + spelling)
