@@ -7,21 +7,14 @@ from pathlib import Path
 import torch
 from ultralytics import YOLO
 
-# Absolute path to data.yaml (repo root `img/`, or legacy `apps/python-desktop/img/`)
+# Absolute path to data.yaml (prefer latest cleaned export under repo-root `img/`).
 _ROOT = Path(__file__).resolve().parent.parent.parent
-DATA_YAML = (
-    _ROOT
-    / "img"
-    / "Visually impaired dataset.v2i.yolov12"
-    / "data.yaml"
-)
-if not DATA_YAML.exists():
-    DATA_YAML = (
-        Path(__file__).resolve().parent
-        / "img"
-        / "Visually impaired dataset.v2i.yolov12"
-        / "data.yaml"
-    )
+_CANDIDATE_DATA_YAMLS = [
+    _ROOT / "img" / "Visually impaired dataset.v1-visually-impaired-dataset-iooiwv3.yolov12" / "data.yaml",
+    _ROOT / "img" / "Visually impaired dataset.v2i.yolov12" / "data.yaml",
+    Path(__file__).resolve().parent / "img" / "Visually impaired dataset.v2i.yolov12" / "data.yaml",
+]
+DATA_YAML = next((p for p in _CANDIDATE_DATA_YAMLS if p.exists()), _CANDIDATE_DATA_YAMLS[0])
 
 
 def train():
