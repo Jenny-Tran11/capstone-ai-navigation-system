@@ -123,6 +123,7 @@ img/
 # --- ML / YOLO (large binaries & training outputs) ---
 *.pt
 !models/yolo/best.pt
+!models/yolo/bestv2.pt
 *.pth
 *.onnx
 *.engine

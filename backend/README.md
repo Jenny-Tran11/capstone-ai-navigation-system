@@ -60,7 +60,7 @@ pip install -r requirements.txt
 Ensure the YOLO model weight file is placed in the `backend/` directory (same folder as `config.py`).
 
 - For base weights, name it `yolov12n.pt` (default).
-- For fine-tuned weights, copy your `best.pt` into `backend/` and update `MODEL_PATH` in `config.py` (e.g. `... / "best.pt"`).
+- For fine-tuned weights, copy `best.pt` or `bestv2.pt` (see [`docs/FINE_TUNING_HANDOFF.md`](../docs/FINE_TUNING_HANDOFF.md)) into `backend/` and update `MODEL_PATH` in `config.py`.
 
 ### 5. Run the Application
 
