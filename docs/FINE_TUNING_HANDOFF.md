@@ -57,7 +57,11 @@ Training scripts resolve `data.yaml` in this order:
 - **Typical notebook pattern:** `YOLO("yolo12n.pt").train(data=<path-to-data.yaml>, epochs=..., imgsz=640, batch=16, device=0, project="/kaggle/working/runs/train", name="blind-nav-clean-v1", ...)` then copy `weights/best.pt` → `bestv2.pt` for download.  
 - **Qualitative result:** Slight improvement vs `best.pt`; **close-range `person` → `Dog` still frequent**; distance-related `person` ↔ `motorcycle` confusion can still occur (dataset bias: full-body `person` vs face-heavy `dog`, riders in `motorcycle` images).
 
-Paste quantitative metrics from Kaggle `results.csv` when finalizing the report:
+Sidewalk segmentation fine-tuning is documented separately in:
+
+- `docs/SIDEWALK_SEGMENTATION_HANDOFF.md`
+
+Paste/append any future rerun metrics from Kaggle `results.csv` here when finalizing object-detection runs:
 
 - **mAP@0.5 (val):** _[optional]_  
 - **mAP@0.5:0.95 (val):** _[optional]_  
