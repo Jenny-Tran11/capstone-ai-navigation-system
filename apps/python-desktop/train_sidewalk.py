@@ -29,6 +29,25 @@ def _resolve_data_yaml() -> Path:
     return _CANDIDATE_DATA_YAMLS[0]
 
 
+def _normalize_roboflow_data_yaml_paths(data_yaml: Path) -> None:
+    """
+    Roboflow sometimes ships train: ../train/images while images actually live at
+    <dataset>/train/images. Ultralytics resolves paths from the yaml directory, so ../
+    points outside the export and breaks. Rewrite in place when we detect that layout.
+    """
+    root = data_yaml.parent
+    if not (root / "train" / "images").is_dir():
+        return
+    text = data_yaml.read_text(encoding="utf-8")
+    patched = text
+    patched = patched.replace("train: ../train/images", "train: train/images")
+    patched = patched.replace("val: ../valid/images", "val: valid/images")
+    patched = patched.replace("test: ../test/images", "test: test/images")
+    if patched != text:
+        data_yaml.write_text(patched, encoding="utf-8")
+        print(f"Fixed dataset paths in {data_yaml} (../ → local train/valid/test).")
+
+
 def _default_device(cli_device: str | None) -> str | int:
     if cli_device is not None:
         return cli_device
@@ -65,6 +84,8 @@ def main() -> None:
             f"Dataset config not found. Expected one of:\n"
             + "\n".join(f"  - {p}" for p in _CANDIDATE_DATA_YAMLS),
         )
+
+    _normalize_roboflow_data_yaml_paths(data_yaml)
 
     epochs = 60 if args.fast else 150
     imgsz = 512 if args.fast else 640
