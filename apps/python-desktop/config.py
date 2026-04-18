@@ -13,6 +13,11 @@ MODEL_FILE = os.getenv("MODEL_FILE", "best.pt")
 MODEL_PATH = str(_ROOT / "models" / "yolo" / MODEL_FILE)
 CONFIDENCE_THRESHOLD = 0.4
 
+# Optional YOLO segmentation weights for sidewalk (polygon masks). If missing, app runs without overlay.
+SIDEWALK_MODEL_FILE = os.getenv("SIDEWALK_MODEL_FILE", "sidewalk-seg.pt")
+SIDEWALK_MODEL_PATH = str(_ROOT / "models" / "yolo" / SIDEWALK_MODEL_FILE)
+SIDEWALK_CONFIDENCE_THRESHOLD = float(os.getenv("SIDEWALK_CONFIDENCE", "0.25"))
+
 # Custom model: 30 domain-specific classes — must match training data.yaml (order + spelling)
 TARGET_CLASS_IDS = list(range(30))
 CLASS_NAMES = [

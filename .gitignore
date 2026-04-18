@@ -124,6 +124,7 @@ img/
 *.pt
 !models/yolo/best.pt
 !models/yolo/bestv2.pt
+!models/yolo/sidewalk-seg.pt
 *.pth
 *.onnx
 *.engine

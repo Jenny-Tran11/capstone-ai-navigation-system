@@ -6,7 +6,7 @@ import threading
 from queue import PriorityQueue
 
 # Import our custom modules
-from vision_service import ObjectDetector
+from vision_service import ObjectDetector, SidewalkSegmentor
 from voice_service import VoiceAssistant
 from navigation_service import NavigationEngine
 import config
@@ -21,6 +21,7 @@ class NavigationApp:
     def __init__(self):
         print("Initializing System...")
         self.vision = ObjectDetector()
+        self.sidewalk = SidewalkSegmentor()
         self.voice = VoiceAssistant()
         self.nav_engine = NavigationEngine()
 
@@ -47,11 +48,21 @@ class NavigationApp:
             finally:
                 self.tts_queue.task_done()
 
-    def draw_overlay(self, image, detections):
+    def draw_overlay(self, image, detections, sidewalk_polys=None):
         """
-        Draws boxes on the image for the demo screen.
+        Draws boxes on the image for the demo screen; optional sidewalk mask outlines.
         """
         annotated = image.copy()
+        if sidewalk_polys:
+            for poly in sidewalk_polys:
+                if poly is not None and len(poly) >= 3:
+                    cv2.polylines(
+                        annotated,
+                        [poly],
+                        True,
+                        (0, 200, 255),
+                        2,
+                    )
         for det in detections:
             x1, y1, x2, y2 = map(int, det['box'])
             label = f"{det['name']}"
@@ -159,7 +170,8 @@ class NavigationApp:
                         (PRIORITY_OBSTACLE, self._next_seq(), navigation_msg),
                     )
 
-                display_img = self.draw_overlay(frame, detections)
+                sidewalk_polys = self.sidewalk.sidewalk_polygons(frame)
+                display_img = self.draw_overlay(frame, detections, sidewalk_polys)
 
                 elapsed = time.perf_counter() - start_time
                 fps = 1.0 / elapsed if elapsed > 0 else 0.0

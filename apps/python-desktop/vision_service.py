@@ -1,7 +1,11 @@
 import cv2
 import os
+
+import numpy as np
 from ultralytics import YOLO
+
 import config
+
 
 class ObjectDetector:
     def __init__(self):
@@ -100,3 +104,40 @@ class ObjectDetector:
         # Join phrases into short sentences suitable for TTS
         message = ". ".join(phrases) + "."
         return message
+
+
+class SidewalkSegmentor:
+    """Optional sidewalk segmentation (YOLO-seg). Missing weights disable boundary overlay only."""
+
+    def __init__(self):
+        self.model = self._load_model()
+
+    def _load_model(self):
+        if not os.path.exists(config.SIDEWALK_MODEL_PATH):
+            print(
+                f"Warning: Sidewalk model not found at {config.SIDEWALK_MODEL_PATH}. "
+                "Boundary overlay disabled; obstacle detection continues."
+            )
+            return None
+        print(f"Loading sidewalk segmentation from {config.SIDEWALK_MODEL_PATH}...")
+        try:
+            return YOLO(config.SIDEWALK_MODEL_PATH)
+        except Exception as e:
+            print(f"Sidewalk model load failed: {e}")
+            return None
+
+    def sidewalk_polygons(self, image):
+        """
+        Returns a list of polygon arrays (int32, Nx2) in pixel coordinates, or None if unavailable.
+        Empty list if no masks in frame.
+        """
+        if self.model is None:
+            return None
+        results = self.model(
+            image,
+            verbose=False,
+            conf=config.SIDEWALK_CONFIDENCE_THRESHOLD,
+        )[0]
+        if results.masks is None or len(results.masks) == 0:
+            return []
+        return [np.array(xy, dtype=np.int32) for xy in results.masks.xy]
