@@ -1,289 +1,220 @@
-# Adding an Expo Mobile App
+# Mobile App Scaffold Script Plan
 
-This guide explains how to add an Expo 55 React Native app to this monorepo alongside the existing `apps/admin` and `apps/web` applications.
+This document replaces the manual setup guide with a plan to create a repeatable script that scaffolds `apps/mobile` in the Baseline monorepo.
 
----
-
-## 1. Scaffold the app
-
-```bash
-cd apps
-npx create-expo-app@latest mobile --template blank-typescript
-```
-
-This creates `apps/mobile/`. The app name in `app.json` should be updated to match your project.
+Reference implementation and design:
+- Reference repo: `/Users/khiem/Developing/FinalTransportApp`
+- Design target: the Mobile App Design Doc folder architecture (Expo Router route groups, NativeWind, Amplify, SWR, shared client-api/types packages, UI primitives, and feature-first structure)
 
 ---
 
-## 2. Register in pnpm workspace
+## Goal
 
-Add `apps/mobile` to `pnpm-workspace.yaml` (it already covers `apps/*`, so no change needed if you used that path). Verify:
-
-```yaml
-packages:
-  - 'apps/*'
-  - 'packages/*'
-  - 'commands/*'
-```
-
-Run `pnpm install` from the monorepo root to link workspace packages.
+Create a single script (Node ESM) that:
+1. Creates a production-ready Expo app at `apps/mobile`.
+2. Writes all required config/files for the agreed architecture.
+3. Installs dependencies in the correct workspace package.
+4. Fails safely if `apps/mobile` already exists.
+5. Generates placeholder assets (icons/splash) with no external image dependency.
 
 ---
 
-## 3. Update `apps/mobile/package.json`
+## Proposed Script Location
 
-Add the shared packages as dependencies:
+- `scripts/mobile/add-mobile-app.ts`
 
-```json
-{
-  "name": "@baseline/mobile",
-  "dependencies": {
-    "@baseline/client-api": "workspace:1.0.0",
-    "@baseline/swr-user": "workspace:1.0.0",
-    "@baseline/types": "workspace:1.0.0",
-    "@baseline/utils": "workspace:1.0.0"
-  }
-}
-```
-
-Then run `pnpm install` again from the root.
-
----
-
-## 4. Configure Metro to resolve workspace packages
-
-Create or update `apps/mobile/metro.config.js`:
-
-```js
-const { getDefaultConfig } = require('expo/metro-config');
-const path = require('path');
-
-const projectRoot = __dirname;
-const workspaceRoot = path.resolve(projectRoot, '../..');
-
-const config = getDefaultConfig(projectRoot);
-
-// Watch all files in the monorepo
-config.watchFolders = [workspaceRoot];
-
-// Resolve modules from the monorepo root first
-config.resolver.nodeModulesPaths = [
-  path.resolve(projectRoot, 'node_modules'),
-  path.resolve(workspaceRoot, 'node_modules'),
-];
-
-module.exports = config;
-```
-
----
-
-## 5. TypeScript path aliases
-
-Create `apps/mobile/tsconfig.json`:
-
-```json
-{
-  "extends": "expo/tsconfig.base",
-  "compilerOptions": {
-    "strict": true,
-    "paths": {
-      "@baseline/client-api/*": ["../../packages/client-api/*"],
-      "@baseline/swr-user/*": ["../../packages/swr-user/*"],
-      "@baseline/types/*": ["../../packages/types/*"],
-      "@baseline/utils/*": ["../../packages/utils/*"]
-    }
-  }
-}
-```
-
----
-
-## 6. NativeWind (Tailwind for React Native)
-
-Install NativeWind v4 for Tailwind utility classes on React Native:
-
-```bash
-pnpm --filter @baseline/mobile add nativewind tailwindcss
-pnpm --filter @baseline/mobile add -D babel-plugin-nativewind
-```
-
-Create `apps/mobile/tailwind.config.js`:
-
-```js
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ['./app/**/*.{ts,tsx}', './src/**/*.{ts,tsx}'],
-  presets: [require('nativewind/preset')],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-};
-```
-
-Update `apps/mobile/babel.config.js`:
-
-```js
-module.exports = function (api) {
-  api.cache(true);
-  return {
-    presets: [
-      ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
-      'nativewind/babel',
-    ],
-  };
-};
-```
-
-Add to `apps/mobile/global.css`:
-
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-```
-
-Import in your root `_layout.tsx`:
-
-```tsx
-import './global.css';
-```
-
----
-
-## 7. Sharing SWR hooks
-
-The `@baseline/swr-user` package works on React Native without modification — SWR is platform-agnostic and `@baseline/client-api` uses axios, which works in React Native.
-
-Example usage in `apps/mobile/app/index.tsx`:
-
-```tsx
-import React from 'react';
-import { View, Text } from 'react-native';
-import { useWorkspacesUser } from '@baseline/swr-user/workspace';
-
-export default function HomeScreen() {
-  const { workspaces, isLoading } = useWorkspacesUser();
-
-  if (isLoading) return <Text>Loading...</Text>;
-
-  return (
-    <View className="flex-1 items-center justify-center bg-white">
-      {workspaces?.map((ws) => (
-        <Text key={ws.workspaceId} className="text-lg font-bold">
-          {ws.name}
-        </Text>
-      ))}
-    </View>
-  );
-}
-```
-
----
-
-## 8. Auth with Amplify
-
-Install Amplify for React Native:
-
-```bash
-pnpm --filter @baseline/mobile add aws-amplify @aws-amplify/react-native
-pnpm --filter @baseline/mobile add @react-native-community/netinfo @react-native-async-storage/async-storage
-```
-
-Configure Amplify identically to the web apps, using `EXPO_PUBLIC_` prefixed env vars instead of `VITE_`:
-
-```ts
-// apps/mobile/src/lib/amplify.ts
-import { Amplify } from 'aws-amplify';
-
-Amplify.configure({
-  Auth: {
-    Cognito: {
-      userPoolId: process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID!,
-      userPoolClientId: process.env.EXPO_PUBLIC_COGNITO_USER_POOL_WEB_CLIENT_ID!,
-    },
-  },
-});
-```
-
----
-
-## 9. EAS Build
-
-Install the EAS CLI and initialise builds:
-
-```bash
-npm install -g eas-cli
-cd apps/mobile
-eas init
-eas build:configure
-```
-
-Create `apps/mobile/eas.json`:
-
-```json
-{
-  "cli": { "version": ">= 10.0.0" },
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    },
-    "preview": {
-      "distribution": "internal"
-    },
-    "production": {
-      "autoIncrement": true
-    }
-  },
-  "submit": {
-    "production": {}
-  }
-}
-```
-
-Build commands:
-
-```bash
-# Development build (includes dev client)
-eas build --profile development --platform all
-
-# Production build
-eas build --profile production --platform all
-
-# Submit to stores
-eas submit --platform ios
-eas submit --platform android
-```
-
----
-
-## 10. Root scripts
-
-Add to the root `package.json`:
+Optional npm script in root `package.json`:
 
 ```json
 {
   "scripts": {
-    "start:mobile": "pnpm --filter @baseline/mobile run start",
-    "build:mobile:ios": "pnpm --filter @baseline/mobile run eas build --platform ios",
-    "build:mobile:android": "pnpm --filter @baseline/mobile run eas build --platform android"
+    "mobile:add": "tsx scripts/mobile/add-mobile-app.ts"
   }
 }
 ```
 
 ---
 
-## Summary
+## Script Design (based on your snippet)
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Expo 55 (React Native) |
-| Styling | NativeWind v4 (Tailwind) |
-| Auth | AWS Amplify for React Native |
-| Data fetching | SWR via `@baseline/swr-user` |
-| API calls | axios via `@baseline/client-api` |
-| Types | `@baseline/types` |
-| Utilities | `@baseline/utils` |
-| Builds | EAS Build (iOS + Android) |
-| Monorepo | pnpm workspaces + Metro resolver |
+### Safety and structure
+
+- Resolve monorepo root from script location.
+- Abort if `apps/mobile` already exists:
+  - print a clear error
+  - exit code `1`
+- Use idempotent directory creation (`mkdirSync(..., { recursive: true })`).
+
+### File generation strategy
+
+- Keep all templates embedded as string constants in the script for easy versioning.
+- Use a helper `write(path, content)` that:
+  - creates parent directories
+  - writes UTF-8 content
+  - preserves LF line endings
+- Use a helper `writeExecutable(path, content)` for shell scripts (`chmod 0o755`).
+
+### Asset generation strategy
+
+Use the minimal PNG generator approach from your snippet:
+- internal `crc32`, PNG chunk helpers, and `createPlaceholderPng(width, height, color)`
+- generate these defaults:
+  - `assets/images/icon.png` (1024x1024)
+  - `assets/images/adaptive-icon.png` (1024x1024)
+  - `assets/images/splash.png` (1242x2436 or 1179x2556)
+  - `assets/images/favicon.png` (48x48)
+
+---
+
+## Files the Script Will Create
+
+### App shell
+
+- `apps/mobile/package.json`
+- `apps/mobile/app.json` (or `app.config.ts` if dynamic env is needed immediately)
+- `apps/mobile/tsconfig.json`
+- `apps/mobile/babel.config.js`
+- `apps/mobile/metro.config.js`
+- `apps/mobile/tailwind.config.js`
+- `apps/mobile/nativewind-env.d.ts`
+- `apps/mobile/global.css`
+- `apps/mobile/eas.json`
+- `apps/mobile/.gitignore`
+
+### Expo Router structure
+
+- `apps/mobile/app/_layout.tsx`
+- `apps/mobile/app/index.tsx`
+- `apps/mobile/app/error.tsx`
+- `apps/mobile/app/+not-found.tsx`
+- `apps/mobile/app/(auth)/_layout.tsx`
+- `apps/mobile/app/(auth)/sign-in.tsx`
+- `apps/mobile/app/(auth)/sign-up.tsx`
+- `apps/mobile/app/(app)/_layout.tsx`
+- `apps/mobile/app/(app)/(tabs)/_layout.tsx`
+- `apps/mobile/app/(app)/(tabs)/home/index.tsx`
+- `apps/mobile/app/(app)/(tabs)/more/index.tsx`
+
+### Feature modules
+
+- `apps/mobile/src/features/auth/SignInScreen.tsx`
+- `apps/mobile/src/features/auth/SignUpScreen.tsx`
+- `apps/mobile/src/features/home/HomeScreen.tsx`
+- `apps/mobile/src/features/more/MoreScreen.tsx`
+
+### Core shared UI and utilities (minimal first pass)
+
+- `apps/mobile/src/components/ui/text.tsx`
+- `apps/mobile/src/components/ui/button.tsx`
+- `apps/mobile/src/components/ScreenContent.tsx`
+- `apps/mobile/src/components/screen-loader/ScreenLoader.tsx`
+- `apps/mobile/src/components/error-state/ErrorState.tsx`
+- `apps/mobile/src/hooks/useIsAuthenticated.ts`
+- `apps/mobile/src/lib/cn.ts`
+- `apps/mobile/src/lib/amplify.ts`
+- `apps/mobile/src/styles/typography.ts`
+- `apps/mobile/src/test-ids/index.ts`
+
+### Assets
+
+- `apps/mobile/assets/images/icon.png`
+- `apps/mobile/assets/images/adaptive-icon.png`
+- `apps/mobile/assets/images/splash.png`
+- `apps/mobile/assets/images/favicon.png`
+
+---
+
+## Dependency Plan
+
+The script should install the same core stack used by `FinalTransportApp` mobile, excluding TanStack Query/tRPC. Keep versions aligned with that repo where possible.
+
+Minimum baseline:
+
+```bash
+pnpm --filter @baseline/mobile add expo expo-router react-native react react-dom
+pnpm --filter @baseline/mobile add nativewind tailwindcss
+pnpm --filter @baseline/mobile add aws-amplify @aws-amplify/react-native
+pnpm --filter @baseline/mobile add swr zustand zod react-hook-form @hookform/resolvers axios
+pnpm --filter @baseline/mobile add @shopify/flash-list expo-notifications expo-device @sentry/react-native
+pnpm --filter @baseline/mobile add @baseline/types @baseline/client-api @baseline/swr-user @baseline/utils
+pnpm --filter @baseline/mobile add -D babel-plugin-nativewind typescript @types/react @types/react-native
+```
+
+---
+
+## Implementation Phases
+
+### Phase 1: Script foundation
+
+- Create script file and utility helpers:
+  - `write`, `writeExecutable`, `ensureDir`, `run`, `abortIfExists`
+- Add PNG generation helpers from your snippet.
+
+### Phase 2: App skeleton
+
+- Generate package/config files.
+- Generate route groups and basic screen re-exports.
+- Generate minimal `src/features/*` screen content.
+
+### Phase 3: Styling/auth/data baseline
+
+- Wire NativeWind and `global.css`.
+- Add Amplify bootstrap and auth guard flow in router layouts.
+- Add SWR config/provider setup in root layout.
+
+### Phase 4: Quality and ergonomics
+
+- Add root command (`mobile:add`).
+- Add post-run output summary (created files + next steps).
+- Add optional `--force` flag in a second iteration if needed.
+
+---
+
+## Acceptance Criteria
+
+- Running `pnpm mobile:add` on a clean repo creates `apps/mobile` with no manual edits required to start.
+- `pnpm --filter @baseline/mobile start` boots Expo with valid routing.
+- Sign-in route and app route groups exist and navigate correctly.
+- NativeWind classes compile correctly.
+- Placeholder image assets are generated and referenced in Expo config.
+- Script exits safely when `apps/mobile` already exists.
+
+---
+
+## Example Script Skeleton
+
+```ts
+import { chmodSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const root = join(__dirname, '..', '..');
+const pkgDir = join(root, 'apps', 'mobile');
+
+if (existsSync(pkgDir)) {
+  console.error('\\nError: apps/mobile/ already exists. Aborting.\\n');
+  process.exit(1);
+}
+
+const write = (path: string, content: string) => {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, content, 'utf8');
+};
+
+const writeExecutable = (path: string, content: string) => {
+  write(path, content);
+  chmodSync(path, 0o755);
+};
+
+// TODO: add PNG helpers from design snippet
+// TODO: write all config files and route files
+// TODO: print next steps
+```
+
+---
+
+## Next Step
+
+After this plan is approved, implement the script in `scripts/mobile/add-mobile-app.ts` and run it once to verify the generated app builds and starts with the `FinalTransportApp`-aligned stack and the folder structure from your design doc.
