@@ -64,3 +64,4 @@ tsconfig.tsbuildinfo
 
 # logs
 *.log
+.env
