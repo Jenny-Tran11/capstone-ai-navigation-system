@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import {
-  FormGroup,
-  Input,
-  Label,
-  Modal,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-} from 'reactstrap';
-import styles from './ConfirmDelete.module.scss';
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@baseline/ui/primitives/dialog';
+import { Input } from '@baseline/ui/primitives/input';
+import { Label } from '@baseline/ui/primitives/label';
 
 interface Props {
   itemName: string;
@@ -39,22 +38,21 @@ const ConfirmDelete = (props: Props): JSX.Element => {
   };
 
   return (
-    <div className={styles.confirmDelete}>
-      <button {...buttonProps} onClick={toggle} className={styles.deleteButton}>
+    <div className="flex items-center">
+      <button
+        {...buttonProps}
+        onClick={toggle}
+        className="flex items-center font-normal text-[15px] leading-[22px] font-['Montserrat',sans-serif] bg-transparent border-0 cursor-pointer disabled:opacity-25"
+      >
         Delete
       </button>
-      <Modal
-        isOpen={isModalOpen}
-        toggle={toggle}
-        centered
-        className={styles.deleteModal}
-      >
-        <ModalHeader toggle={toggle}>
-          Delete &quot;{itemName}&quot;?
-        </ModalHeader>
-        <ModalBody>
-          <FormGroup>
-            <Label for="delete">
+      <Dialog open={isModalOpen} onOpenChange={toggle}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete &quot;{itemName}&quot;?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="delete">
               Please type <b>{deleteString}</b> to confirm deletion
             </Label>
             <Input
@@ -63,24 +61,20 @@ const ConfirmDelete = (props: Props): JSX.Element => {
               autoComplete="off"
               placeholder={deleteString}
               value={deleteType}
-              onChange={(e) => {
-                setDeleteType(e.target.value);
-              }}
+              onChange={(e) => setDeleteType(e.target.value)}
             />
-          </FormGroup>
-        </ModalBody>
-        <ModalFooter>
-          <button
-            disabled={deleteString !== deleteType}
-            onClick={() => {
-              void handleDelete();
-            }}
-            className={styles.deleteButton}
-          >
-            Delete
-          </button>
-        </ModalFooter>
-      </Modal>
+          </div>
+          <DialogFooter>
+            <button
+              disabled={deleteString !== deleteType}
+              onClick={() => { void handleDelete(); }}
+              className="flex items-center font-normal text-[15px] leading-[22px] font-['Montserrat',sans-serif] bg-transparent border-0 cursor-pointer disabled:opacity-25"
+            >
+              Delete
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

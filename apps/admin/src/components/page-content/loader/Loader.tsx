@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import styles from './Loader.module.scss';
 
 interface Props {
   isLoading?: boolean;
@@ -34,13 +33,18 @@ const Loader = (props: Props): JSX.Element => {
 
   return (
     <div
-      className={`${styles.loader} ${
-        isLoadingTextShowing ? styles.textVisible : ''
-      } ${isLoaderShowing ? styles.visible : ''}`}
+      className={`absolute inset-0 z-[2] flex items-center justify-center bg-[#efefef] pointer-events-none transition-opacity duration-100 ease-in-out ${
+        isLoaderShowing ? 'opacity-100' : 'opacity-0'
+      }`}
     >
       {isLoadingTextShowing ? (
         <>
-          <svg width="77" height="81" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            width="77"
+            height="81"
+            xmlns="http://www.w3.org/2000/svg"
+            className="animate-[fade_600ms_forwards_ease-in-out,pulse_1.2s_infinite_ease-in-out]"
+          >
             <g>
               <path
                 fill="#ffd600"

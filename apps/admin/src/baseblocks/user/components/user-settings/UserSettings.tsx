@@ -5,8 +5,8 @@ import {
   fetchUserAttributes,
 } from 'aws-amplify/auth';
 import React, { useState } from 'react';
-import { FormFeedback, FormGroup, Input, Label } from 'reactstrap';
-import styles from './UserSettings.module.scss';
+import { Input } from '@baseline/ui/primitives/input';
+import { Label } from '@baseline/ui/primitives/label';
 
 interface Props {
   user: { email: string; email_verified: boolean };
@@ -49,12 +49,12 @@ const UserSettings = (props: Props): JSX.Element => {
   };
 
   return (
-    <div className={styles.userSettings}>
-      <h1>Account settings</h1>
-      <div className={styles.settings}>
-        <FormGroup>
-          <Label for="email">Email</Label>
-          <div className={styles.email}>
+    <div>
+      <h1 className="text-[40px] leading-[49px] font-bold mb-8 md:text-2xl md:leading-8">Account settings</h1>
+      <div className="text-base leading-6 w-full px-12 py-[18px] bg-white border border-[#bababa] space-y-4 md:px-3">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="font-semibold">Email</Label>
+          <div className="flex">
             <Input
               name="email"
               id="email"
@@ -63,62 +63,54 @@ const UserSettings = (props: Props): JSX.Element => {
               value={email}
               disabled={!isChangingEmail}
               onChange={(e) => setEmail(e.target.value)}
+              className="rounded-none"
             />
             <button
               disabled={!isEmailVerified}
+              className="px-6 py-3 bg-white border border-[#bababa] border-l-0 text-base leading-6 disabled:opacity-40 cursor-pointer hover:bg-muted transition-colors"
               onClick={() => {
-                if (isChangingEmail) {
-                  void handleEmailChange();
-                } else {
-                  setIsChangingEmail(true);
-                }
+                if (isChangingEmail) { void handleEmailChange(); }
+                else { setIsChangingEmail(true); }
               }}
             >
               {isChangingEmail ? 'Update' : 'Edit'}
             </button>
           </div>
-        </FormGroup>
-        {!isEmailVerified ? (
-          <FormGroup>
-            <Label for="code">Check your email for a code</Label>
-            <div className={styles.email}>
+        </div>
+        {!isEmailVerified && (
+          <div className="space-y-2">
+            <Label htmlFor="code">Check your email for a code</Label>
+            <div className="flex">
               <Input
                 name="code"
                 id="code"
                 type="text"
                 placeholder="Code"
-                invalid={isCodeInvalid}
                 value={changingEmailCode}
                 onChange={(e) => setChangingEmailCode(e.target.value)}
+                className={`rounded-none ${isCodeInvalid ? 'border-destructive' : ''}`}
               />
               <button
-                onClick={() => {
-                  void finalizeEmailChange();
-                }}
+                className="px-6 py-3 bg-white border border-[#bababa] border-l-0 text-base leading-6 cursor-pointer hover:bg-muted transition-colors"
+                onClick={() => { void finalizeEmailChange(); }}
               >
                 Submit
               </button>
               <button
-                onClick={() => {
-                  setIsEmailVerified(true);
-                  setIsChangingEmail(true);
-                }}
+                className="px-6 py-3 bg-white border border-[#bababa] border-l-0 text-base leading-6 cursor-pointer hover:bg-muted transition-colors"
+                onClick={() => { setIsEmailVerified(true); setIsChangingEmail(true); }}
               >
                 Cancel
               </button>
             </div>
-            <FormFeedback className={isCodeInvalid ? 'd-block' : ''}>
-              Code is invalid
-            </FormFeedback>
-          </FormGroup>
-        ) : (
-          <></>
+            {isCodeInvalid && (
+              <p className="text-sm text-destructive">Code is invalid</p>
+            )}
+          </div>
         )}
         <button
-          className={styles.signOut}
-          onClick={() => {
-            void signOut();
-          }}
+          className="text-base leading-6 cursor-pointer bg-transparent border-0 text-foreground hover:underline"
+          onClick={() => { void signOut(); }}
         >
           Sign out
         </button>

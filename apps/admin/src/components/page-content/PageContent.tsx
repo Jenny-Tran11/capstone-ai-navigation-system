@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from './PageContent.module.scss';
 
 interface Props {
   children: JSX.Element | JSX.Element[];
@@ -9,11 +8,9 @@ const PageContent = (props: Props) => {
   const { children } = props;
 
   return (
-    <>
-      <div className={styles.pageContent}>
-        <div className={styles.children}>{children}</div>
-      </div>
-    </>
+    <div className="relative px-[min(12vw,144px)] py-[98px] bg-[#efefef] w-full">
+      <div className="animate-[fade_500ms_forwards_ease-in-out]">{children}</div>
+    </div>
   );
 };
 

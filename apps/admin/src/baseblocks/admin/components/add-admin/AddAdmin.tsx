@@ -1,17 +1,16 @@
 import { createAdmin } from '@baseline/client-api/admin';
 import React, { useState } from 'react';
-import {
-  FormGroup,
-  Input,
-  Label,
-  Modal,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-} from 'reactstrap';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
-import styles from './AddAdmin.module.scss';
 import { Admin } from '@baseline/types/admin';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@baseline/ui/primitives/dialog';
+import { Input } from '@baseline/ui/primitives/input';
+import { Label } from '@baseline/ui/primitives/label';
 
 interface Props {
   setAllAdmins: React.Dispatch<React.SetStateAction<Admin[]>>;
@@ -35,38 +34,38 @@ const AddAdmin = (props: Props) => {
   };
 
   return (
-    <div className={styles.addUser}>
-      <button className={styles.addUserButton} onClick={toggle}>
+    <div>
+      <button
+        className="text-base leading-6 px-3 py-1.5 bg-transparent border border-[#bababa] cursor-pointer hover:bg-muted transition-colors"
+        onClick={toggle}
+      >
         Invite
       </button>
-      <Modal
-        className={styles.addUserModal}
-        isOpen={isModalOpen}
-        toggle={toggle}
-        centered
-      >
-        <ModalHeader toggle={toggle}>Add Admin</ModalHeader>
-        <ModalBody>
-          <FormGroup>
+      <Dialog open={isModalOpen} onOpenChange={toggle}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Admin</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
             <Label>Email</Label>
             <Input
+              type="email"
               onChange={(e) => setNewEmail(e.target.value)}
               value={newEmail}
+              placeholder="admin@example.com"
             />
-          </FormGroup>
-        </ModalBody>
-        <ModalFooter>
-          <button
-            disabled={!newEmail}
-            className={styles.addUserButton}
-            onClick={() => {
-              void addUser();
-            }}
-          >
-            Add
-          </button>
-        </ModalFooter>
-      </Modal>
+          </div>
+          <DialogFooter>
+            <button
+              disabled={!newEmail}
+              className="text-base leading-6 px-3 py-1.5 bg-transparent border border-[#bababa] disabled:opacity-40 cursor-pointer hover:bg-muted transition-colors"
+              onClick={() => { void addUser(); }}
+            >
+              Add
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

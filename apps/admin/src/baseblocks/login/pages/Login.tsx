@@ -1,14 +1,14 @@
 import React from 'react';
 import { Authenticator } from '@aws-amplify/ui-react';
-import styles from './Login.module.scss';
 
 function Login() {
   return (
-    <div className={styles.login}>
-      <div className={styles.content}>
+    <div className="flex min-h-screen overflow-hidden flex-row flex-auto">
+      <div className="flex flex-col flex-auto justify-center items-center">
         <Authenticator />
       </div>
     </div>
   );
 }
+
 export default Login;

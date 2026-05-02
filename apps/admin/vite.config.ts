@@ -1,11 +1,13 @@
+import path from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import EnvironmentPlugin from 'vite-plugin-environment';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     EnvironmentPlugin([
       'REACT_APP_APP_NAME',
       'REACT_APP_AWS_PROFILE',
@@ -17,10 +19,12 @@ export default defineConfig({
     ]),
   ],
   envPrefix: 'REACT_APP_',
-  define: {},
   resolve: {
     alias: {
       './runtimeConfig': './runtimeConfig.browser',
+      '@': path.resolve(__dirname, './src'),
+      '@baseline/ui/lib': path.resolve(__dirname, '../../packages/ui/src/lib'),
+      '@baseline/ui': path.resolve(__dirname, '../../packages/ui/src'),
     },
   },
   esbuild: {
@@ -38,5 +42,10 @@ export default defineConfig({
         },
       },
     },
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5001,
+    allowedHosts: true,
   },
 });

@@ -9,11 +9,12 @@ BaselineJS is an open-source, fullstack TypeScript, serverless-first framework d
 This is a **pnpm monorepo** with the following workspaces:
 
 - `apps/web` — Public-facing React/Vite frontend (runs on port 5000)
-- `apps/admin` — Admin portal React/Vite frontend (uses AWS Amplify/Cognito auth)
+- `apps/admin` — Admin portal React/Vite frontend (Tailwind v4 + shadcn/ui, AWS Amplify/Cognito auth)
 - `apps/api` — Express/Serverless backend (requires AWS credentials + Java for DynamoDB local)
 - `apps/infra` — AWS CDK infrastructure definitions
 - `packages/client-api` — Shared API client library
 - `packages/types` — Shared TypeScript types
+- `packages/ui` — Shared UI package: Tailwind v4 globals + 50+ shadcn/ui primitives
 - `commands/add-object` — CLI tool for scaffolding new objects
 
 ## Running in Replit
@@ -26,17 +27,37 @@ Only the `web` frontend is configured to run locally in Replit (port 5000). The 
 
 ## Key Technologies
 
-- **Frontend:** React 18, Vite 5, TypeScript, reactstrap (Bootstrap)
+- **Frontend:** React 18, Vite 5, TypeScript, Tailwind CSS v4, shadcn/ui (new-york style)
+- **UI Package:** `packages/ui` — `@baseline/ui` — exports all primitives + `globals.css` with OKLch color tokens
 - **Backend:** Express, Serverless Framework, serverless-offline
 - **Database:** DynamoDB (local via serverless-dynamodb plugin for development)
 - **Auth:** AWS Cognito + Amplify
 - **Package Manager:** pnpm v9+
 - **Node:** v20+
 
+## UI / Styling Architecture
+
+`packages/ui` is the design system:
+- `src/globals.css` — Tailwind v4 `@import 'tailwindcss'` + `@theme` block with OKLch color tokens (light + dark)
+- `src/lib/utils.ts` — `cn()` helper (clsx + tailwind-merge)
+- `src/primitives/` — 50+ shadcn/ui primitives (new-york style)
+- `src/index.ts` — barrel export of all primitives + `cn`
+- `package.json` exports: `"."` → `src/index.ts`, `"./globals.css"` → `src/globals.css`
+
+`apps/admin` consumes it via:
+- `src/index.css` → `@import '@baseline/ui/globals.css'`
+- Vite aliases: `@baseline/ui` → `packages/ui/src`, `@baseline/ui/lib` → `packages/ui/src/lib`
+- `@tailwindcss/vite` plugin handles CSS compilation
+- `components.json` — shadcn config pointing at `@baseline/ui/primitives` for code-gen
+
+### Migration: SCSS → Tailwind
+All SCSS module files have been removed from `apps/admin`. All components now use Tailwind utility classes. Reactstrap has been replaced with shadcn/ui Dialog, Input, Label primitives.
+
 ## Important Configuration
 
-- `apps/web/vite.config.ts` — Configured with `host: '0.0.0.0'`, `port: 5000`, `allowedHosts: true` for Replit proxy compatibility
-- Environment variables for the web app (Cognito IDs, API URL) are given default empty values in vite.config.ts so the dev server starts without AWS setup
+- `apps/web/vite.config.ts` — Configured with `host: '0.0.0.0'`, `port: 5000`, `allowedHosts: true`
+- `apps/admin/vite.config.ts` — Tailwind v4 plugin, path aliases for `@` and `@baseline/ui`
+- Environment variables given default empty values in vite configs so dev servers start without AWS setup
 - `scripts/project-variables.sh` — Sets `APP_NAME=baseline-core`, `AWS_PROFILE=baseline-core`, `REGION=ap-southeast-2`
 
 ## Deployment
