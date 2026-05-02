@@ -4,10 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "deploy:staging": "./scripts/deploy.sh staging",
-    "remove:staging": ". ../../scripts/project-variables.sh && npx serverless remove --stage staging --region $REGION",
-    "deploy:prod": "./scripts/deploy.sh prod",
-    "remove:prod": ". ../../scripts/project-variables.sh && npx serverless remove --stage prod --region $REGION",
     "aws:profile": "../../scripts/setup-aws-profile.sh",
     "start": "npx vite",
     "build": "pnpm run generate:env:staging && npx vite build",
@@ -47,10 +43,7 @@
     "eslint-plugin-react": "7.37.2",
     "eslint-plugin-react-hooks": "5.1.0",
     "postcss": "8.5.1",
-    "prettier": "2.4.1",
-    "serverless": "3.40.0",
-    "serverless-baseline-invalidate-cloudfront": "0.1.2",
-    "serverless-s3-sync": "3.1.0"
+    "prettier": "2.4.1"
   },
   "browserslist": {
     "production": [

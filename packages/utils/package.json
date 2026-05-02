@@ -1,0 +1,15 @@
+{
+  "name": "@baseline/utils",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "lint": "npx eslint '*.ts'",
+    "type-check": "npx tsc --noEmit",
+    "pretty": "npx prettier --write '*.{ts,tsx,js,json,css,scss,md,yml,yaml,html}'"
+  },
+  "dependencies": {
+    "@baseline/types": "workspace:1.0.0",
+    "nanoid": "5.1.5",
+    "zod": "4.0.16"
+  }
+}

@@ -9,10 +9,6 @@
     "start:exposed": "pnpm run start --host 0.0.0.0",
     "start": "./scripts/run-api-local.sh",
     "debug": "export SLS_DEBUG=* && ./scripts/run-api-local-debug.sh",
-    "deploy:staging": "./scripts/deploy.sh staging",
-    "remove:staging": ". ../../scripts/project-variables.sh && npx serverless remove --stage staging --region $REGION",
-    "deploy:prod": "./scripts/deploy.sh prod",
-    "remove:prod": ". ../../scripts/project-variables.sh && npx serverless remove --stage prod --region $REGION",
     "add:env:local": "../../scripts/add-env-var.sh local",
     "add:env:staging": "../../scripts/add-env-var.sh staging",
     "add:env:prod": "../../scripts/add-env-var.sh prod",
@@ -20,10 +16,9 @@
     "add:user:staging": "./scripts/add-cognito-user.sh staging",
     "add:user:prod": "./scripts/add-cognito-user.sh prod",
     "setup:ministack": "./scripts/setup-ministack.sh",
-    "install:dynamodb": "echo 'Replaced by MiniStack — run: docker compose up -d'",
     "lint": "npx eslint 'src/**/*.{ts,js}'",
-    "build": ". ../../scripts/project-variables.sh && npx serverless package --stage staging --region $REGION",
-    "pretty": "npx prettier --write 'src/**/*.{ts,tsx,js,json,css,scss,md,yml,yaml,html}' && npx prettier --write '*.{yml,yaml,js}'"
+    "build": "tsc --noEmit",
+    "pretty": "npx prettier --write 'src/**/*.{ts,tsx,js,json,css,scss,md,html}'"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "3.675.0",
@@ -45,9 +40,6 @@
     "@types/node": "20.11.26",
     "esbuild": "0.20.1",
     "prettier": "2.4.1",
-    "serverless": "3.40.0",
-    "serverless-esbuild": "1.52.1",
-    "serverless-offline": "13.8.2",
     "stylelint": "16.13.2",
     "stylelint-order": "6.0.4",
     "tsx": "4.19.3",
