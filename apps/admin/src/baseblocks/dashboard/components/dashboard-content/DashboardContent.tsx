@@ -166,7 +166,7 @@ const DashboardContent = (): JSX.Element => {
     <div className="flex flex-col gap-6 md:gap-8">
       <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-muted-foreground text-xs shadow-sm">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1 text-muted-foreground text-xs shadow-sm">
             <IconSparkles className="size-3.5 shrink-0" aria-hidden />
             Admin console
           </div>
@@ -184,7 +184,7 @@ const DashboardContent = (): JSX.Element => {
         </p>
       </header>
 
-      <section className="grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+      <section className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
         {stats.map((stat) => (
           <StatCard key={stat.key} {...stat} />
         ))}
@@ -232,7 +232,7 @@ const DashboardContent = (): JSX.Element => {
               { name: 'Jackson Lee', email: 'pre@example.com', role: 'Developer' },
               { name: 'Hally Gray', email: 'hally@site.com', role: 'Viewer' },
             ].map((member) => (
-              <div key={member.email} className="flex items-center gap-3 rounded-lg border border-border/60 p-3">
+              <div key={member.email} className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 p-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="text-xs">
                     {member.name
@@ -367,7 +367,7 @@ function ActionTile(props: {
 }) {
   const { to, title, description, icon: Icon } = props;
   return (
-    <div className="flex flex-col justify-between rounded-lg border border-border bg-background/60 p-4 shadow-xs">
+    <div className="flex flex-col justify-between rounded-xl border border-border/60 bg-card p-4 shadow-[0_1px_3px_0_oklch(0_0_0/0.04),0_1px_2px_-1px_oklch(0_0_0/0.04)]">
       <div className="mb-4 flex items-start gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-card">
           <Icon className="size-5 text-muted-foreground" aria-hidden />

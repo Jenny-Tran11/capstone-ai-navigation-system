@@ -21,7 +21,7 @@ interface Props {
 
 const PageContent = ({ children, breadcrumbs }: Props) => {
   return (
-    <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-5 px-4 py-4 md:gap-6 md:px-6 md:py-6 lg:px-8">
+    <div className="flex w-full flex-1 flex-col gap-5 px-4 py-4 md:gap-6 md:px-6 md:py-6">
       {breadcrumbs?.length ? (
         <div className="rounded-lg border border-border/70 bg-muted/30 px-3 py-2">
           <Breadcrumb>

@@ -57,9 +57,13 @@ export * from './primitives/tooltip';
 export { useIsMobile } from './primitives/use-mobile';
 export { cn } from './lib/utils';
 
+export * from './components/admin-list-item';
 export * from './components/app-sidebar';
+export * from './components/confirm-delete-dialog';
+export * from './components/loader';
 export * from './components/nav-main';
 export * from './components/nav-secondary';
 export * from './components/nav-user';
+export * from './components/page-content';
 export * from './components/section-cards';
 export * from './components/site-header';

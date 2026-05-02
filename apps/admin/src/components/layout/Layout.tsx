@@ -1,14 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigation } from 'react-router-dom';
 import { fetchUserAttributes, signOut } from 'aws-amplify/auth';
-import { IconCalendarWeek, IconDownload } from '@tabler/icons-react';
 import type { NavUserData } from '@baseline/ui/components/nav-user';
-import { Button } from '@baseline/ui/primitives/button';
 import { SidebarInset, SidebarProvider } from '@baseline/ui/primitives/sidebar';
 import { SiteHeader } from '@baseline/ui/components/site-header';
 import AdminSidebar from '../app-sidebar/AdminSidebar';
 import Loader from '../page-content/loader/Loader';
-import { ThemeToggle } from '../theme-toggle/ThemeToggle';
+import UserMenu from '../user-menu/UserMenu';
 
 const ROUTE_TITLES: Array<[RegExp, string]> = [
   [/^\/dashboard\/?$/, 'Dashboard'],
@@ -66,37 +64,26 @@ const Layout = () => {
 
   return (
     <SidebarProvider
+      className="h-svh overflow-hidden"
+      defaultOpen={false}
       style={
         {
-          '--sidebar-width': '15rem',
-          '--header-height': 'calc(var(--spacing) * 12)',
+          '--sidebar-width': '13rem',
+          '--header-height': '3rem',
         } as React.CSSProperties
       }
     >
-      <AdminSidebar user={user} onSignOut={handleSignOut} />
-      <SidebarInset className="min-h-0">
+      <AdminSidebar />
+      <SidebarInset className="min-h-0 overflow-y-auto">
         <SiteHeader
           heading={heading}
           actions={
             <>
-              <ThemeToggle />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="hidden gap-2 sm:inline-flex"
-              >
-                <IconCalendarWeek className="size-4" />
-                05 Apr - 02 May
-              </Button>
-              <Button type="button" size="sm" className="gap-2">
-                <IconDownload className="size-4" />
-                Download
-              </Button>
+              <UserMenu user={user} onSignOut={handleSignOut} />
             </>
           }
         />
-        <div className="@container/main flex min-h-0 flex-1 flex-col overflow-x-hidden bg-muted/20">
+        <div className="@container/main flex min-h-0 flex-1 flex-col overflow-x-hidden bg-background">
           {isLoading ? (
             <div className="flex flex-1 items-center justify-center p-6">
               <Loader hasStartedLoading={true} />

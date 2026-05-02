@@ -19,7 +19,7 @@ export function SiteHeader({
   return (
     <header
       className={cn(
-        'sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-2 border-b border-border/80 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)',
+        'sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-2 border-b border-border/70 bg-background/70 backdrop-blur-sm supports-backdrop-filter:bg-background/55 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)',
         className,
       )}
       {...props}

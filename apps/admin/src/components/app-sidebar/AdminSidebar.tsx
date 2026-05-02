@@ -8,7 +8,6 @@ import {
 } from '@tabler/icons-react';
 import { AppSidebar } from '@baseline/ui/components/app-sidebar';
 import type { NavItem } from '@baseline/ui/components/nav-main';
-import type { NavUserData } from '@baseline/ui/components/nav-user';
 
 const navMain: NavItem[] = [
   { title: 'Dashboard', url: '/dashboard', icon: IconDashboard },
@@ -20,12 +19,7 @@ const navSecondary: NavItem[] = [
   { title: 'Account settings', url: '/settings', icon: IconSettings },
 ];
 
-interface Props {
-  user?: NavUserData;
-  onSignOut?: () => void;
-}
-
-export default function AdminSidebar({ user, onSignOut }: Props) {
+export default function AdminSidebar() {
   const location = useLocation();
 
   const isItemActive = (item: NavItem) => {
@@ -47,8 +41,6 @@ export default function AdminSidebar({ user, onSignOut }: Props) {
       brand={{ name: 'Baseline', url: '/dashboard' }}
       navMain={navMain}
       navSecondary={navSecondary}
-      user={user}
-      onSignOut={onSignOut}
       isItemActive={isItemActive}
       renderLink={(item, children) => (
         <NavLink to={item.url} end={item.url === '/dashboard'}>

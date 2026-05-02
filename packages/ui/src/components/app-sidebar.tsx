@@ -74,7 +74,7 @@ export function AppSidebar({
                 <>
                   <Logo className="!size-4" />
                   {!isCollapsedDesktop ? (
-                    <span className="truncate font-semibold text-[15px]">
+                    <span className="truncate font-medium text-sm">
                       {brand.name}
                     </span>
                   ) : null}
