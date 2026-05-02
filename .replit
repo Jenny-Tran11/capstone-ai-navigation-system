@@ -46,3 +46,7 @@ externalPort = 3001
 deploymentTarget = "static"
 build = ["bash", "-c", "cd apps/web && npx vite build"]
 publicDir = "apps/web/.dist"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000
