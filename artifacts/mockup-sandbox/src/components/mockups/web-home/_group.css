@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
+.warm-theme {
+  --background: 40 33% 96%; /* Cream/off-white #f7f5f0 */
+  --foreground: 20 20% 20%;
+  --primary: 15 60% 50%; /* Terracotta */
+  --primary-foreground: 40 33% 96%;
+  --accent: 35 60% 60%; /* Amber/sand */
+  --muted: 40 20% 90%;
+  --border: 40 20% 85%;
+  font-family: 'Montserrat', sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.warm-theme .font-editorial {
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+.warm-theme .font-editorial strong {
+  font-weight: 600;
+}

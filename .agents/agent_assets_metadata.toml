@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "SfAVuOIKLbnGHKL3ZMAIb"
+uri = "file://artifacts/mockup-sandbox/public/images/modern-hero.png"
+type = "image"
+title = "Abstract geometric SaaS hero image"
+
+[[generated]]
+id = "AU4iaF3mmbF0DSP5JTCDH"
+uri = "file://artifacts/mockup-sandbox/public/images/warm-hero.png"
+type = "image"
+title = "Warm studio collaboration"
+
+[[generated]]
+id = "qmmqBUJZzm-mnyFoNcaAa"
+uri = "file://artifacts/mockup-sandbox/public/images/bold-hero.png"
+type = "image"
+title = "Abstract tech data infrastructure visual"
