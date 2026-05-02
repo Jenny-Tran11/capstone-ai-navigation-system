@@ -3,7 +3,12 @@ import PageContent from '../../../components/page-content/PageContent';
 import DashboardContent from '../components/dashboard-content/DashboardContent';
 
 const Dashboard = (): JSX.Element => (
-  <PageContent>
+  <PageContent
+    breadcrumbs={[
+      { label: 'Home', href: '/dashboard' },
+      { label: 'Dashboard' },
+    ]}
+  >
     <DashboardContent />
   </PageContent>
 );

@@ -20,7 +20,12 @@ const User = (): JSX.Element => {
   };
 
   return (
-    <PageContent>
+    <PageContent
+      breadcrumbs={[
+        { label: 'Home', href: '/dashboard' },
+        { label: 'Account settings' },
+      ]}
+    >
       <UserSettings
         user={{
           email: user.email,

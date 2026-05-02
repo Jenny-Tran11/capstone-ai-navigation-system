@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@baseline/ui/primitives/dialog';
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@baseline/ui/primitives/alert-dialog';
+import { Button } from '@baseline/ui/primitives/button';
 import { Input } from '@baseline/ui/primitives/input';
 import { Label } from '@baseline/ui/primitives/label';
+import { cn } from '@baseline/ui';
 
 interface Props {
   itemName: string;
@@ -27,55 +32,93 @@ const ConfirmDelete = (props: Props): JSX.Element => {
     buttonProps,
   } = props;
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const toggle = () => setIsModalOpen((open) => !open);
+  const {
+    className: triggerClassName,
+    onClick: triggerOnClick,
+    ...restTriggerProps
+  } = buttonProps ?? {};
+
+  const [isOpen, setIsOpen] = useState(false);
   const [deleteType, setDeleteType] = useState('');
+  const [isPending, setIsPending] = useState(false);
+
+  const reset = () => {
+    setDeleteType('');
+    setIsPending(false);
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (isPending && !open) return;
+    setIsOpen(open);
+    if (!open) reset();
+  };
 
   const handleDelete = async (): Promise<void> => {
-    toggle();
-    setDeleteType('');
-    await deleteFunction();
+    setIsPending(true);
+    try {
+      await deleteFunction();
+      setIsOpen(false);
+      reset();
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
-    <div className="flex items-center">
-      <button
-        {...buttonProps}
-        onClick={toggle}
-        className="flex items-center font-normal text-[15px] leading-[22px] font-['Montserrat',sans-serif] bg-transparent border-0 cursor-pointer disabled:opacity-25"
-      >
-        Delete
-      </button>
-      <Dialog open={isModalOpen} onOpenChange={toggle}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete &quot;{itemName}&quot;?</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="delete">
-              Please type <b>{deleteString}</b> to confirm deletion
-            </Label>
-            <Input
-              id="delete"
-              name="delete"
-              autoComplete="off"
-              placeholder={deleteString}
-              value={deleteType}
-              onChange={(e) => setDeleteType(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <button
-              disabled={deleteString !== deleteType}
-              onClick={() => { void handleDelete(); }}
-              className="flex items-center font-normal text-[15px] leading-[22px] font-['Montserrat',sans-serif] bg-transparent border-0 cursor-pointer disabled:opacity-25"
-            >
-              Delete
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className={cn(
+            'text-destructive hover:bg-destructive/10 hover:text-destructive',
+            triggerClassName,
+          )}
+          {...restTriggerProps}
+          onClick={(e) => {
+            triggerOnClick?.(e);
+          }}
+        >
+          Delete
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete &quot;{itemName}&quot;?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="delete">
+            Please type <span className="font-medium text-foreground">{deleteString}</span> to
+            confirm deletion.
+          </Label>
+          <Input
+            id="delete"
+            name="delete"
+            autoComplete="off"
+            placeholder={deleteString}
+            value={deleteType}
+            onChange={(e) => setDeleteType(e.target.value)}
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={deleteString !== deleteType || isPending}
+            onClick={() => {
+              void handleDelete();
+            }}
+          >
+            {isPending ? 'Deleting…' : 'Delete'}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

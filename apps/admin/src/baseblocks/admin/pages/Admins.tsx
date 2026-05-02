@@ -17,7 +17,12 @@ const Admins = (): JSX.Element => {
   const { admins } = useLoaderData() as { admins: Admin[] };
 
   return (
-    <PageContent>
+    <PageContent
+      breadcrumbs={[
+        { label: 'Home', href: '/dashboard' },
+        { label: 'Admins' },
+      ]}
+    >
       <AdminList admins={admins} />
     </PageContent>
   );
