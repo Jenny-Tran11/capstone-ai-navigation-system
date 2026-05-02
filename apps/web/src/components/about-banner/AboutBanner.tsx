@@ -42,7 +42,7 @@ const AboutBanner = (): JSX.Element => (
       {/* CTA */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
         <Link
-          to="/#"
+          to="/contact"
           className="no-underline inline-flex items-center gap-2 text-white text-base font-semibold rounded-full px-8 py-4 w-full sm:w-auto transition-all duration-200 shadow-lg"
           style={{ backgroundColor: 'var(--warm-primary)' }}
           onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = 'var(--warm-primary-hover)')}

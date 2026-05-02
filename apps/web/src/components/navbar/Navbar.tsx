@@ -33,14 +33,14 @@ const Navbar = (): JSX.Element => {
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-4">
           <Link
-            to="/#"
+            to="/signin"
             className="text-sm font-medium no-underline transition-opacity hover:opacity-70"
             style={{ color: 'var(--warm-fg)' }}
           >
             Sign in
           </Link>
           <Link
-            to="/#"
+            to="/get-started"
             className="no-underline text-sm font-semibold text-white rounded-full px-6 py-2.5 transition-all duration-200"
             style={{ backgroundColor: 'var(--warm-primary)' }}
             onMouseEnter={(e) => ((e.target as HTMLElement).style.backgroundColor = 'var(--warm-primary-hover)')}
@@ -80,7 +80,7 @@ const Navbar = (): JSX.Element => {
             About
           </Link>
           <Link
-            to="/#"
+            to="/get-started"
             className="no-underline text-sm font-semibold text-white rounded-full px-6 py-2.5"
             style={{ backgroundColor: 'var(--warm-primary)' }}
           >

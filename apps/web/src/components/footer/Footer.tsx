@@ -1,6 +1,31 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+const platformLinks: { label: string; to: string }[] = [
+  { label: 'Features', to: '/features' },
+  { label: 'Integrations', to: '/integrations' },
+  { label: 'Pricing', to: '/pricing' },
+  { label: 'Changelog', to: '/changelog' },
+];
+
+const companyLinks: { label: string; to: string }[] = [
+  { label: 'About Us', to: '/about' },
+  { label: 'Careers', to: '/careers' },
+  { label: 'Blog', to: '/blog' },
+  { label: 'Contact', to: '/contact' },
+];
+
+const connectLinks: { label: string; href: string }[] = [
+  { label: 'hello@baselinecore.com', href: 'mailto:hello@baselinecore.com' },
+  { label: 'Twitter', href: 'https://twitter.com/baselinecore' },
+  { label: 'LinkedIn', href: 'https://linkedin.com/company/baselinecore' },
+];
+
+const linkHover = {
+  onMouseEnter: (e: React.MouseEvent<HTMLElement>) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-primary)'),
+  onMouseLeave: (e: React.MouseEvent<HTMLElement>) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-muted)'),
+};
+
 const Footer = (): JSX.Element => (
   <footer
     className="border-t py-16 px-6"
@@ -29,16 +54,15 @@ const Footer = (): JSX.Element => (
       <div className="space-y-4">
         <h4 className="font-semibold text-sm" style={{ color: 'var(--warm-fg)' }}>Platform</h4>
         <div className="flex flex-col gap-3">
-          {['Features', 'Integrations', 'Pricing', 'Changelog'].map((item) => (
+          {platformLinks.map(({ label, to }) => (
             <Link
-              key={item}
-              to="/#"
+              key={label}
+              to={to}
               className="no-underline text-sm transition-colors"
               style={{ color: 'var(--warm-muted)' }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-primary)')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-muted)')}
+              {...linkHover}
             >
-              {item}
+              {label}
             </Link>
           ))}
         </div>
@@ -48,20 +72,15 @@ const Footer = (): JSX.Element => (
       <div className="space-y-4">
         <h4 className="font-semibold text-sm" style={{ color: 'var(--warm-fg)' }}>Company</h4>
         <div className="flex flex-col gap-3">
-          <Link to="/about" className="no-underline text-sm transition-colors" style={{ color: 'var(--warm-muted)' }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-primary)')}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-muted)')}
-          >About Us</Link>
-          {['Careers', 'Blog', 'Contact'].map((item) => (
+          {companyLinks.map(({ label, to }) => (
             <Link
-              key={item}
-              to="/#"
+              key={label}
+              to={to}
               className="no-underline text-sm transition-colors"
               style={{ color: 'var(--warm-muted)' }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-primary)')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-muted)')}
+              {...linkHover}
             >
-              {item}
+              {label}
             </Link>
           ))}
         </div>
@@ -71,16 +90,17 @@ const Footer = (): JSX.Element => (
       <div className="space-y-4">
         <h4 className="font-semibold text-sm" style={{ color: 'var(--warm-fg)' }}>Connect</h4>
         <div className="flex flex-col gap-3">
-          {['hello@baselinecore.com', 'Twitter', 'LinkedIn'].map((item) => (
+          {connectLinks.map(({ label, href }) => (
             <a
-              key={item}
-              href="#"
+              key={label}
+              href={href}
+              target={href.startsWith('http') ? '_blank' : undefined}
+              rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
               className="no-underline text-sm transition-colors"
               style={{ color: 'var(--warm-muted)' }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-primary)')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-muted)')}
+              {...linkHover}
             >
-              {item}
+              {label}
             </a>
           ))}
         </div>
@@ -94,8 +114,8 @@ const Footer = (): JSX.Element => (
     >
       <p>© {new Date().getFullYear()} Baseline Core. All rights reserved.</p>
       <div className="flex items-center gap-6">
-        <a href="#" className="no-underline hover:opacity-70 transition-opacity" style={{ color: 'var(--warm-muted)' }}>Privacy Policy</a>
-        <a href="#" className="no-underline hover:opacity-70 transition-opacity" style={{ color: 'var(--warm-muted)' }}>Terms of Service</a>
+        <Link to="/privacy" className="no-underline hover:opacity-70 transition-opacity" style={{ color: 'var(--warm-muted)' }}>Privacy Policy</Link>
+        <Link to="/terms" className="no-underline hover:opacity-70 transition-opacity" style={{ color: 'var(--warm-muted)' }}>Terms of Service</Link>
       </div>
     </div>
   </footer>
