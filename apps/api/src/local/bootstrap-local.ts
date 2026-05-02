@@ -134,6 +134,7 @@ async function seedCognitoUser(poolId: string, email: string, password: string):
 
 async function bootstrap(): Promise<void> {
   const adminTable      = `${APP_NAME}-${STAGE}-admin`;
+  const contactTable    = `${APP_NAME}-${STAGE}-contact`;
   const permissionTable = `${APP_NAME}-${STAGE}-permission`;
   const workspaceTable  = `${APP_NAME}-${STAGE}-workspace`;
   const poolName        = `${APP_NAME}-${STAGE}-user-pool`;
@@ -141,6 +142,7 @@ async function bootstrap(): Promise<void> {
 
   console.log('Creating DynamoDB tables...');
   await createTableIfNotExists(adminTable,      'userSub');
+  await createTableIfNotExists(contactTable,    'id');
   await createTableIfNotExists(permissionTable, 'permissionId');
   await createTableIfNotExists(workspaceTable,  'workspaceId');
 

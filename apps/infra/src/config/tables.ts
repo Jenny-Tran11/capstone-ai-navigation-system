@@ -17,6 +17,10 @@ export function getTableDefs(): TableDefinition[] {
       partitionKey: { name: 'userSub', type: 'S' },
     },
     {
+      entityName: 'contact',
+      partitionKey: { name: 'id', type: 'S' },
+    },
+    {
       entityName: 'permission',
       partitionKey: { name: 'permissionId', type: 'S' },
       gsis: [
