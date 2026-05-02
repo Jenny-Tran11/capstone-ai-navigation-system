@@ -80,11 +80,11 @@ aws --endpoint-url=http://localhost:4566 \
 
 ## Step 2 — Point the Cognito SDK client at MiniStack
 
-`packages/api/src/baseblocks/cognito/cognito.service.ts` creates the client with no
+`apps/api/src/baseblocks/cognito/cognito.service.ts` creates the client with no
 `endpoint`, so it always calls real AWS. Add one line:
 
 ```typescript
-// packages/api/src/baseblocks/cognito/cognito.service.ts
+// apps/api/src/baseblocks/cognito/cognito.service.ts
 import * as AWS_CognitoIdentityServiceProvider from '@aws-sdk/client-cognito-identity-provider';
 
 const { CognitoIdentityProvider: CognitoIdentityServiceProvider } =
@@ -104,7 +104,7 @@ When `AWS_ENDPOINT_URL` is unset (staging, prod) the client is unchanged.
 
 ## Step 3 — Update the local start script
 
-Replace `packages/api/scripts/run-api-local.sh`:
+Replace `apps/api/scripts/run-api-local.sh`:
 
 ```bash
 #!/usr/bin/env bash
@@ -160,7 +160,7 @@ cd "$CURRENT_DIR" || exit
 
 ## Step 4 — Create the setup script
 
-Create `packages/api/scripts/setup-ministack.sh`:
+Create `apps/api/scripts/setup-ministack.sh`:
 
 ```bash
 #!/usr/bin/env bash
@@ -269,10 +269,10 @@ echo "Done. Sign in: example@devika.com / Password123"
 echo ".cognito/local-config.json written — generate:env:local will pick this up"
 ```
 
-Make it executable and wire it up in `packages/api/package.json`:
+Make it executable and wire it up in `apps/api/package.json`:
 
 ```bash
-chmod +x packages/api/scripts/setup-ministack.sh
+chmod +x apps/api/scripts/setup-ministack.sh
 ```
 
 ```json
@@ -284,7 +284,7 @@ chmod +x packages/api/scripts/setup-ministack.sh
 }
 ```
 
-Add `.env.local` to `packages/api/.gitignore`.
+Add `.env.local` to `apps/api/.gitignore`.
 
 ---
 
@@ -292,7 +292,7 @@ Add `.env.local` to `packages/api/.gitignore`.
 
 ```bash
 # Source the generated IDs
-. packages/api/.env.local
+. apps/api/.env.local
 
 # Get an IdToken
 aws cognito-idp initiate-auth \
@@ -338,7 +338,7 @@ with this once `apps/infra` is in place.
 pnpm --filter @baseline/api remove serverless-dynamodb
 ```
 
-In `packages/api/serverless.yml`, remove:
+In `apps/api/serverless.yml`, remove:
 - `serverless-dynamodb` from `plugins`
 - The entire `custom.serverless-dynamodb` block
 
@@ -394,9 +394,9 @@ aws --endpoint-url=http://localhost:4566 cognito-idp list-user-pools \
 | File | Change |
 |---|---|
 | `docker-compose.yml` | **New** — MiniStack container |
-| `packages/api/src/baseblocks/cognito/cognito.service.ts` | Spread `AWS_ENDPOINT_URL` into client constructor |
-| `packages/api/scripts/run-api-local.sh` | Set `AWS_ENDPOINT_URL`, `IS_OFFLINE=false`, call `setup:ministack` then `generate:env:local`, remove `AUTHORIZER` |
-| `packages/api/scripts/setup-ministack.sh` | **New** — creates DynamoDB tables + Cognito pool + seeds both, writes `.cognito/local-config.json` + `.env.local` |
-| `packages/api/package.json` | Add `setup:ministack`; replace `install:dynamodb` |
-| `packages/api/serverless.yml` | Remove `serverless-dynamodb` plugin + custom block |
-| `packages/api` deps | Remove `serverless-dynamodb` |
+| `apps/api/src/baseblocks/cognito/cognito.service.ts` | Spread `AWS_ENDPOINT_URL` into client constructor |
+| `apps/api/scripts/run-api-local.sh` | Set `AWS_ENDPOINT_URL`, `IS_OFFLINE=false`, call `setup:ministack` then `generate:env:local`, remove `AUTHORIZER` |
+| `apps/api/scripts/setup-ministack.sh` | **New** — creates DynamoDB tables + Cognito pool + seeds both, writes `.cognito/local-config.json` + `.env.local` |
+| `apps/api/package.json` | Add `setup:ministack`; replace `install:dynamodb` |
+| `apps/api/serverless.yml` | Remove `serverless-dynamodb` plugin + custom block |
+| `apps/api` deps | Remove `serverless-dynamodb` |

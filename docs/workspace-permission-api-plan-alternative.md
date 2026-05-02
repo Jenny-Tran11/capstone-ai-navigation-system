@@ -22,8 +22,8 @@ It keeps today’s behavior stable while adding workspace/permission as an addit
 - New backend domains: `workspace` and `permission`.
 - New DynamoDB tables and indexes.
 - New API routes under `/workspace/*` and `/permission/*`.
-- Shared contracts in `shared/types`.
-- Shared API clients in `shared/client-api`.
+- Shared contracts in `packages/types`.
+- Shared API clients in `packages/client-api`.
 - Admin UI for workspace/permission management.
 - Web UI for user workspace access.
 
@@ -37,7 +37,7 @@ It keeps today’s behavior stable while adding workspace/permission as an addit
 
 ## Architecture Decisions
 
-1. **Deployment model**: keep `packages/api/serverless.yml`.
+1. **Deployment model**: keep `apps/api/serverless.yml`.
 2. **Identity source**: keep `req.currentUserSub` from Cognito claims.
 3. **Transition strategy**: additive permission middleware + additive routes.
 4. **Permission model**:
@@ -131,57 +131,57 @@ It keeps today’s behavior stable while adding workspace/permission as an addit
 
 #### New files
 
-- `packages/api/src/baseblocks/workspace/workspace-dynamodb.yml`
-- `packages/api/src/baseblocks/workspace/workspace-functions.yml`
-- `packages/api/src/baseblocks/workspace/workspace-api.ts`
-- `packages/api/src/baseblocks/workspace/workspace.service.ts`
-- `packages/api/src/baseblocks/workspace/workspace.ts`
-- `packages/api/src/baseblocks/workspace/workspace-user-api.ts`
-- `packages/api/src/baseblocks/workspace/workspace-admin-api.ts`
+- `apps/api/src/baseblocks/workspace/workspace-dynamodb.yml`
+- `apps/api/src/baseblocks/workspace/workspace-functions.yml`
+- `apps/api/src/baseblocks/workspace/workspace-api.ts`
+- `apps/api/src/baseblocks/workspace/workspace.service.ts`
+- `apps/api/src/baseblocks/workspace/workspace.ts`
+- `apps/api/src/baseblocks/workspace/workspace-user-api.ts`
+- `apps/api/src/baseblocks/workspace/workspace-admin-api.ts`
 
-- `packages/api/src/baseblocks/permission/permission-dynamodb.yml`
-- `packages/api/src/baseblocks/permission/permission-functions.yml`
-- `packages/api/src/baseblocks/permission/permission-api.ts`
-- `packages/api/src/baseblocks/permission/permission.service.ts`
-- `packages/api/src/baseblocks/permission/permission.ts`
-- `packages/api/src/baseblocks/permission/permission-utils.ts`
-- `packages/api/src/baseblocks/permission/permission-admin-api.ts`
+- `apps/api/src/baseblocks/permission/permission-dynamodb.yml`
+- `apps/api/src/baseblocks/permission/permission-functions.yml`
+- `apps/api/src/baseblocks/permission/permission-api.ts`
+- `apps/api/src/baseblocks/permission/permission.service.ts`
+- `apps/api/src/baseblocks/permission/permission.ts`
+- `apps/api/src/baseblocks/permission/permission-utils.ts`
+- `apps/api/src/baseblocks/permission/permission-admin-api.ts`
 
-- `packages/api/src/middleware/check-permission.ts`
+- `apps/api/src/middleware/check-permission.ts`
 
 #### Existing files to update
 
-- `packages/api/serverless.yml`
+- `apps/api/serverless.yml`
   - add resource imports for workspace/permission tables
   - add function imports for workspace/permission handlers
   - extend IAM resources for new table ARNs and indexes
 
 #### Behavior notes
 
-- Reuse `ServiceObject` in `packages/api/src/util/service-object.ts`.
-- Keep `packages/api/src/baseblocks/admin/admin-api.ts` unchanged in phase 1.
+- Reuse `ServiceObject` in `apps/api/src/util/service-object.ts`.
+- Keep `apps/api/src/baseblocks/admin/admin-api.ts` unchanged in phase 1.
 - Keep existing `isAdmin` middleware for legacy routes.
 
 ---
 
 ### Phase 2 — Shared Contracts & Client APIs
 
-#### New `shared/types` files
+#### New `packages/types` files
 
-- `shared/types/base-object.d.ts`
-- `shared/types/workspace.d.ts`
-- `shared/types/permission.d.ts`
+- `packages/types/base-object.d.ts`
+- `packages/types/workspace.d.ts`
+- `packages/types/permission.d.ts`
 
-#### Existing `shared/types` updates
+#### Existing `packages/types` updates
 
-- Update package exports if required in `shared/types/package.json`.
+- Update package exports if required in `packages/types/package.json`.
 
-#### New `shared/client-api` files
+#### New `packages/client-api` files
 
-- `shared/client-api/workspace.ts`
-- `shared/client-api/permission.ts`
+- `packages/client-api/workspace.ts`
+- `packages/client-api/permission.ts`
 
-Pattern: same request style used by `shared/client-api/admin.ts`.
+Pattern: same request style used by `packages/client-api/admin.ts`.
 
 ---
 
@@ -189,19 +189,19 @@ Pattern: same request style used by `shared/client-api/admin.ts`.
 
 #### New pages/components
 
-- `packages/admin/src/baseblocks/workspace/pages/Workspaces.tsx`
-- `packages/admin/src/baseblocks/permission/pages/Permissions.tsx`
+- `apps/admin/src/baseblocks/workspace/pages/Workspaces.tsx`
+- `apps/admin/src/baseblocks/permission/pages/Permissions.tsx`
 
 #### Existing updates
 
-- `packages/admin/src/App.tsx`:
+- `apps/admin/src/App.tsx`:
   - add protected routes `/workspaces` and `/permissions`
-- `packages/admin/src/components/sidebar/Sidebar.tsx`:
+- `apps/admin/src/components/sidebar/Sidebar.tsx`:
   - add navigation links
 
 #### Data flow
 
-- Start with direct `shared/client-api/*` calls.
+- Start with direct `packages/client-api/*` calls.
 - Add SWR hooks afterwards for optimistic updates.
 
 ---
@@ -210,12 +210,12 @@ Pattern: same request style used by `shared/client-api/admin.ts`.
 
 #### New pages
 
-- `packages/web/src/pages/Workspaces.tsx`
-- `packages/web/src/pages/WorkspaceDetail.tsx`
+- `apps/web/src/pages/Workspaces.tsx`
+- `apps/web/src/pages/WorkspaceDetail.tsx`
 
 #### Existing updates
 
-- `packages/web/src/App.tsx`
+- `apps/web/src/App.tsx`
   - add routes `/workspaces`, `/workspaces/:workspaceId`
   - add auth-aware protected route wrapper/loader
 

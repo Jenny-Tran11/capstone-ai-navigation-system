@@ -9,7 +9,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(...rootConfig, react.configs.flat.recommended, {
   files: ['src/**/*.{ts,tsx,jsx,js}'],
-  ignores: ['src/vite-env.d.ts', 'src/react-app-env.d.ts'],
+  ignores: ['src/vite-env.d.ts'],
   settings: {
     react: {
       version: 'detect',
@@ -19,6 +19,7 @@ export default tseslint.config(...rootConfig, react.configs.flat.recommended, {
     parser: tsParser,
     parserOptions: {
       project: './tsconfig.json',
+      tsconfigRootDir: import.meta.dirname,
     },
     globals: {
       ...globals.browser,

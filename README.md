@@ -116,7 +116,7 @@ Start the api, admin and web in their own terminal windows/tabs with the followi
 ### Running locally Limitations
 
 - API, Web & Admin: No S3, you will need to rely on AWS staging S3
-- API: No local Cognito Authorizer, the deployed staging cognito can be used (see `packages/api/serverless.yml`) or the payload set by `AUTHORIZER` in `packages/api/scripts/run-api-local.sh`.
+- API: No local Cognito Authorizer, the deployed staging cognito can be used (see `apps/api/serverless.local.yml`) or the payload set by `AUTHORIZER` in `apps/api/scripts/run-api-local.sh`.
 - Admin: Cognito UI relies on an active AWS Cognito user pool, use deployed staging
 
 ## Deploy a Change

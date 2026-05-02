@@ -12,7 +12,7 @@ pipelines:
             - . ./scripts/setup-npm.sh
             - . ./scripts/setup-aws.sh
             - pnpm install
-            - ./scripts/deploy.sh ./packages/api
+            - ./scripts/deploy.sh ./apps/api
           caches:
             - root-node
             - api-node
@@ -29,7 +29,7 @@ pipelines:
                 - . ./scripts/setup-npm.sh
                 - . ./scripts/setup-aws.sh
                 - pnpm install
-                - ./scripts/deploy.sh ./packages/web
+                - ./scripts/deploy.sh ./apps/web
               caches:
                 - root-node
                 - api-node
@@ -45,7 +45,7 @@ pipelines:
                 - . ./scripts/setup-npm.sh
                 - . ./scripts/setup-aws.sh
                 - pnpm install
-                - ./scripts/deploy.sh ./packages/admin
+                - ./scripts/deploy.sh ./apps/admin
               caches:
                 - root-node
                 - api-node
@@ -77,7 +77,7 @@ pipelines:
               - . ./scripts/setup-npm.sh
               - . ./scripts/setup-aws.sh
               - pnpm install
-              - cd ./packages/api
+              - cd ./apps/api
               - pnpm run build
             caches:
               - root-node
@@ -94,7 +94,7 @@ pipelines:
               - . ./scripts/setup-npm.sh
               - . ./scripts/setup-aws.sh
               - pnpm install
-              - cd ./packages/web
+              - cd ./apps/web
               - pnpm run build
             caches:
               - root-node
@@ -111,7 +111,7 @@ pipelines:
               - . ./scripts/setup-npm.sh
               - . ./scripts/setup-aws.sh
               - pnpm install
-              - cd ./packages/admin
+              - cd ./apps/admin
               - pnpm run build
             caches:
               - root-node
@@ -122,7 +122,7 @@ pipelines:
 definitions:
   caches:
     root-node: ./node_modules
-    api-node: ./packages/api/node_modules
-    web-node: ./packages/web/node_modules
-    admin-node: ./packages/admin/node_modules
-    client-api-node: ./shared/client-api/node_modules
+    api-node: ./apps/api/node_modules
+    web-node: ./apps/web/node_modules
+    admin-node: ./apps/admin/node_modules
+    client-api-node: ./packages/client-api/node_modules

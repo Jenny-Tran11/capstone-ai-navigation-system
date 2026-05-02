@@ -47,9 +47,9 @@ EOF
 
 # Comment below is used to determine where to add new env vars, please do not modify
 # Additional variables are set here
-echo "$OUTPUT" >./packages/web/$OUTPUT_FILENAME
+echo "$OUTPUT" >./apps/web/$OUTPUT_FILENAME
 printf "\033[32m[%s] has been generated successfully!\033[39m\n" "./web/${OUTPUT_FILENAME}"
-echo "$OUTPUT" >./packages/admin/$OUTPUT_FILENAME
+echo "$OUTPUT" >./apps/admin/$OUTPUT_FILENAME
 printf "\033[32m[%s] has been generated successfully!\033[39m\n" "./admin/${OUTPUT_FILENAME}"
 
 cd "$CURRENT_DIR" || exit

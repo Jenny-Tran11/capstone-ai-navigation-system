@@ -1,12 +1,12 @@
 ---
 name: workspace-permission-api
-overview: Port the workspace and permission feature set from `Baseline Fork copy` into the current Baseline Fork. Adds backend tables + Express routes + permission middleware to `packages/api`, shared types and API client modules, a new `shared/swr-user` package, an admin permission/workspace management UI, and Cognito + workspace flows in the web app.
+overview: Port the workspace and permission feature set from `Baseline Fork copy` into the current Baseline Fork. Adds backend tables + Express routes + permission middleware to `apps/api`, shared types and API client modules, a new `shared/swr-user` package, an admin permission/workspace management UI, and Cognito + workspace flows in the web app.
 todos:
   - id: types
-    content: Add Permission/Workspace/BaseObject .d.ts files to shared/types
+    content: Add Permission/Workspace/BaseObject .d.ts files to packages/types
     status: pending
   - id: client-api
-    content: Add singleton-style workspace.ts and permission.ts to shared/client-api
+    content: Add singleton-style workspace.ts and permission.ts to packages/client-api
     status: pending
   - id: swr-user-pkg
     content: Create shared/swr-user package (package.json, tsconfig, workspace/permission hooks, index)
@@ -24,10 +24,10 @@ todos:
     content: Add permission/workspace dynamodb.yml + functions.yml; wire IAM, resources, functions in serverless.yml; add permission seed for local
     status: pending
   - id: admin-ui
-    content: Add Workspaces and Permissions pages, sidebar links, and routes in packages/admin/src/App.tsx; switch gate to SUPER permission
+    content: Add Workspaces and Permissions pages, sidebar links, and routes in apps/admin/src/App.tsx; switch gate to SUPER permission
     status: pending
   - id: web-auth
-    content: Add Amplify config, Login page, and protected loader in packages/web (mirror admin)
+    content: Add Amplify config, Login page, and protected loader in apps/web (mirror admin)
     status: pending
   - id: web-workspace-ui
     content: Add Workspaces and WorkspaceDetail pages with WorkspaceContext + localStorage current-workspace tracking
@@ -42,22 +42,22 @@ isProject: false
 
 ## 0. What's already in place vs. what we're adding
 
-Current state ([packages/api/src](packages/api/src), [shared/types](shared/types), [shared/client-api](shared/client-api)):
+Current state ([apps/api/src](apps/api/src), [packages/types](packages/types), [packages/client-api](packages/client-api)):
 - One DynamoDB table (`admin`); Cognito authorizer; `isAdmin` middleware; `req.currentUserSub` from claims.
 - `@baseline/types` only has `Admin`, `PagedResponse`. `@baseline/client-api` only has `admin.ts` (uses an injected `requestHandler` param).
-- `packages/admin` uses Amplify + react-router data loaders + axios. `packages/web` has no auth, no data layer.
+- `apps/admin` uses Amplify + react-router data loaders + axios. `apps/web` has no auth, no data layer.
 
 Reference at `/Users/khiem/Developing/Baseline Fork copy` provides the full template: see [apps/api/src/baseblocks/permission](../../Baseline%20Fork%20copy/apps/api/src/baseblocks/permission), [apps/api/src/baseblocks/workspace](../../Baseline%20Fork%20copy/apps/api/src/baseblocks/workspace), [packages/swr-user](../../Baseline%20Fork%20copy/packages/swr-user).
 
 Key adaptations from the reference:
 - Reference uses CDK; we keep `serverless.yml` for tables/functions.
 - Reference uses `req.currentUserId` (Cognito `custom:userId` with `sub` fallback); we keep the existing `req.currentUserSub` to avoid touching auth.
-- Reference uses `packages/types`; we use `shared/types`.
-- Reference's client uses singleton `getRequestHandler()`; we mirror that for new modules so SWR hooks can call them directly (existing `shared/client-api/request-handler.ts` already exports the singleton).
+- Reference uses `packages/types`; we use `packages/types`.
+- Reference's client uses singleton `getRequestHandler()`; we mirror that for new modules so SWR hooks can call them directly (existing `packages/client-api/request-handler.ts` already exports the singleton).
 
 ---
 
-## 1. Backend — `packages/api`
+## 1. Backend — `apps/api`
 
 ### 1a. DynamoDB tables (new files)
 
@@ -94,7 +94,7 @@ Resources:
 
 Create `src/baseblocks/workspace/workspace-dynamodb.yml` (single PK `workspaceId`, no GSI, mirrors admin table style).
 
-### 1b. Wire resources, IAM, and functions in [packages/api/serverless.yml](packages/api/serverless.yml)
+### 1b. Wire resources, IAM, and functions in [apps/api/serverless.yml](apps/api/serverless.yml)
 
 In `provider.iam.role.statements`, add `${permissionTable.Arn}`, `${workspaceTable.Arn}` (and `/index/*`) alongside the existing `${adminTable.Arn}`.
 
@@ -110,7 +110,7 @@ Append to `functions:`
 - ${file(./src/baseblocks/workspace/workspace-functions.yml)}
 ```
 
-Each new functions file mirrors [packages/api/src/baseblocks/admin/admin-functions.yml](packages/api/src/baseblocks/admin/admin-functions.yml) — proxy `/permission` + `/permission/{any+}` and `/workspace` + `/workspace/{any+}` ANY with the Cognito authorizer.
+Each new functions file mirrors [apps/api/src/baseblocks/admin/admin-functions.yml](apps/api/src/baseblocks/admin/admin-functions.yml) — proxy `/permission` + `/permission/{any+}` and `/workspace` + `/workspace/{any+}` ANY with the Cognito authorizer.
 
 ### 1c. Permission middleware (new)
 
@@ -138,7 +138,7 @@ export const checkPermission =
 ### 1d. Permission baseblock (new)
 
 Files (full content modeled on the reference, adapted):
-- `src/baseblocks/permission/permission.service.ts` — `ServiceObject<Permission>` + `getPermissionsForOwnerId`, `getPermissionsForType` using the two GSIs (uses `[ServiceObject](packages/api/src/util/service-object.ts)`).
+- `src/baseblocks/permission/permission.service.ts` — `ServiceObject<Permission>` + `getPermissionsForOwnerId`, `getPermissionsForType` using the two GSIs (uses `[ServiceObject](apps/api/src/util/service-object.ts)`).
 - `src/baseblocks/permission/permission-utils.ts` — `compositeKey = type + (value ? '#' + value : '')`; exports `createPermission({ ownerSub, type, value })` and `checkPermissionForUserSub(sub, checks)`.
 - `src/baseblocks/permission/permission.ts` — `permissionMapper`.
 - `src/baseblocks/permission/permission-admin-api.ts` — Express router with routes (all `superOnly` except `/me`):
@@ -166,26 +166,26 @@ Files (full content modeled on the reference, adapted):
 
 ### 1f. Bootstrap a SUPER for local dev
 
-Add a `permission.seed.json` (one row granting `SUPER` to the seed admin's `userSub` from [admin.seed.json](packages/api/src/baseblocks/admin/admin.seed.json)) and register it under `custom.serverless-dynamodb.seed.local.sources` in `serverless.yml`.
+Add a `permission.seed.json` (one row granting `SUPER` to the seed admin's `userSub` from [admin.seed.json](apps/api/src/baseblocks/admin/admin.seed.json)) and register it under `custom.serverless-dynamodb.seed.local.sources` in `serverless.yml`.
 
 ---
 
 ## 2. Shared packages
 
-### 2a. `shared/types`
+### 2a. `packages/types`
 
-Add `.d.ts` files matching reference shapes (use `shared/types/admin.d.ts` style — `.d.ts`, not `.ts`):
+Add `.d.ts` files matching reference shapes (use `packages/types/admin.d.ts` style — `.d.ts`, not `.ts`):
 - `base-object.d.ts` — `{ createdAt?: string; updatedAt?: string }`
 - `workspace.d.ts` — `Workspace { workspaceId; name; description?; imageUrl? }`
 - `permission.d.ts` — `SuperPermissions`/`WorkspacePermissions`/`AllPermissions` constants, `PermissionType`, `Permission { permissionId; type; value?; compositeKey; ownerId }`. Note `.d.ts` allows declared values via `declare const`.
 
-Update [shared/types/package.json](shared/types/package.json) `exports` (or rely on path-style imports already used: `@baseline/types/admin`).
+Update [packages/types/package.json](packages/types/package.json) `exports` (or rely on path-style imports already used: `@baseline/types/admin`).
 
-### 2b. `shared/client-api`
+### 2b. `packages/client-api`
 
 Add singleton-style modules (matching the reference, since SWR hooks will use them):
-- `shared/client-api/workspace.ts` — `listWorkspacesAdmin / getWorkspaceAdmin / createWorkspaceAdmin / updateWorkspaceAdmin / deleteWorkspaceAdmin` plus `listWorkspacesUser / getWorkspaceUser / createWorkspaceUser`. Each uses `getRequestHandler().request<...>(...)` (singleton already exported from [shared/client-api/request-handler.ts](shared/client-api/request-handler.ts)).
-- `shared/client-api/permission.ts` — `getPermissionsForCurrentUserAdmin / getAllPermissionForTypeAdmin / createPermissionAdmin / deletePermissionAdmin`.
+- `packages/client-api/workspace.ts` — `listWorkspacesAdmin / getWorkspaceAdmin / createWorkspaceAdmin / updateWorkspaceAdmin / deleteWorkspaceAdmin` plus `listWorkspacesUser / getWorkspaceUser / createWorkspaceUser`. Each uses `getRequestHandler().request<...>(...)` (singleton already exported from [packages/client-api/request-handler.ts](packages/client-api/request-handler.ts)).
+- `packages/client-api/permission.ts` — `getPermissionsForCurrentUserAdmin / getAllPermissionForTypeAdmin / createPermissionAdmin / deletePermissionAdmin`.
 
 The existing `admin.ts` (param-style `requestHandler`) is left untouched.
 
@@ -196,17 +196,17 @@ Mirror the reference layout:
 - `shared/swr-user/workspace.ts` — `useWorkspacesAdmin` (key `workspace/admin/list`), `useWorkspacesUser` (key `workspace/user/list`), `useWorkspaceUser(id)` (key `workspace/user/${id}` | null) plus optimistic helpers `onWorkspaceCreated/Updated/Deleted`.
 - `shared/swr-user/permission.ts` — `usePermissionsForType(type)` (key `permission/admin/list?type=${type}`), `usePermissionsForCurrentUser` (key `permission/admin/me`), plus `onPermissionCreated/Deleted`.
 - `shared/swr-user/index.ts` — re-exports.
-- `tsconfig.json`, `eslint.config.mjs` cloned from `shared/client-api`.
+- `tsconfig.json`, `eslint.config.mjs` cloned from `packages/client-api`.
 
 Register the package by extending [pnpm-workspace.yaml](pnpm-workspace.yaml) `packages:` to include `shared/*` (already covers it) and run `pnpm install`.
 
 ---
 
-## 3. Admin frontend — `packages/admin`
+## 3. Admin frontend — `apps/admin`
 
-Add as workspace deps in [packages/admin/package.json](packages/admin/package.json): `@baseline/swr-user: workspace:1.0.0`, `swr: ^2`.
+Add as workspace deps in [apps/admin/package.json](apps/admin/package.json): `@baseline/swr-user: workspace:1.0.0`, `swr: ^2`.
 
-### 3a. Routes & loaders ([packages/admin/src/App.tsx](packages/admin/src/App.tsx))
+### 3a. Routes & loaders ([apps/admin/src/App.tsx](apps/admin/src/App.tsx))
 
 Add two new protected routes:
 - `/workspaces` → `Workspaces` page (admin CRUD on workspaces)
@@ -218,24 +218,24 @@ Optional refinement: instead of the binary `checkAdmin` call, switch the gate to
 
 ### 3b. New pages
 
-- `src/baseblocks/workspace/pages/Workspaces.tsx` — uses `useWorkspacesAdmin()`, list + create/edit/delete modals, calls `createWorkspaceAdmin/updateWorkspaceAdmin/deleteWorkspaceAdmin` and `onWorkspace*` mutators. Add link in [Sidebar](packages/admin/src/components/sidebar/Sidebar.tsx).
-- `src/baseblocks/permission/pages/Permissions.tsx` — uses `usePermissionsForType('SUPER')` and `usePermissionsForType('WORKSPACE')` plus admin user list ([AdminList.tsx](packages/admin/src/baseblocks/admin/components/admin-list/AdminList.tsx)) to pick a target user; calls `createPermissionAdmin / deletePermissionAdmin`. Pattern follows [UsersList.tsx in the reference](../../Baseline%20Fork%20copy/apps/admin/src/baseblocks/cognito-user/components/users-list/UsersList.tsx).
+- `src/baseblocks/workspace/pages/Workspaces.tsx` — uses `useWorkspacesAdmin()`, list + create/edit/delete modals, calls `createWorkspaceAdmin/updateWorkspaceAdmin/deleteWorkspaceAdmin` and `onWorkspace*` mutators. Add link in [Sidebar](apps/admin/src/components/sidebar/Sidebar.tsx).
+- `src/baseblocks/permission/pages/Permissions.tsx` — uses `usePermissionsForType('SUPER')` and `usePermissionsForType('WORKSPACE')` plus admin user list ([AdminList.tsx](apps/admin/src/baseblocks/admin/components/admin-list/AdminList.tsx)) to pick a target user; calls `createPermissionAdmin / deletePermissionAdmin`. Pattern follows [UsersList.tsx in the reference](../../Baseline%20Fork%20copy/apps/admin/src/baseblocks/cognito-user/components/users-list/UsersList.tsx).
 
 ---
 
-## 4. Web frontend — `packages/web`
+## 4. Web frontend — `apps/web`
 
 The web app currently has no auth or data layer. Add:
 
-### 4a. Dependencies in [packages/web/package.json](packages/web/package.json)
+### 4a. Dependencies in [apps/web/package.json](apps/web/package.json)
 
 `aws-amplify`, `@aws-amplify/ui-react`, `axios`, `swr`, `@baseline/swr-user: workspace:1.0.0` (already has `@baseline/client-api`, `@baseline/types`).
 
 ### 4b. Auth bootstrap
 
-- New `src/lib/amplify.ts` — `Amplify.configure({ Auth: { Cognito: { userPoolId, userPoolClientId, identityPoolId } } })` using `process.env.REACT_APP_COGNITO_*` (mirror [packages/admin/src/App.tsx](packages/admin/src/App.tsx) lines 27–36).
+- New `src/lib/amplify.ts` — `Amplify.configure({ Auth: { Cognito: { userPoolId, userPoolClientId, identityPoolId } } })` using `process.env.REACT_APP_COGNITO_*` (mirror [apps/admin/src/App.tsx](apps/admin/src/App.tsx) lines 27–36).
 - New `src/pages/Login.tsx` using `@aws-amplify/ui-react` `Authenticator` (mirror admin `Login`).
-- Update [packages/web/src/App.tsx](packages/web/src/App.tsx) to use a data-router with public + protected branches, replicating the admin's `protectedLoader` (calls `createRequestHandler` with the `Authorization: Bearer <idToken>` interceptor) — protected loader simply requires a valid `idToken` (no SUPER check).
+- Update [apps/web/src/App.tsx](apps/web/src/App.tsx) to use a data-router with public + protected branches, replicating the admin's `protectedLoader` (calls `createRequestHandler` with the `Authorization: Bearer <idToken>` interceptor) — protected loader simply requires a valid `idToken` (no SUPER check).
 
 ### 4c. Workspace flows + current-workspace tracking
 
@@ -249,7 +249,7 @@ New pages:
 
 ### 4d. Wire env
 
-Add `REACT_APP_COGNITO_USER_POOL_ID`, `REACT_APP_COGNITO_USER_POOL_WEB_CLIENT_ID`, `REACT_APP_COGNITO_IDENTITY_POOL_ID`, `REACT_APP_API_URL` to [packages/web/scripts](packages/web/scripts) env-generation script (clone from `packages/admin/scripts`).
+Add `REACT_APP_COGNITO_USER_POOL_ID`, `REACT_APP_COGNITO_USER_POOL_WEB_CLIENT_ID`, `REACT_APP_COGNITO_IDENTITY_POOL_ID`, `REACT_APP_API_URL` to [apps/web/scripts](apps/web/scripts) env-generation script (clone from `apps/admin/scripts`).
 
 ---
 

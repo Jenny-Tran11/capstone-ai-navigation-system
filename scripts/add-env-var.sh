@@ -89,12 +89,12 @@ else
 fi
 
 if [ "$ENV_LOCATION" == "backend" ]; then
-  if grep -q "$NAME:" "packages/api/serverless.yml"; then
-    echo "Variable is already in packages/api/serverless.yml, will not duplicate"
+  if grep -q "$NAME:" "apps/api/serverless.local.yml"; then
+    echo "Variable is already in apps/api/serverless.local.yml, will not duplicate"
   else
-    echo "Updating packages/api/serverless.yml..."
-    sed -i.bak "s/.*  environment:.*/&\n    $NAME: \${ssm:\/\${env:APP_NAME}\/\${opt:stage}\/$NAME, \"\"}/" packages/api/serverless.yml
-    rm packages/api/serverless.yml.bak
+    echo "Updating apps/api/serverless.local.yml..."
+    sed -i.bak "s/.*  environment:.*/&\n    $NAME: \${ssm:\/\${env:APP_NAME}\/\${opt:stage}\/$NAME, \"\"}/" apps/api/serverless.local.yml
+    rm apps/api/serverless.local.yml.bak
   fi
 else
   if grep -q "$NAME=" "scripts/generate-env-vars.sh"; then
@@ -106,22 +106,22 @@ else
     rm scripts/generate-env-vars.sh.bak
   fi
 
-  if grep -q "      'REACT_APP_$NAME" "packages/web/vite.config.ts"; then
-    echo "Variable is already in packages/web/vite.config.ts, will not duplicate"
+  if grep -q "      'REACT_APP_$NAME" "apps/web/vite.config.ts"; then
+    echo "Variable is already in apps/web/vite.config.ts, will not duplicate"
   else
-    echo "Updating packages/web/vite.config.ts..."
+    echo "Updating apps/web/vite.config.ts..."
     NEW_VAR_TYPE="      'REACT_APP_$NAME'"
-    sed -i.bak "s/.*    EnvironmentPlugin(\[.*/&\n${NEW_VAR_TYPE},/g" packages/web/vite.config.ts
-    rm packages/web/vite.config.ts.bak
+    sed -i.bak "s/.*    EnvironmentPlugin(\[.*/&\n${NEW_VAR_TYPE},/g" apps/web/vite.config.ts
+    rm apps/web/vite.config.ts.bak
   fi
 
-  if grep -q "      'REACT_APP_$NAME" "packages/admin/vite.config.ts"; then
-    echo "Variable is already in packages/admin/vite.config.ts, will not duplicate"
+  if grep -q "      'REACT_APP_$NAME" "apps/admin/vite.config.ts"; then
+    echo "Variable is already in apps/admin/vite.config.ts, will not duplicate"
   else
-    echo "Updating packages/admin/vite.config.ts..."
+    echo "Updating apps/admin/vite.config.ts..."
     NEW_VAR_TYPE="      'REACT_APP_$NAME'"
-    sed -i.bak "s/.*    EnvironmentPlugin(\[.*/&\n${NEW_VAR_TYPE},/g" packages/admin/vite.config.ts
-    rm packages/admin/vite.config.ts.bak
+    sed -i.bak "s/.*    EnvironmentPlugin(\[.*/&\n${NEW_VAR_TYPE},/g" apps/admin/vite.config.ts
+    rm apps/admin/vite.config.ts.bak
   fi
 
   echo "Generating fresh env vars file..."

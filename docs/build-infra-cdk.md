@@ -8,9 +8,9 @@ Complete, self-contained spec. An agent can create every file from this document
 
 | Old file | Replaced by |
 |---|---|
-| `packages/api/serverless.yml` | `SharedStack` (Cognito + DynamoDB) + `ApiStack` (Lambda + API Gateway) |
-| `packages/admin/serverless.yml` | `SpaStack` via `SpaDeployment` construct |
-| `packages/web/serverless.yml` | `SpaStack` via `SpaDeployment` construct |
+| `apps/api/serverless.yml` | `SharedStack` (Cognito + DynamoDB) + `ApiStack` (Lambda + API Gateway) |
+| `apps/admin/serverless.yml` | `SpaStack` via `SpaDeployment` construct |
+| `apps/web/serverless.yml` | `SpaStack` via `SpaDeployment` construct |
 
 **Local dev is unchanged.** `serverless-offline` and `serverless-dynamodb` stay in `apps/api/`.
 Rename `apps/api/serverless.yml` → `apps/api/serverless.local.yml` and update its start script.

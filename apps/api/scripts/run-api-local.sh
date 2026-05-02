@@ -43,6 +43,6 @@ pnpm run install:dynamodb
 export NODE_OPTIONS=--enable-source-maps
 
 # Start the API with serverless
-npx serverless offline start --stage local --region "$REGION" --httpPort 4000 --verbose "$@"
+npx serverless offline start --config serverless.local.yml --stage local --region "$REGION" --httpPort 4000 --verbose "$@"
 
 cd "$CURRENT_DIR" || exit

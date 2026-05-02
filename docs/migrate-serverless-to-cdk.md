@@ -24,16 +24,16 @@ For the full implementation spec (all source files), see [`build-infra-cdk.md`](
 ## What changes, what stays
 
 **Removed (IaC only — delete these files):**
-- `packages/api/serverless.yml`
-- `packages/admin/serverless.yml`
-- `packages/web/serverless.yml`
+- `apps/api/serverless.yml`
+- `apps/admin/serverless.yml`
+- `apps/web/serverless.yml`
 - `serverless-esbuild`, `serverless-s3-sync`, `serverless-baseline-invalidate-cloudfront` from dependencies
 
 **Kept for local development (unchanged):**
 - `serverless-offline` — still powers `pnpm start:api`
 - `serverless-dynamodb` — still runs DynamoDB locally on port 8000
 - All seed files (`admin.seed.json`, etc.)
-- Rename `packages/api/serverless.yml` → `packages/api/serverless.local.yml` to make clear this file is local-only
+- Rename `apps/api/serverless.yml` → `apps/api/serverless.local.yml` to make clear this file is local-only
 
 **Added:**
 - `apps/infra/` — CDK TypeScript app that owns all AWS infrastructure
@@ -67,7 +67,7 @@ apps/infra/
 
 ---
 
-## Mapping: `packages/api/serverless.yml` → CDK
+## Mapping: `apps/api/serverless.yml` → CDK
 
 | Serverless concept | CDK replacement |
 |---|---|
@@ -87,7 +87,7 @@ apps/infra/
 | `custom.deletionPolicy: prod → Retain` | `RemovalPolicy.RETAIN` when `config.retain === true` |
 | `Outputs` | `new CfnOutput(...)` in each construct |
 
-## Mapping: `packages/admin/serverless.yml` + `packages/web/serverless.yml` → CDK
+## Mapping: `apps/admin/serverless.yml` + `apps/web/serverless.yml` → CDK
 
 | Serverless concept | CDK replacement |
 |---|---|

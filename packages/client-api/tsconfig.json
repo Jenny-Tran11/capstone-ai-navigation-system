@@ -14,7 +14,7 @@
     "rootDirs": ["./"],
     "outDir": ".esbuild"
   },
-  "include": ["../../shared/types", "src"],
+  "include": ["../types", "."],
   "watchOptions": {
     "excludeDirectories": [
       "node_modules",
