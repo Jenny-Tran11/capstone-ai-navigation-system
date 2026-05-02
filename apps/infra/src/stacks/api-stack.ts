@@ -111,6 +111,30 @@ export class ApiStack extends Stack {
       lambdaFunctions.push(fn);
     }
 
+    // ── Contact API (mixed auth: POST public, GET admin-only) ─────────────────
+    const contactFn = new BaselineFunction(this, 'ApiContact', {
+      config,
+      functionName: 'ApiContact',
+      entry: 'baseblocks/contact/contact-api.ts',
+      environment: {
+        COGNITO_USER_POOL_ID: userPool.userPoolId,
+      },
+    });
+    contactFn.fn.addToRolePolicy(dynamoPolicy);
+    fileBucket.grantReadWrite(contactFn.fn);
+
+    const contactIntegration = new apigateway.LambdaIntegration(contactFn.fn);
+    const contactResource = api.root.addResource('contact');
+
+    contactResource.addMethod('POST', contactIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE,
+    });
+
+    const contactListResource = contactResource.addResource('list');
+    contactListResource.addMethod('GET', contactIntegration, authOptions);
+
+    lambdaFunctions.push(contactFn);
+
     // ── Alarms ───────────────────────────────────────
     new BaselineAlarms(this, 'Alarms', {
       config,

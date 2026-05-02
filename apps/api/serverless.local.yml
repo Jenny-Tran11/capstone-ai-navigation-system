@@ -68,6 +68,8 @@ provider:
           Resource:
             - !Sub ${adminTable.Arn}
             - !Sub ${adminTable.Arn}/index/*
+            - !Sub ${contactTable.Arn}
+            - !Sub ${contactTable.Arn}/index/*
         - Effect: Allow
           Action:
             - cognito-idp:AdminCreateUser
@@ -79,6 +81,8 @@ provider:
 resources:
   - ${file(./src/baseblocks/cognito/cognito-resources.yml)}
   - ${file(./src/baseblocks/admin/admin-dynamodb.yml)}
+  - ${file(./src/baseblocks/contact/contact-dynamodb.yml)}
 
 functions:
   - ${file(./src/baseblocks/admin/admin-functions.yml)}
+  - ${file(./src/baseblocks/contact/contact-functions.yml)}
