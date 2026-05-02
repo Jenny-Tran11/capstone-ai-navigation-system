@@ -2,28 +2,86 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Hero = (): JSX.Element => (
-  <div className="flex items-center justify-evenly py-[280px] px-24 max-[1200px]:flex-col-reverse max-[1200px]:py-8 max-[1200px]:px-4">
-    <div className="flex-auto max-w-[550px] max-[1200px]:max-w-none">
-      <h1 className="text-[72px] leading-[88px] font-bold max-[768px]:text-[40px] max-[768px]:leading-[49px]">
-        Lorem ipsum
-      </h1>
-      <p className="text-2xl leading-8 max-w-[550px] max-[1200px]:max-w-none max-[768px]:text-base max-[768px]:leading-6">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus ut
-        nulla risus. Ut euismod, sapien ut rhoncus venenatis, metus magna congue
-        mi, sit amet efficitur augue purus vel mi. Suspendisse eu varius nisl.
-        Maecenas sapien massa, aliquet id lectus sed, vulputate molestie nunc.
-      </p>
-      <Link
-        to="/#"
-        className="inline-block px-[108px] py-3 text-white no-underline bg-[#3a3838] border-2 border-[#3a3838] rounded-[32px] transition-[background-color,color] duration-150 ease-in-out hover:text-[#3a3838] hover:bg-white text-base leading-6 font-semibold max-[768px]:text-xs max-[768px]:leading-5"
+  <main
+    className="relative flex flex-col items-center justify-center pt-24 pb-16 px-6 overflow-hidden"
+    style={{ backgroundColor: 'var(--warm-bg)' }}
+  >
+    {/* Soft background glow */}
+    <div
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none -z-10 opacity-30"
+      style={{ backgroundColor: '#e8976a' }}
+    />
+
+    <div className="max-w-4xl mx-auto text-center space-y-8">
+      {/* Badge */}
+      <div
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium mb-2"
+        style={{ borderColor: 'rgba(204,89,51,0.25)', color: 'var(--warm-primary)', backgroundColor: 'rgba(204,89,51,0.06)' }}
       >
-        Button
-      </Link>
+        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--warm-primary)' }} />
+        Introducing Baseline Core 2.0
+      </div>
+
+      {/* Headline */}
+      <h1
+        className="text-5xl md:text-7xl leading-tight tracking-tight"
+        style={{ color: 'var(--warm-fg)', fontWeight: 300, letterSpacing: '-0.02em' }}
+      >
+        Software that feels <strong style={{ fontWeight: 600 }}>human</strong>.
+        <br />
+        Built for modern teams.
+      </h1>
+
+      {/* Sub-copy */}
+      <p
+        className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-light"
+        style={{ color: 'var(--warm-muted)' }}
+      >
+        We believe technology should adapt to your rhythm, not the other way around.
+        Baseline Core is the flexible foundation for teams that value craft as much as velocity.
+      </p>
+
+      {/* CTAs */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+        <Link
+          to="/#"
+          className="no-underline inline-flex items-center gap-2 text-white text-base font-semibold rounded-full px-8 py-4 w-full sm:w-auto transition-all duration-200 shadow-lg group"
+          style={{ backgroundColor: 'var(--warm-primary)' }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = 'var(--warm-primary-hover)')}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = 'var(--warm-primary)')}
+        >
+          Start your journey
+          <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+        <Link
+          to="/about"
+          className="no-underline inline-flex items-center text-base font-medium rounded-full px-8 py-4 w-full sm:w-auto transition-all duration-200 border"
+          style={{ color: 'var(--warm-fg)', borderColor: 'var(--warm-border)', backgroundColor: 'transparent' }}
+          onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--warm-primary)'; el.style.color = 'var(--warm-primary)'; }}
+          onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--warm-border)'; el.style.color = 'var(--warm-fg)'; }}
+        >
+          Read our story
+        </Link>
+      </div>
     </div>
-    <div className="flex-none w-[500px] h-[480px] m-4 max-[1200px]:w-full max-[1200px]:mb-8">
-      <img src="./placeholder.svg" alt="placeholder" className="w-full h-full object-cover" />
+
+    {/* Hero image */}
+    <div className="mt-20 w-full max-w-6xl mx-auto px-4 sm:px-6">
+      <div
+        className="relative rounded-[2rem] overflow-hidden shadow-2xl aspect-[16/9]"
+        style={{ boxShadow: '0 25px 60px rgba(45,37,32,0.12)' }}
+      >
+        <img
+          src="/warm-hero.png"
+          alt="Team collaborating in a modern warm studio"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 rounded-[2rem] border border-black/5 pointer-events-none" />
+      </div>
     </div>
-  </div>
+  </main>
 );
 
 export default Hero;
