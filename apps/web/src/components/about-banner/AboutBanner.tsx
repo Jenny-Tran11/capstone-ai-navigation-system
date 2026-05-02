@@ -24,7 +24,7 @@ const AboutBanner = (): JSX.Element => (
 
       {/* Headline */}
       <h1
-        className="text-5xl md:text-7xl leading-tight"
+        className="text-3xl sm:text-5xl md:text-7xl leading-tight"
         style={{ color: 'var(--warm-fg)', fontWeight: 300, letterSpacing: '-0.02em' }}
       >
         Crafting software with <strong style={{ fontWeight: 600 }}>purpose</strong>.
@@ -71,7 +71,7 @@ const AboutBanner = (): JSX.Element => (
       ].map((value) => (
         <div
           key={value.title}
-          className="p-8 rounded-2xl border"
+          className="p-6 sm:p-8 rounded-2xl border"
           style={{ backgroundColor: 'var(--warm-surface)', borderColor: 'var(--warm-border)' }}
         >
           <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--warm-fg)' }}>{value.title}</h3>

@@ -96,7 +96,7 @@ const Footer = (): JSX.Element => (
               href={href}
               target={href.startsWith('http') ? '_blank' : undefined}
               rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-              className="no-underline text-sm transition-colors"
+              className="no-underline text-sm transition-colors break-all"
               style={{ color: 'var(--warm-muted)' }}
               {...linkHover}
             >

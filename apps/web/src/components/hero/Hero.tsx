@@ -24,7 +24,7 @@ const Hero = (): JSX.Element => (
 
       {/* Headline */}
       <h1
-        className="text-5xl md:text-7xl leading-tight tracking-tight"
+        className="text-3xl sm:text-5xl md:text-7xl leading-tight tracking-tight"
         style={{ color: 'var(--warm-fg)', fontWeight: 300, letterSpacing: '-0.02em' }}
       >
         Software that feels <strong style={{ fontWeight: 600 }}>human</strong>.
