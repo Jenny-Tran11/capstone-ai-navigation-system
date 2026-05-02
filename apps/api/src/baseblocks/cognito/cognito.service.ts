@@ -5,6 +5,7 @@ const { CognitoIdentityProvider: CognitoIdentityServiceProvider } =
 
 const cognito = new CognitoIdentityServiceProvider({
   region: process.env.API_REGION || 'ap-southeast-2',
+  ...(process.env.AWS_ENDPOINT_URL && { endpoint: process.env.AWS_ENDPOINT_URL }),
 });
 
 export async function getUserAttributesByEmail(userEmail: string) {

@@ -65,3 +65,6 @@ tsconfig.tsbuildinfo
 # logs
 *.log
 .env
+
+# Local MiniStack config
+.cognito/

@@ -16,21 +16,28 @@ echo "Profile: [${AWS_PROFILE}]"
 echo "Region: [${REGION}]"
 echo "Stack Stage: [${STACK_STAGE}]"
 
-STACK=$STACK_STAGE
-if [ "$STACK_STAGE" == "local" ]; then
-    STACK="staging"
-fi
-
-# Get stack outputs
-. ./scripts/get-stack-outputs.sh "${STACK}" >/dev/null
-
 if [ "$STACK_STAGE" == "local" ]; then
     OUTPUT_FILENAME=.env.development
-    ServiceEndpoint=http://localhost:4000/local
+    ServiceEndpoint=http://localhost:4000
     if [ "$CODESPACE_NAME" ]; then
-        ServiceEndpoint="https://${CODESPACE_NAME}-4000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}/local"
+        ServiceEndpoint="https://${CODESPACE_NAME}-4000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+    fi
+    # Read Cognito IDs from local MiniStack config instead of CloudFormation
+    CONFIG_FILE=".cognito/local-config.json"
+    if [ -f "$CONFIG_FILE" ]; then
+        UserPoolId=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('$CONFIG_FILE','utf8')).userPoolId)")
+        UserPoolClientId=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('$CONFIG_FILE','utf8')).userPoolClientId)")
+        IdentityPoolId=""
+    else
+        echo "Warning: $CONFIG_FILE not found. Run 'pnpm --filter @baseline/api run setup:ministack' first."
+        UserPoolId=""
+        UserPoolClientId=""
+        IdentityPoolId=""
     fi
 else
+    STACK=$STACK_STAGE
+    # Get stack outputs from CloudFormation
+    . ./scripts/get-stack-outputs.sh "${STACK}" >/dev/null
     OUTPUT_FILENAME=.env.production
 fi
 

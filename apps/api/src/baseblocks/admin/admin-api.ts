@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { NextFunction, Response } from 'express';
 import { AdminMapper } from './admin';
 import { isAdmin } from '../../middleware/is-admin';
 import {
@@ -13,8 +13,38 @@ import createAuthenticatedHandler from '../../util/create-authenticated-handler'
 import { adminService } from './admin.service';
 
 const app = createApp();
-// app.use(isAdmin); // All private endpoints require the user to be an admin
+
+// Local development: inject auth context from AUTHORIZER env var or bearer JWT.
+// In Lambda (staging/prod) this is handled by serverless-http via createAuthenticatedHandler.
+if (process.env.NODE_ENV === 'local') {
+  app.use((req: RequestContext, _res: Response, next: NextFunction) => {
+    const authEnv = process.env.AUTHORIZER;
+    if (authEnv) {
+      const parsed = JSON.parse(authEnv) as { claims: { sub?: string; email?: string } };
+      req.context = { authorizer: parsed } as RequestContext['context'];
+      req.currentUserSub = parsed.claims?.sub ?? '';
+    } else {
+      const authHeader = req.headers['authorization'] as string | undefined;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+      if (token) {
+        try {
+          const claims = JSON.parse(
+            Buffer.from(token.split('.')[1], 'base64').toString('utf8'),
+          ) as { sub?: string };
+          req.context = { authorizer: { claims } } as RequestContext['context'];
+          req.currentUserSub = claims.sub ?? '';
+        } catch {
+          req.context = { authorizer: { claims: {} } } as RequestContext['context'];
+          req.currentUserSub = '';
+        }
+      }
+    }
+    next();
+  });
+}
+
 export const handler = createAuthenticatedHandler(app);
+export { app };
 
 app.patch('/admin', [
   isAdmin,

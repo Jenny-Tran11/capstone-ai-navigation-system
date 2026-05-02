@@ -10,6 +10,7 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true,
     "lib": ["es2015"],
     "rootDirs": ["./"],
     "outDir": ".esbuild"

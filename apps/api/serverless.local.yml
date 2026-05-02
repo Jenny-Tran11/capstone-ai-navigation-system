@@ -4,46 +4,20 @@ frameworkVersion: '>=2.0.0 <4.0.0'
 
 plugins:
   - serverless-esbuild
-  - serverless-dynamodb
   - serverless-offline
 
 custom:
   apiCorsOrigin: '*'
-  deletionPolicy:
-    local: 'Delete'
-    staging: 'Delete'
-    prod: 'Retain'
-  updatePolicy:
-    local: 'Delete'
-    staging: 'Delete'
-    prod: 'Retain'
-  esbuildAWSExclude: # patch to include aws sdk v3 when running locally, hopefully serverless-offline fixes in the future
-    local: ''
-    staging: '@aws-sdk'
-    prod: '@aws-sdk'
   esbuild:
     minify: false
     packager: pnpm
     keepOutputDirectory: true
-    sourcemap: linked # to reduce the size of deployed code you can remove source maps
+    sourcemap: linked
     exclude:
-      - ${self:custom.esbuildAWSExclude.${opt:stage}}
+      - '@aws-sdk'
     watch:
       pattern: 'src/**/*.ts'
-      ignore: 'scripts/**/* .build/**/* .dynamodb/**/* .serverless/**/* .esbuild/**/* node_modules/**/*'
-  serverless-dynamodb:
-    stages:
-      - local
-    start:
-      port: 8000
-      inMemory: true
-      migrate: true
-      seed: true
-    seed:
-      local:
-        sources:
-          - table: ${env:APP_NAME}-${opt:stage}-admin
-            sources: [./src/baseblocks/admin/admin.seed.json]
+      ignore: 'scripts/**/* .build/**/* .serverless/**/* .esbuild/**/* node_modules/**/*'
 
 package:
   individually: true

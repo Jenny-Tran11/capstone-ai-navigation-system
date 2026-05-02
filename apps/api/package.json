@@ -19,15 +19,16 @@
     "aws:profile": "../../scripts/setup-aws-profile.sh",
     "add:user:staging": "./scripts/add-cognito-user.sh staging",
     "add:user:prod": "./scripts/add-cognito-user.sh prod",
-    "install:dynamodb": ". ../../scripts/project-variables.sh && npx serverless dynamodb install --stage staging --region $REGION",
+    "setup:ministack": "./scripts/setup-ministack.sh",
+    "install:dynamodb": "echo 'Replaced by MiniStack — run: docker compose up -d'",
     "lint": "npx eslint 'src/**/*.{ts,js}'",
     "build": ". ../../scripts/project-variables.sh && npx serverless package --stage staging --region $REGION",
     "pretty": "npx prettier --write 'src/**/*.{ts,tsx,js,json,css,scss,md,yml,yaml,html}' && npx prettier --write '*.{yml,yaml,js}'"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "3.675.0",
-    "@baselinejs/dynamodb": "0.2.4",
     "@baseline/types": "workspace:1.0.0",
+    "@baselinejs/dynamodb": "0.2.4",
     "aws-lambda": "1.0.7",
     "compression": "1.7.4",
     "cors": "2.8.5",
@@ -36,6 +37,7 @@
     "serverless-http": "3.0.1"
   },
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "3.675.0",
     "@types/aws-lambda": "8.10.93",
     "@types/compression": "1.7.2",
     "@types/cors": "2.8.12",
@@ -44,11 +46,11 @@
     "esbuild": "0.20.1",
     "prettier": "2.4.1",
     "serverless": "3.40.0",
-    "serverless-dynamodb": "0.2.50",
     "serverless-esbuild": "1.52.1",
     "serverless-offline": "13.8.2",
     "stylelint": "16.13.2",
     "stylelint-order": "6.0.4",
+    "tsx": "4.19.3",
     "typescript": "5.4.2"
   }
 }
