@@ -19,7 +19,6 @@ import {
   getRequestHandler,
 } from '@baseline/client-api/request-handler';
 import { AxiosRequestConfig } from 'axios';
-import Home from './baseblocks/home/pages/Home';
 import Login from './baseblocks/login/pages/Login';
 import NotAdmin from './baseblocks/not-admin/pages/NotAdmin';
 import Layout from './components/layout/Layout';
@@ -60,7 +59,7 @@ export default function App() {
           router.navigate('/dashboard').catch((e) => console.error(e));
           break;
         case 'signedOut':
-          router.navigate('/').catch((e) => console.error(e));
+          router.navigate('/login').catch((e) => console.error(e));
           break;
         case 'signInWithRedirect_failure':
           break;
@@ -114,13 +113,17 @@ async function loginLoader() {
   return null;
 }
 
+async function rootRedirectLoader() {
+  return redirect('/dashboard');
+}
+
 const router = createBrowserRouter([
   {
     id: 'public',
     path: '/',
     Component: Outlet,
     children: [
-      { path: '/', Component: Home, index: true },
+      { path: '/', index: true, loader: rootRedirectLoader },
       { path: '/not-admin', Component: NotAdmin },
       { path: '/login', Component: Login, loader: loginLoader },
     ],
