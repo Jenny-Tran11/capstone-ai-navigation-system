@@ -9,6 +9,11 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./primitives/*": {
+      "types": "./src/primitives/*.tsx",
+      "import": "./src/primitives/*.tsx",
+      "default": "./src/primitives/*.tsx"
+    },
     "./globals.css": "./src/globals.css",
     "./package.json": "./package.json"
   },
