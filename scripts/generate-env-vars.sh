@@ -41,6 +41,11 @@ else
     OUTPUT_FILENAME=.env.production
 fi
 
+COGNITO_ENDPOINT=""
+if [ "$STACK_STAGE" == "local" ]; then
+    COGNITO_ENDPOINT="http://localhost:4566"
+fi
+
 OUTPUT=$(
     cat <<EOF
 REACT_APP_APP_NAME=${APP_NAME:-}
@@ -49,6 +54,7 @@ REACT_APP_API_URL=${ServiceEndpoint:-}/
 REACT_APP_COGNITO_IDENTITY_POOL_ID=${IdentityPoolId:-}
 REACT_APP_COGNITO_USER_POOL_ID=${UserPoolId:-}
 REACT_APP_COGNITO_USER_POOL_WEB_CLIENT_ID=${UserPoolClientId:-}
+REACT_APP_COGNITO_ENDPOINT=${COGNITO_ENDPOINT}
 EOF
 )
 

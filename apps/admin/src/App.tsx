@@ -24,6 +24,21 @@ import NotAdmin from './baseblocks/not-admin/pages/NotAdmin';
 import Layout from './components/layout/Layout';
 import Loader from './components/page-content/loader/Loader';
 
+// Redirect Cognito API calls to local MiniStack endpoint when set
+if (process.env.REACT_APP_COGNITO_ENDPOINT) {
+  const localEndpoint = process.env.REACT_APP_COGNITO_ENDPOINT;
+  const cognitoPattern = /https:\/\/cognito-idp\.[^.]+\.amazonaws\.com/;
+  const originalFetch = globalThis.fetch.bind(globalThis);
+  globalThis.fetch = (input, init) => {
+    const url = input instanceof Request ? input.url : String(input);
+    if (cognitoPattern.test(url)) {
+      const patched = url.replace(cognitoPattern, localEndpoint);
+      return originalFetch(patched, init);
+    }
+    return originalFetch(input, init);
+  };
+}
+
 Amplify.configure({
   Auth: {
     Cognito: {

@@ -40,7 +40,18 @@ wait_for_port() {
   done
 }
 
+# ── Ensure Docker is running ────────────────────────────────────────────────────
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker daemon not running — launching Docker Desktop..."
+  open -a Docker
+  echo "Waiting for Docker daemon..."
+  until docker info >/dev/null 2>&1; do sleep 1; done
+  echo "Docker ready"
+fi
+
 # ── Ensure MiniStack is up ──────────────────────────────────────────────────────
+echo "Starting MiniStack..."
+docker compose -f ../../docker-compose.yml up -d
 echo "Waiting for MiniStack (port 4566)..."
 wait_for_port 4566 "MiniStack" 30
 echo "MiniStack ready"
