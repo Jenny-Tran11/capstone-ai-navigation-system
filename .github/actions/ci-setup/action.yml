@@ -1,5 +1,5 @@
 name: CI setup
-description: Checkout, project env, pnpm, cache, install, and AWS OIDC for build-lint workflows
+description: Project env, pnpm, cache, install, and AWS OIDC (run actions/checkout before this local composite)
 
 inputs:
   production_aws_role_arn:
@@ -12,8 +12,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v4
-
     - name: Project variables
       shell: bash
       run: ./scripts/project-variables-github.sh
