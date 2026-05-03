@@ -30,6 +30,7 @@
     "generate:env:prod": "./scripts/generate-env-vars.sh prod",
     "urls:staging": "./scripts/project-urls.sh staging",
     "urls:prod": "./scripts/project-urls.sh prod",
+    "typecheck": "bash ./scripts/ci-typecheck.sh",
     "lint": "biome lint ./apps ./packages",
     "format": "biome format --write ./apps ./packages",
     "check": "biome check --write ./apps ./packages",

@@ -1,0 +1,69 @@
+name: CI setup
+description: Checkout, project env, pnpm, cache, install, and AWS OIDC for build-lint workflows
+
+inputs:
+  production_aws_role_arn:
+    description: IAM role ARN for OIDC when ref is refs/heads/prod
+    required: true
+  staging_aws_role_arn:
+    description: IAM role ARN for OIDC for all other refs
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Project variables
+      shell: bash
+      run: ./scripts/project-variables-github.sh
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+
+    - uses: pnpm/action-setup@v3
+      with:
+        version: 9
+
+    - name: Get pnpm store directory
+      shell: bash
+      run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+
+    - uses: actions/cache@v4
+      name: Setup pnpm cache
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install
+
+    - name: Select AWS OIDC role
+      shell: bash
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+          echo "ROLE_ARN=${{ inputs.production_aws_role_arn }}" >> "$GITHUB_ENV"
+        else
+          echo "ROLE_ARN=${{ inputs.staging_aws_role_arn }}" >> "$GITHUB_ENV"
+        fi
+
+    - name: Configure AWS credentials (OIDC)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: ${{ env.AWS_REGION }}
+        role-to-assume: ${{ env.ROLE_ARN }}
+        output-credentials: true
+
+    - name: Configure AWS CLI profile
+      shell: bash
+      run: |
+        echo "Configuring AWS profile ${{ env.AWS_PROFILE_GITHUB }}"
+        aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE_GITHUB }}
+        aws configure set aws_access_key_id ${{ env.AWS_ACCESS_KEY_ID }} --profile ${{ env.AWS_PROFILE_GITHUB }}
+        aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE_GITHUB }}
+        aws configure set aws_session_token ${{ env.AWS_SESSION_TOKEN }} --profile ${{ env.AWS_PROFILE_GITHUB }}
+        aws sts get-caller-identity --query "Account" --output text --profile "${{ env.AWS_PROFILE_GITHUB }}"
