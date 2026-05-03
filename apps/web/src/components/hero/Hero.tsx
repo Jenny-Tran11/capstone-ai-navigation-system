@@ -25,7 +25,7 @@ const Hero = (): JSX.Element => (
           className="w-2 h-2 rounded-full"
           style={{ backgroundColor: 'var(--warm-primary)' }}
         />
-        Introducing Baseline Core 2.0
+        Introducing Baseline Bolt 2.0
       </div>
 
       {/* Headline */}
@@ -48,7 +48,7 @@ const Hero = (): JSX.Element => (
         style={{ color: 'var(--warm-muted)' }}
       >
         We believe technology should adapt to your rhythm, not the other way
-        around. Baseline Core is the flexible foundation for teams that value
+        around. Baseline Bolt is the flexible foundation for teams that value
         craft as much as velocity.
       </p>
 

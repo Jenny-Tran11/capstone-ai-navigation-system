@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "build": "tsc --noEmit",
-    "synth": "cdk synth --context stage=staging",
-    "diff:staging": "cdk diff --all --context stage=staging",
-    "diff:prod": "cdk diff --all --context stage=prod",
-    "deploy:staging": "cdk deploy --all --context stage=staging --require-approval never",
-    "deploy:prod": "cdk deploy --all --context stage=prod --require-approval broadening",
-    "destroy:staging": "cdk destroy --all --context stage=staging --force",
-    "bootstrap": "cdk bootstrap --context stage=staging",
+    "synth": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk synth --context stage=staging'",
+    "diff:staging": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk diff --all --context stage=staging'",
+    "diff:prod": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk diff --all --context stage=prod'",
+    "deploy:staging": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk deploy --all --context stage=staging --require-approval never'",
+    "deploy:prod": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk deploy --all --context stage=prod --require-approval broadening'",
+    "destroy:staging": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk destroy --all --context stage=staging --force'",
+    "bootstrap": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk bootstrap --context stage=staging'",
     "bootstrap:toolkit": "bash ../../scripts/cdk-bootstrap-toolkit.sh"
   },
   "dependencies": {

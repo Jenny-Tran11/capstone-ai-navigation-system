@@ -50,7 +50,7 @@ const Footer = (): JSX.Element => (
             className="text-lg font-medium tracking-tight"
             style={{ color: 'var(--warm-fg)' }}
           >
-            Baseline Core
+            Baseline Bolt
           </span>
         </div>
         <p
@@ -138,7 +138,7 @@ const Footer = (): JSX.Element => (
       className="max-w-7xl mx-auto mt-16 pt-8 border-t flex flex-col md:flex-row items-center justify-between gap-4 text-xs"
       style={{ borderColor: 'var(--warm-border)', color: 'var(--warm-muted)' }}
     >
-      <p>© {new Date().getFullYear()} Baseline Core. All rights reserved.</p>
+      <p>© {new Date().getFullYear()} Baseline Bolt. All rights reserved.</p>
       <div className="flex items-center gap-6">
         <Link
           to="/privacy"

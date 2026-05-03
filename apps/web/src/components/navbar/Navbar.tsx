@@ -26,7 +26,7 @@ const Navbar = (): JSX.Element => {
             className="text-xl font-medium tracking-tight"
             style={{ color: 'var(--warm-fg)' }}
           >
-            Baseline Core
+            Baseline Bolt
           </span>
         </Link>
 

@@ -99,7 +99,7 @@ const DashboardContent = (): JSX.Element => {
   const appName =
     typeof process.env.REACT_APP_APP_NAME === 'string'
       ? process.env.REACT_APP_APP_NAME.trim()
-      : 'Baseline Core';
+      : 'Baseline Bolt';
 
   useEffect(() => {
     let cancelled = false;

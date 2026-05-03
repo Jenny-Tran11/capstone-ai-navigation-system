@@ -46,7 +46,7 @@ const AboutBanner = (): JSX.Element => (
         className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-light"
         style={{ color: 'var(--warm-muted)' }}
       >
-        We started Baseline Core because we believed great software should feel
+        We started Baseline Bolt because we believed great software should feel
         effortless. Every decision we make — from architecture to interface — is
         driven by care for the people using it.
       </p>

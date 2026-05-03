@@ -16,7 +16,7 @@ const PageWrapper = (props: Props): JSX.Element => {
       style={{ backgroundColor: 'var(--warm-bg)' }}
     >
       <Helmet>
-        <title>{title ? `${title} | Baseline Core` : 'Baseline Core'}</title>
+        <title>{title ? `${title} | Baseline Bolt` : 'Baseline Bolt'}</title>
       </Helmet>
       <Navbar />
       <div className="flex-1">{children}</div>

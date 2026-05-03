@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     EnvironmentPlugin({
-      REACT_APP_APP_NAME: 'Baseline Core',
+      REACT_APP_APP_NAME: 'Baseline Bolt',
       REACT_APP_AWS_PROFILE: '',
       REACT_APP_API_URL: '',
       REACT_APP_COGNITO_IDENTITY_POOL_ID: '',

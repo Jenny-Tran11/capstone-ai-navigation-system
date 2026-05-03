@@ -69,7 +69,7 @@ aws sts get-caller-identity --query "Account" --output text --profile "$AWS_PROF
 TOKEN_JSON="$(
   aws sts assume-role-with-web-identity \
     --duration-seconds 3600 \
-    --role-session-name "baseline-core-deploy" \
+    --role-session-name "baseline-bolt-deploy" \
     --role-arn "$AWS_ROLE_ARN" \
     --web-identity-token "$BITBUCKET_STEP_OIDC_TOKEN"
 )"

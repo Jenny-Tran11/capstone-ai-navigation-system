@@ -58,7 +58,7 @@ All SCSS module files have been removed from `apps/admin`. All components now us
 - `apps/web/vite.config.ts` — Configured with `host: '0.0.0.0'`, `port: 5000`, `allowedHosts: true`
 - `apps/admin/vite.config.ts` — Tailwind v4 plugin, path aliases for `@` and `@baseline/ui`
 - Environment variables given default empty values in vite configs so dev servers start without AWS setup
-- `scripts/project-variables.sh` — Sets `APP_NAME=baseline-core`, `AWS_PROFILE=baseline-core`, `REGION=ap-southeast-2`
+- `scripts/project-variables.sh` — Sets `APP_NAME=baseline-bolt`, `AWS_PROFILE=baseline-bolt`, `REGION=ap-southeast-2`
 
 ## Deployment
 

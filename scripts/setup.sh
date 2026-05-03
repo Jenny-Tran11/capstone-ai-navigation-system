@@ -20,8 +20,8 @@ if ! command -v aws &>/dev/null; then
 fi
 printf "Enter the name of your new application (e.g. my-new-app): "
 read -r PROJECT_NAME
-sed -i '' -e "s|baseline-core|$PROJECT_NAME|g" ./scripts/project-variables.sh >/dev/null 2>&1
-sed -i '' -e "s|baseline-core|$PROJECT_NAME|g" ./scripts/setup.sh >/dev/null 2>&1
+sed -i '' -e "s|baseline-bolt|$PROJECT_NAME|g" ./scripts/project-variables.sh >/dev/null 2>&1
+sed -i '' -e "s|baseline-bolt|$PROJECT_NAME|g" ./scripts/setup.sh >/dev/null 2>&1
 echo
 echo "Awesome, lets set a region where the app will be hosted!"
 echo

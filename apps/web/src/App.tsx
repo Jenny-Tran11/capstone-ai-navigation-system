@@ -19,7 +19,7 @@ const router = createBrowserRouter([
         title="Features"
         badge="Platform"
         heading="Everything your team needs."
-        description="From real-time collaboration to powerful integrations, Baseline Core gives modern teams the tools to move fast without sacrificing craft."
+        description="From real-time collaboration to powerful integrations, Baseline Bolt gives modern teams the tools to move fast without sacrificing craft."
       />
     ),
   },
@@ -30,7 +30,7 @@ const router = createBrowserRouter([
         title="Integrations"
         badge="Platform"
         heading="Connect the tools you love."
-        description="Baseline Core works with the services your team already relies on — from project management to analytics and beyond."
+        description="Baseline Bolt works with the services your team already relies on — from project management to analytics and beyond."
       />
     ),
   },
@@ -41,7 +41,7 @@ const router = createBrowserRouter([
         title="Pricing"
         badge="Simple pricing"
         heading="Honest pricing, no surprises."
-        description="Start for free and scale as your team grows. Every plan includes the full Baseline Core experience — no hidden limits."
+        description="Start for free and scale as your team grows. Every plan includes the full Baseline Bolt experience — no hidden limits."
       />
     ),
   },
@@ -73,7 +73,7 @@ const router = createBrowserRouter([
       <SimplePage
         title="Blog"
         badge="Insights"
-        heading="Ideas from the Baseline Core team."
+        heading="Ideas from the Baseline Bolt team."
         description="We write about design, engineering, and the craft of building software that people actually enjoy using."
       />
     ),
@@ -94,7 +94,7 @@ const router = createBrowserRouter([
       <SimplePage
         title="Terms of Service"
         heading="Terms of Service."
-        description="By using Baseline Core you agree to these terms. We've written them in plain language so they're easy to understand."
+        description="By using Baseline Bolt you agree to these terms. We've written them in plain language so they're easy to understand."
       />
     ),
   },

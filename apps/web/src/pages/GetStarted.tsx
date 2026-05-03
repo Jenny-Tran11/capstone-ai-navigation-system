@@ -29,7 +29,7 @@ const GetStarted = (): JSX.Element => {
               Start your journey
             </h1>
             <p className="text-sm" style={{ color: 'var(--warm-muted)' }}>
-              Create your free Baseline Core account
+              Create your free Baseline Bolt account
             </p>
           </div>
 
