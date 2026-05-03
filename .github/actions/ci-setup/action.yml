@@ -62,13 +62,10 @@ runs:
         role-to-assume: ${{ env.ROLE_ARN }}
         output-credentials: true
 
-    - name: Configure AWS CLI profile
+    - name: Verify AWS credentials (OIDC env chain)
       if: inputs.configure_aws == 'true'
       shell: bash
       run: |
-        echo "Configuring AWS profile ${{ env.AWS_PROFILE_GITHUB }}"
-        aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE_GITHUB }}
-        aws configure set aws_access_key_id ${{ env.AWS_ACCESS_KEY_ID }} --profile ${{ env.AWS_PROFILE_GITHUB }}
-        aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE_GITHUB }}
-        aws configure set aws_session_token ${{ env.AWS_SESSION_TOKEN }} --profile ${{ env.AWS_PROFILE_GITHUB }}
-        aws sts get-caller-identity --query "Account" --output text --profile "${{ env.AWS_PROFILE_GITHUB }}"
+        unset AWS_PROFILE
+        aws sts get-caller-identity --query "Account" --output text
+        echo "AWS_PROFILE=" >> "$GITHUB_ENV"
