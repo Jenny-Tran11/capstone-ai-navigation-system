@@ -40,8 +40,7 @@ export class BaselineAlarms extends Construct {
     const timeoutSeconds = 29;
 
     // fn.node.id is often "Fn" for every NodejsFunction child — use index for unique construct ids.
-    for (let i = 0; i < functions.length; i++) {
-      const fn = functions[i]!;
+    for (const [i, fn] of functions.entries()) {
       const base = fn.functionName;
       const id = `Lambda${i}`;
 
@@ -56,37 +55,29 @@ export class BaselineAlarms extends Construct {
       });
       errorAlarm.addAlarmAction(action);
 
-      const throttleAlarm = new cloudwatch.Alarm(
-        this,
-        `${id}Throttles`,
-        {
-          alarmName: `${base}-throttles`,
-          metric: fn.metricThrottles({ period: Duration.minutes(5) }),
-          threshold: 10,
-          evaluationPeriods: 1,
-          comparisonOperator:
-            cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-          treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-        },
-      );
+      const throttleAlarm = new cloudwatch.Alarm(this, `${id}Throttles`, {
+        alarmName: `${base}-throttles`,
+        metric: fn.metricThrottles({ period: Duration.minutes(5) }),
+        threshold: 10,
+        evaluationPeriods: 1,
+        comparisonOperator:
+          cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      });
       throttleAlarm.addAlarmAction(action);
 
-      const durationAlarm = new cloudwatch.Alarm(
-        this,
-        `${id}Duration`,
-        {
-          alarmName: `${base}-duration-p99`,
-          metric: fn.metricDuration({
-            period: Duration.minutes(5),
-            statistic: 'p99',
-          }),
-          threshold: timeoutSeconds * 1000 * 0.8,
-          evaluationPeriods: 3,
-          comparisonOperator:
-            cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-          treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-        },
-      );
+      const durationAlarm = new cloudwatch.Alarm(this, `${id}Duration`, {
+        alarmName: `${base}-duration-p99`,
+        metric: fn.metricDuration({
+          period: Duration.minutes(5),
+          statistic: 'p99',
+        }),
+        threshold: timeoutSeconds * 1000 * 0.8,
+        evaluationPeriods: 3,
+        comparisonOperator:
+          cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      });
       durationAlarm.addAlarmAction(action);
     }
 

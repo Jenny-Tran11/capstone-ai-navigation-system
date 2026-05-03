@@ -32,6 +32,11 @@ export function suppressNagRules(stack: Stack): void {
         'CloudWatch logging at stage level will be configured with custom domains',
     },
     {
+      id: 'AwsSolutions-APIG4',
+      reason:
+        'POST /contact is intentionally unauthenticated for public contact submissions',
+    },
+    {
       id: 'AwsSolutions-COG1',
       reason:
         'Password policy requires uppercase, lowercase, digits; symbols intentionally not required for UX',
@@ -40,6 +45,11 @@ export function suppressNagRules(stack: Stack): void {
       id: 'AwsSolutions-COG3',
       reason:
         'AdvancedSecurityMode will be enabled in production via stage config when needed',
+    },
+    {
+      id: 'AwsSolutions-COG8',
+      reason:
+        'Cognito Plus / Advanced Security tier is optional for this baseline template',
     },
     {
       id: 'AwsSolutions-COG4',
