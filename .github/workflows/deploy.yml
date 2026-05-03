@@ -47,10 +47,18 @@ jobs:
         with:
           production_aws_role_arn: ${{ secrets.PRODUCTION_AWS_ROLE_ARN }}
           staging_aws_role_arn: ${{ secrets.STAGING_AWS_ROLE_ARN }}
-          configure_aws: 'false'
+          # Needed so generate:env:* can call CloudFormation (same as local SSO default chain).
+          configure_aws: 'true'
 
-      - name: Build ${{ matrix.name }}
-        run: pnpm --filter ${{ matrix.filter }} run build
+      - name: Generate env & build ${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            pnpm run generate:env:prod
+          else
+            pnpm run generate:env:staging
+          fi
+          pnpm --filter ${{ matrix.filter }} run build:deploy
 
       - name: Upload ${{ matrix.name }} bundle
         uses: actions/upload-artifact@v4

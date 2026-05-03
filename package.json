@@ -38,6 +38,7 @@
     "add:object": "pnpm --filter @baseline/add-object start",
     "add:user:staging": "pnpm --filter @baseline/api run add:user:staging",
     "add:user:prod": "pnpm --filter @baseline/api run add:user:prod",
+    "add:staging:admin": "./scripts/add-staging-user-and-permission.sh",
     "synth": "pnpm --filter @baseline/infra run synth",
     "diff:staging": "pnpm --filter @baseline/infra run diff:staging",
     "diff:prod": "pnpm --filter @baseline/infra run diff:prod",

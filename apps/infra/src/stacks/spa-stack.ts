@@ -15,21 +15,15 @@ export class SpaStack extends Stack {
 
     const { config } = props;
 
+    const repoRoot = path.resolve(__dirname, '..', '..', '..', '..');
+    const adminSourceDir = path.join(repoRoot, 'apps', 'admin', '.dist');
+    const webSourceDir = path.join(repoRoot, 'apps', 'web', '.dist');
+
     new BaselineSpaApp(this, 'AdminSpa', {
       config,
       name: 'Admin',
+      sourceDir: fs.existsSync(adminSourceDir) ? adminSourceDir : undefined,
     });
-
-    const webSourceDir = path.resolve(
-      __dirname,
-      '..',
-      '..',
-      '..',
-      '..',
-      'apps',
-      'web',
-      '.dist',
-    );
 
     new BaselineSpaApp(this, 'WebSpa', {
       config,

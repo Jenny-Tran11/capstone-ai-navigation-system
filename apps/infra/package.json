@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "build": "tsc --noEmit",
-    "synth": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk synth --context stage=staging'",
-    "diff:staging": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk diff --all --context stage=staging'",
-    "diff:prod": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk diff --all --context stage=prod'",
-    "deploy:staging": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk deploy --all --context stage=staging --require-approval never'",
-    "deploy:prod": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk deploy --all --context stage=prod --require-approval broadening'",
-    "destroy:staging": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk destroy --all --context stage=staging --force'",
-    "bootstrap": "bash -c 'source ../../scripts/project-variables.sh && unset AWS_PROFILE && cdk bootstrap --context stage=staging'",
+    "synth": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk synth --context stage=staging'",
+    "diff:staging": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk diff --all --context stage=staging'",
+    "diff:prod": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk diff --all --context stage=prod'",
+    "deploy:staging": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk deploy --all --context stage=staging --require-approval never'",
+    "deploy:prod": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk deploy --all --context stage=prod --require-approval broadening'",
+    "destroy:staging": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk destroy --all --context stage=staging --force'",
+    "bootstrap": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk bootstrap --context stage=staging'",
     "bootstrap:toolkit": "bash ../../scripts/cdk-bootstrap-toolkit.sh"
   },
   "dependencies": {

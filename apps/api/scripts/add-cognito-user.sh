@@ -1,115 +1,100 @@
 #!/usr/bin/env bash
+# Add a Cognito user and admin DynamoDB row (staging/prod).
+# Credentials: scripts/aws-context.sh (default: SSO / default chain, not the baseline-bolt profile).
 
-shopt -s failglob
+set -euo pipefail
 
 CURRENT_DIR="$(pwd -P)"
-PARENT_PATH="$(
-  cd "$(dirname "${BASH_SOURCE[0]}")" || exit
-  pwd -P
-)/.."
-cd "$PARENT_PATH" || exit
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$ROOT" || exit
 
 STAGE=$1
 USER_EMAIL=$2
 USER_PASSWORD=$3
 
-# Sets REGION, APP_NAME, AWS_REGION, AWS_PROFILE
-. ../../scripts/project-variables.sh
+: "${BASELINE_AWS_USE_DEFAULT_CHAIN:=1}"
+export BASELINE_AWS_USE_DEFAULT_CHAIN
+
+# shellcheck source=get-stack-outputs.sh
+. ./scripts/get-stack-outputs.sh "$STAGE" >/dev/null
 
 TABLE="${APP_NAME}-${STAGE}-admin"
+COGNITO_USER_POOL_ID="$(baseline_resolve_cognito_user_pool_id "$STAGE")"
 
-echo "Getting Cognito User Pool Id from [$STAGE]..."
-. ../../scripts/get-stack-outputs.sh "$STAGE" >/dev/null
-COGNITO_USER_POOL_ID="${UserPoolId:-}"
-if [ "$COGNITO_USER_POOL_ID" == "" ]; then
-  echo "Failed to get Cognito User Pool Id!"
-  echo 'Check your aws credentials are up to date, maybe run "npm run aws:profile"'
+if [ -z "${COGNITO_USER_POOL_ID}" ] || [ "${COGNITO_USER_POOL_ID}" = "None" ]; then
+  echo "Failed to resolve Cognito User Pool Id."
   exit 1
-else
-  echo "Cognito Pool Id [$COGNITO_USER_POOL_ID]"
 fi
+echo "Cognito pool: [${COGNITO_USER_POOL_ID}]"
 
 if [ -z "$USER_EMAIL" ]; then
   printf "Email: "
   read -r USER_EMAIL
 fi
-
-if [ "$USER_EMAIL" == "" ]; then
+if [ -z "$USER_EMAIL" ]; then
   echo "Error: No user email set"
   exit 1
 fi
 
 if [ -z "$USER_PASSWORD" ]; then
   echo
-  echo "Password Requirements:"
-  echo "- 8 character minimum length"
-  echo "- Contains at least 1 number"
-  echo "- Contains at least 1 lowercase letter"
-  echo "- Contains at least 1 uppercase letter"
-  echo "- Contains at least 1 special character"
-
+  echo "Password requirements: 8+ chars, number, lower, upper, special character"
   printf "Password: "
   read -sr USER_PASSWORD
   echo ""
 fi
-
-if [ "$USER_PASSWORD" == "" ]; then
+if [ -z "$USER_PASSWORD" ]; then
   echo "Error: No user password set"
   exit 1
 fi
 
-EXISTING_USER=$(aws cognito-idp admin-get-user \
-  --profile "${AWS_PROFILE}" \
+set +e
+baseline_aws cognito-idp admin-get-user \
   --region "${REGION}" \
-  --user-pool-id "${COGNITO_USER_POOL_ID:-}" \
-  --username "${USER_EMAIL}")
+  --user-pool-id "${COGNITO_USER_POOL_ID}" \
+  --username "${USER_EMAIL}" \
+  >/dev/null 2>&1
+USER_EXISTS=$?
+set -e
 
-if [ "$EXISTING_USER" ]; then
-  echo "User already exists, will not modify password"
-  echo "Will attempt to add to DynamoDB"
+if [ "$USER_EXISTS" -eq 0 ]; then
+  echo "User already exists; skipping password change."
 else
-  echo "Creating User..."
-
-  aws cognito-idp admin-create-user \
-    --profile "${AWS_PROFILE}" \
+  echo "Creating user…"
+  baseline_aws cognito-idp admin-create-user \
     --region "${REGION}" \
-    --user-pool-id "${COGNITO_USER_POOL_ID:-}" \
-    --username "${USER_EMAIL:-}" \
-    --user-attributes Name=email,Value="${USER_EMAIL:-}" Name=email_verified,Value=true \
+    --user-pool-id "${COGNITO_USER_POOL_ID}" \
+    --username "${USER_EMAIL}" \
+    --user-attributes Name=email,Value="${USER_EMAIL}" Name=email_verified,Value=true \
     --message-action SUPPRESS >/dev/null
 
-  echo "Setting Password..."
-  aws cognito-idp admin-set-user-password \
-    --profile "${AWS_PROFILE}" \
+  echo "Setting password…"
+  baseline_aws cognito-idp admin-set-user-password \
     --region "${REGION}" \
-    --user-pool-id "${COGNITO_USER_POOL_ID:-}" \
-    --username "${USER_EMAIL:-}" \
-    --password "${USER_PASSWORD:-}" \
+    --user-pool-id "${COGNITO_USER_POOL_ID}" \
+    --username "${USER_EMAIL}" \
+    --password "${USER_PASSWORD}" \
     --permanent >/dev/null
 fi
 
-USER_SUB=$(aws cognito-idp admin-get-user \
-  --profile "${AWS_PROFILE}" \
+USER_SUB=$(baseline_aws cognito-idp admin-get-user \
   --region "${REGION}" \
-  --user-pool-id "${COGNITO_USER_POOL_ID:-}" \
+  --user-pool-id "${COGNITO_USER_POOL_ID}" \
   --username "${USER_EMAIL}" |
-  jq '.["Username"]' |
-  tr -d '"')
+  jq -r '.Username // empty')
 
-echo "User Sub: [${USER_SUB}]"
+echo "User sub: [${USER_SUB}]"
 
-if [ "$USER_SUB" ]; then
-  echo "Found user sub, attempting to create DynamoDB record"
-  aws dynamodb put-item \
+if [ -n "$USER_SUB" ]; then
+  baseline_aws dynamodb put-item \
     --table-name "${TABLE}" \
-    --item \
-    "{\"userSub\": {\"S\": \"${USER_SUB}\"}, \"userEmail\": {\"S\": \"${USER_EMAIL}\"}}" \
-    --profile "${AWS_PROFILE}" \
+    --item "{\"userSub\": {\"S\": \"${USER_SUB}\"}, \"userEmail\": {\"S\": \"${USER_EMAIL}\"}}" \
     --region "${REGION}"
 else
-  echo "User sub not found, cannot create DynamoDB record"
+  echo "Could not read user sub; skipping DynamoDB."
 fi
 
-echo "Done!"
+echo "Done."
 
 cd "$CURRENT_DIR" || exit

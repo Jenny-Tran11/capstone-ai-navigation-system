@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Export CloudFormation stack outputs as shell variables (UserPoolId, ServiceEndpoint, …).
+# CDK uses hashed OutputKeys; we mirror stable names from ExportName (see aws-context.sh).
 # shellcheck disable=SC2207
 
 CURRENT_DIR="$(pwd -P)"
@@ -8,8 +10,12 @@ PARENT_PATH="$(
 )/.."
 cd "$PARENT_PATH" || exit
 
-# Sets REGION, APP_NAME, AWS_REGION, AWS_PROFILE
+# shellcheck source=project-variables.sh
 . ./scripts/project-variables.sh
+# shellcheck source=aws-context.sh
+. ./scripts/aws-context.sh
+
+baseline_apply_default_aws_chain
 
 STAGE=$1
 
@@ -17,70 +23,77 @@ echo "Begin: exporting cloudformation outputs as environment variables"
 start=$(date +%s)
 
 echo "App Name: [${APP_NAME}]"
-echo "Profile: [${AWS_PROFILE}]"
+echo "Profile: [${AWS_PROFILE:-<default chain>}]"
 echo "Region: [${REGION}]"
 echo "Stage: [${STAGE}]"
 
-if [ "$AWS_PROFILE" == "" ] || [ "$STAGE" == "" ] || [ "$REGION" == "" ]; then
-  echo "Error: No profile, stage or region passed"
+if [ "$STAGE" = "" ] || [ "$REGION" = "" ]; then
+  echo "Error: stage or region missing"
   exit 1
 fi
 
-IS_STACK="$(aws cloudformation describe-stacks --region "${REGION}" --profile "${AWS_PROFILE}" --max-items 1 >/dev/null)"
-if ! $IS_STACK; then
+STACK_PREFIX="${APP_NAME}-${STAGE}-"
+
+if ! stacks_json="$(baseline_aws cloudformation describe-stacks --region "${REGION}" --output json 2>/dev/null)"; then
+  echo "Failed to describe stacks in ${REGION}"
+elif [[ "$(echo "${stacks_json}" | jq '.Stacks | length')" = "0" ]]; then
   echo "No stacks found in region, nothing to export"
-elif [[ "$(aws cloudformation describe-stacks --region "${REGION}" --profile "${AWS_PROFILE}" --max-items 1 --query "Stacks[]")" == "[]" ]]; then
-  echo "Empty set of stacks found, nothing to export"
 else
-  stacksForRegion=$(aws cloudformation describe-stacks --region "${REGION}")
+  echo "Env stack prefix: [${STACK_PREFIX}]"
 
-  echo "Env Stack filter: [$APP_NAME] && [$STAGE]"
+  while IFS= read -r stack_name; do
+    [[ -z "${stack_name}" ]] && continue
 
-  stacksForEnvFilter="$(echo "${stacksForRegion:-}" | grep "StackName" | { grep -i "$APP_NAME" | grep -i "$STAGE" || true; })"
+    echo
+    echo "Outputs for: ${stack_name}"
+    echo
 
-  if [ "${stacksForEnvFilter:-}" != "" ]; then
-    stacksForEnv="$(echo "${stacksForEnvFilter:-}" | cut -d\" -f4)"
+    stack_info="$(baseline_aws cloudformation describe-stacks \
+      --region "$REGION" \
+      --stack-name "$stack_name" \
+      --output json)"
 
-    if [ "${stacksForEnv:-}" != "" ]; then
-      for stack in $stacksForEnv; do
-        echo
-        echo "Outputs for: $stack"
-        echo
-        stack_info=$(aws cloudformation describe-stacks \
-          --region "$REGION" \
-          --stack-name "$stack" \
-          --profile "${AWS_PROFILE}" \
-          --output json)
+    EXP_PREFIX="${APP_NAME}-${STAGE}-"
 
-        if [[ "$stack_info" =~ "OutputKey" ]]; then
-          outputKeys=($(echo "$stack_info" | jq ".Stacks[].Outputs[].OutputKey"))
-          outputValues=($(echo "$stack_info" | jq ".Stacks[].Outputs[].OutputValue"))
+    while IFS= read -r line; do
+      [[ -z "${line}" ]] && continue
+      key="$(echo "${line}" | jq -r '.OutputKey')"
+      val="$(echo "${line}" | jq -r '.OutputValue')"
+      exp="$(echo "${line}" | jq -r '.ExportName // empty')"
+      [[ -z "${key}" || "${key}" = "null" ]] && continue
+      echo "export ${key}=…"
+      baseline_export "${key}" "${val}"
 
-          for ((i = 0; i < ${#outputKeys[@]}; i++)); do
-            keyTmp=${outputKeys[i]#\"*}
-            key=${keyTmp%\"*}
-            valTmp=${outputValues[i]#\"*}
-            val=${valTmp%\"*}
-            echo "export $key=$val"
-            export "$key"="$val"
-          done
+      if [[ -n "${exp}" && "${exp}" = "${EXP_PREFIX}"* && "${exp}" != *":"* ]]; then
+        rest="${exp#"${EXP_PREFIX}"}"
+        if [[ "${rest}" =~ ^[A-Za-z][A-Za-z0-9]*$ ]]; then
+          case "${rest}" in
+            ApiUrl) baseline_export ServiceEndpoint "${val}" ;;
+            WebUrl) baseline_export WebCloudFrontUrl "${val#https://}" ;;
+            AdminUrl) baseline_export AdminCloudFrontUrl "${val#https://}" ;;
+            *) baseline_export "${rest}" "${val}" ;;
+          esac
+          echo "export ${rest}=… (from ExportName)"
         fi
-      done
-    else
-      echo "No stacks found for environment filter, nothing to export"
-    fi
-  else
-    echo "No stacks found for environment filter, nothing to export"
-  fi
+      fi
+    done < <(echo "${stack_info}" | jq -c '.Stacks[0].Outputs // [] | .[]')
+  done < <(
+    echo "${stacks_json}" | jq -r \
+      --arg p "${STACK_PREFIX}" \
+      '.Stacks[]
+        | select(.StackName | startswith($p))
+        | select(.StackStatus | test("DELETE_(COMPLETE|IN_PROGRESS)") | not)
+        | .StackName'
+  )
 fi
 
-AWS_ACCOUNT_ID="$(aws sts get-caller-identity --profile "$AWS_PROFILE" --region us-east-1 --output text --query 'Account')"
+AWS_ACCOUNT_ID="$(baseline_aws sts get-caller-identity --region us-east-1 --output text --query 'Account')"
 export AWS_ACCOUNT_ID
 
-echo AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID"
+echo "AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}"
 
 end=$(date +%s)
 runtime=$((end - start))
-echo "Finish ($runtime secs): exporting cloudformation outputs as environment variables"
+echo "Finish (${runtime} secs): exporting cloudformation outputs as environment variables"
 
 cd "$CURRENT_DIR" || exit

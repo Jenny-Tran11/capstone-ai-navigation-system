@@ -1,53 +1,65 @@
 #!/usr/bin/env bash
+# Writes apps/web and apps/admin .env files from local ministack or CloudFormation outputs.
+# CloudFormation path uses aws-context.sh behavior via get-stack-outputs.sh (SSO/OIDC-friendly).
 
 CURRENT_DIR="$(pwd -P)"
 PARENT_PATH="$(
-    cd "$(dirname "${BASH_SOURCE[0]}")" || exit
-    pwd -P
+  cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+  pwd -P
 )/.."
 cd "$PARENT_PATH" || exit
 
-# Sets REGION, APP_NAME, AWS_REGION, AWS_PROFILE
+# shellcheck source=project-variables.sh
 . ./scripts/project-variables.sh
 
-STACK_STAGE=$1 # local/staging/prod
+STACK_STAGE=$1
 echo "App Name: [${APP_NAME}]"
 echo "Profile: [${AWS_PROFILE}]"
 echo "Region: [${REGION}]"
 echo "Stack Stage: [${STACK_STAGE}]"
 
-if [ "$STACK_STAGE" == "local" ]; then
-    OUTPUT_FILENAME=.env.development
-    ServiceEndpoint=http://localhost:4000
-    if [ "$CODESPACE_NAME" ]; then
-        ServiceEndpoint="https://${CODESPACE_NAME}-4000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
-    fi
-    # Read Cognito IDs from local MiniStack config instead of CloudFormation
-    CONFIG_FILE=".cognito/local-config.json"
-    if [ -f "$CONFIG_FILE" ]; then
-        UserPoolId=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('$CONFIG_FILE','utf8')).userPoolId)")
-        UserPoolClientId=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('$CONFIG_FILE','utf8')).userPoolClientId)")
-        IdentityPoolId=""
-    else
-        echo "Warning: $CONFIG_FILE not found. Run 'pnpm --filter @baseline/api run setup:ministack' first."
-        UserPoolId=""
-        UserPoolClientId=""
-        IdentityPoolId=""
-    fi
+if [ "$STACK_STAGE" = "local" ]; then
+  OUTPUT_FILENAME=.env.development
+  ServiceEndpoint=http://localhost:4000
+  if [ "${CODESPACE_NAME:-}" ]; then
+    ServiceEndpoint="https://${CODESPACE_NAME}-4000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+  fi
+  CONFIG_FILE=".cognito/local-config.json"
+  if [ -f "$CONFIG_FILE" ]; then
+    UserPoolId=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('$CONFIG_FILE','utf8')).userPoolId)")
+    UserPoolClientId=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('$CONFIG_FILE','utf8')).userPoolClientId)")
+    IdentityPoolId=""
+  else
+    echo "Warning: $CONFIG_FILE not found. Run 'pnpm --filter @baseline/api run setup:ministack' first."
+    UserPoolId=""
+    UserPoolClientId=""
+    IdentityPoolId=""
+  fi
 else
-    STACK=$STACK_STAGE
-    # Get stack outputs from CloudFormation
-    . ./scripts/get-stack-outputs.sh "${STACK}" >/dev/null
-    OUTPUT_FILENAME=.env.production
+  : "${BASELINE_AWS_USE_DEFAULT_CHAIN:=1}"
+  export BASELINE_AWS_USE_DEFAULT_CHAIN
+  # shellcheck source=get-stack-outputs.sh
+  . ./scripts/get-stack-outputs.sh "${STACK_STAGE}" >/dev/null
+  OUTPUT_FILENAME=.env.production
+
+  if [ -z "${UserPoolId:-}" ] || [ -z "${UserPoolClientId:-}" ] || [ -z "${ServiceEndpoint:-}" ]; then
+    echo "" >&2
+    echo "Warning: incomplete staging/prod env (UserPoolId, UserPoolClientId, and/or API URL)." >&2
+    echo "  • Credentials: aws cloudformation describe-stacks --region ${REGION}" >&2
+    echo "  • Named profile only: BASELINE_AWS_USE_DEFAULT_CHAIN=0 pnpm run generate:env:${STACK_STAGE}" >&2
+    echo "" >&2
+  fi
 fi
 
 COGNITO_ENDPOINT=""
-if [ "$STACK_STAGE" == "local" ]; then
-    COGNITO_ENDPOINT="http://localhost:4566"
+if [ "$STACK_STAGE" = "local" ]; then
+  COGNITO_ENDPOINT="http://localhost:4566"
 fi
 
+ServiceEndpoint="${ServiceEndpoint%/}"
+
 OUTPUT=$(
-    cat <<EOF
+  cat <<EOF
 REACT_APP_APP_NAME=${APP_NAME:-}
 REACT_APP_AWS_PROFILE=${AWS_PROFILE:-}
 REACT_APP_API_URL=${ServiceEndpoint:-}/
