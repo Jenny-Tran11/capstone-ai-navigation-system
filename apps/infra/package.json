@@ -10,7 +10,8 @@
     "deploy:staging": "cdk deploy --all --context stage=staging --require-approval never",
     "deploy:prod": "cdk deploy --all --context stage=prod --require-approval broadening",
     "destroy:staging": "cdk destroy --all --context stage=staging --force",
-    "bootstrap": "cdk bootstrap --context stage=staging"
+    "bootstrap": "cdk bootstrap --context stage=staging",
+    "bootstrap:toolkit": "bash ../../scripts/cdk-bootstrap-toolkit.sh"
   },
   "dependencies": {
     "aws-cdk-lib": "2.252.0",

@@ -44,6 +44,7 @@
     "deploy:staging": "pnpm --filter @baseline/admin run build && pnpm --filter @baseline/web run build && pnpm --filter @baseline/infra run deploy:staging",
     "deploy:prod": "pnpm --filter @baseline/admin run build && pnpm --filter @baseline/web run build && pnpm --filter @baseline/infra run deploy:prod",
     "destroy:staging": "pnpm --filter @baseline/infra run destroy:staging",
+    "bootstrap:infra": "pnpm --filter @baseline/infra run bootstrap:toolkit",
     "start:api": "pnpm --filter @baseline/api run start",
     "start:admin": "pnpm --filter @baseline/admin run start",
     "start:web": "pnpm --filter @baseline/web run start",
