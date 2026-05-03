@@ -79,10 +79,9 @@ export class ApiStack extends Stack {
 
     // ── API entities ─────────────────────────────────
     const apiEntities: ApiEntity[] = [
-      { name: 'ApiAdmin', path: 'admin', entry: 'baseblocks/admin/admin-api.ts' },
-      // TODO: uncomment when handlers exist
-      // { name: 'ApiPermission', path: 'permission', entry: 'baseblocks/permission/permission-api.ts' },
-      // { name: 'ApiWorkspace', path: 'workspace', entry: 'baseblocks/workspace/workspace-api.ts' },
+      { name: 'ApiAdmin',      path: 'admin',      entry: 'baseblocks/admin/admin-api.ts' },
+      { name: 'ApiPermission', path: 'permission', entry: 'baseblocks/permission/permission-api.ts' },
+      { name: 'ApiWorkspace',  path: 'workspace',  entry: 'baseblocks/workspace/workspace-api.ts' },
       // { name: 'ApiCognitoUser', path: 'cognito-user', entry: 'baseblocks/cognito-user/cognito-user-api.ts' },
     ];
 

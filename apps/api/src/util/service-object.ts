@@ -8,7 +8,8 @@ import {
   updateItem,
   DynamoDbDocumentClient,
 } from '@baselinejs/dynamodb';
-import { randomUUID } from 'crypto';
+import { generateId } from '@baseline/utils/service-object';
+import { type ObjectIdPrefix } from '@baseline/types/service-object';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class ServiceObject<T extends Record<string, any>> {
@@ -75,8 +76,11 @@ export class ServiceObject<T extends Record<string, any>> {
       if (!this.dynamoDb) {
         throw new Error('DynamoDB not connected');
       }
+      const now = new Date().toISOString();
       const item: Partial<T> = {
-        [this.primaryKey]: randomUUID(),
+        [this.primaryKey]: generateId(this.objectName as ObjectIdPrefix),
+        createdAt: now,
+        updatedAt: now,
         ...record,
       };
       return await putItem<T>({
@@ -104,7 +108,7 @@ export class ServiceObject<T extends Record<string, any>> {
       if (!record[this.primaryKey]) {
         throw new Error(`Cannot update without ${this.primaryKey}`);
       }
-      const partial = {} as Partial<T>;
+      const partial = { updatedAt: new Date().toISOString() } as unknown as Partial<T>;
       Object.keys(record).forEach((key: keyof T) => {
         if (key !== this.primaryKey) {
           partial[key] = record[key];

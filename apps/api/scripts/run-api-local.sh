@@ -21,7 +21,6 @@ export API_REGION="${REGION}"
 export AWS_DEFAULT_REGION="${REGION}"
 export AWS_ENDPOINT_URL=http://localhost:4566
 export API_CORS_ORIGIN="*"
-export AUTHORIZER='{"claims":{"email":"example@devika.com","sub":"ed805890-d66b-4126-a5d9-0b22e70fce80"}}'
 export NODE_OPTIONS=--enable-source-maps
 
 TSX="./node_modules/.bin/tsx"
@@ -60,9 +59,12 @@ echo "MiniStack ready"
 echo "Running bootstrap..."
 $TSX src/local/bootstrap-local.ts
 
-# ── Source generated Cognito IDs ────────────────────────────────────────────────
+# ── Source generated Cognito IDs and primary user sub ──────────────────────────
 # shellcheck source=/dev/null
 [ -f .env.local ] && . .env.local
+
+# Build AUTHORIZER from the real Cognito sub written by bootstrap
+export AUTHORIZER="{\"claims\":{\"email\":\"${PRIMARY_USER_EMAIL:-example@devika.com}\",\"sub\":\"${PRIMARY_USER_SUB:-}\"}}"
 
 # ── Generate frontend env vars in background ────────────────────────────────────
 bash ../../scripts/generate-env-vars.sh local &

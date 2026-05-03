@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { deleteAdmin } from '@baseline/client-api/admin';
 import { Admin } from '@baseline/types/admin';
 import {
-  IconDotsVertical,
   IconCopy,
+  IconDotsVertical,
   IconTrash,
   IconUsers,
 } from '@tabler/icons-react';
@@ -24,33 +24,22 @@ import {
 import { Badge } from '@baseline/ui/primitives/badge';
 import { Button } from '@baseline/ui/primitives/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@baseline/ui/primitives/card';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@baseline/ui/primitives/dropdown-menu';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@baseline/ui/primitives/table';
+import { EntityList, type ColumnDef } from '@baseline/ui';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
 import AddUser from '../add-admin/AddAdmin';
 
 interface Props {
   admins: Admin[];
 }
+
+/** TanStack row shape — local alias so ESLint resolves types without importing react-table in admin */
+type RowLike<T> = { original: T };
 
 function initialsOf(email: string): string {
   if (!email) return 'U';
@@ -100,6 +89,107 @@ const AdminList = ({ admins }: Props): JSX.Element => {
       ? '1 person in your team'
       : `${allAdmins.length} people in your team`;
 
+  const columns = useMemo<ColumnDef<Admin, unknown>[]>(
+    () => [
+      {
+        accessorKey: 'userEmail',
+        header: 'Member',
+        cell: ({ row }: { row: RowLike<Admin> }) => {
+          const admin = row.original;
+          return (
+            <div className="flex items-center gap-3">
+              <Avatar className="h-9 w-9 rounded-full">
+                <AvatarFallback className="rounded-full bg-muted font-medium text-muted-foreground text-xs">
+                  {initialsOf(admin.userEmail)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="truncate font-medium text-foreground text-sm">
+                  {admin.userEmail}
+                </p>
+                <p
+                  className="truncate font-mono text-muted-foreground text-xs md:hidden"
+                  title={admin.userSub}
+                >
+                  {admin.userSub}
+                </p>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'userSub',
+        header: 'User ID',
+        meta: {
+          headerClassName: 'hidden md:table-cell',
+          cellClassName: 'hidden md:table-cell',
+        },
+        cell: ({ row }: { row: RowLike<Admin> }) => (
+          <span
+            className="line-clamp-1 font-mono text-muted-foreground text-xs"
+            title={row.original.userSub}
+          >
+            {row.original.userSub}
+          </span>
+        ),
+      },
+      {
+        id: 'role',
+        header: 'Role',
+        cell: () => (
+          <Badge variant="outline" className="font-normal">
+            Admin
+          </Badge>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <span className="sr-only">Actions</span>,
+        enableHiding: false,
+        meta: {
+          headerClassName: 'w-0 pr-6 text-right',
+          cellClassName: 'w-0 text-right pr-6',
+        },
+        cell: ({ row }: { row: RowLike<Admin> }) => {
+          const admin = row.original;
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label={`Actions for ${admin.userEmail}`}
+                >
+                  <IconDotsVertical className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem
+                  onSelect={() => void handleCopyId(admin.userSub)}
+                >
+                  <IconCopy />
+                  {copiedId === admin.userSub ? 'Copied' : 'Copy user ID'}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => setPendingDelete(admin)}
+                >
+                  <IconTrash />
+                  Remove admin
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+      },
+    ],
+    [copiedId],
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -114,111 +204,21 @@ const AdminList = ({ admins }: Props): JSX.Element => {
         </div>
       </header>
 
-      <Card className="overflow-hidden">
-        <CardHeader className="gap-1 border-b bg-muted/30 pb-6 [.border-b]:pb-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-1">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <IconUsers className="size-5 text-muted-foreground" />
-                Team members
-              </CardTitle>
-              <CardDescription>{countLabel}</CardDescription>
-            </div>
-            <AddUser setAllAdmins={setAllAdmins} />
-          </div>
-        </CardHeader>
-        <CardContent className="px-0 pb-0">
-          {allAdmins.length === 0 ? (
-            <p className="px-6 py-10 text-center text-muted-foreground text-sm">
-              No admins yet — use Invite to add the first one.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="pl-6">Member</TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    User ID
-                  </TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="w-0 pr-6 text-right">
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allAdmins.map((admin) => (
-                  <TableRow key={admin.userSub}>
-                    <TableCell className="pl-6">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 rounded-full">
-                          <AvatarFallback className="rounded-full bg-muted font-medium text-muted-foreground text-xs">
-                            {initialsOf(admin.userEmail)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="truncate font-medium text-foreground text-sm">
-                            {admin.userEmail}
-                          </p>
-                          <p
-                            className="truncate font-mono text-muted-foreground text-xs md:hidden"
-                            title={admin.userSub}
-                          >
-                            {admin.userSub}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden font-mono text-muted-foreground text-xs md:table-cell">
-                      <span className="line-clamp-1" title={admin.userSub}>
-                        {admin.userSub}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-normal">
-                        Admin
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="pr-6 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                            aria-label={`Actions for ${admin.userEmail}`}
-                          >
-                            <IconDotsVertical className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuItem
-                            onSelect={() => void handleCopyId(admin.userSub)}
-                          >
-                            <IconCopy />
-                            {copiedId === admin.userSub
-                              ? 'Copied'
-                              : 'Copy user ID'}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => setPendingDelete(admin)}
-                          >
-                            <IconTrash />
-                            Remove admin
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <EntityList
+        title={
+          <span className="inline-flex items-center gap-2">
+            <IconUsers className="size-5 text-muted-foreground" />
+            Team members
+          </span>
+        }
+        description={countLabel}
+        columns={columns}
+        data={allAdmins}
+        searchColumn="userEmail"
+        createAction={<AddUser setAllAdmins={setAllAdmins} />}
+        emptyMessage="No admins yet — use Invite to add the first one."
+        showViewOptions={false}
+      />
 
       <AlertDialog
         open={pendingDelete !== null}

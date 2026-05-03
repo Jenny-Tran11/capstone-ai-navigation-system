@@ -3,6 +3,7 @@ import * as path from 'path';
 import {
   DynamoDBClient,
   CreateTableCommand,
+  DeleteTableCommand,
   ListTablesCommand,
   BatchWriteItemCommand,
 } from '@aws-sdk/client-dynamodb';
@@ -11,9 +12,12 @@ import {
   CreateUserPoolCommand,
   CreateUserPoolClientCommand,
   AdminCreateUserCommand,
+  AdminDeleteUserCommand,
+  AdminGetUserCommand,
   AdminSetUserPasswordCommand,
   ListUserPoolsCommand,
   ListUserPoolClientsCommand,
+  ListUsersCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 
 const ENDPOINT = 'http://localhost:4566';
@@ -32,12 +36,15 @@ const clientConfig = {
 const dynamo = new DynamoDBClient(clientConfig);
 const cognito = new CognitoIdentityProviderClient(clientConfig);
 
-async function createTableIfNotExists(tableName: string, partitionKey: string): Promise<void> {
+async function dropTableIfExists(tableName: string): Promise<void> {
   const { TableNames } = await dynamo.send(new ListTablesCommand({}));
-  if (TableNames?.includes(tableName)) {
-    console.log(`  ${tableName} already exists`);
-    return;
-  }
+  if (!TableNames?.includes(tableName)) return;
+  await dynamo.send(new DeleteTableCommand({ TableName: tableName }));
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  console.log(`  Dropped ${tableName}`);
+}
+
+async function createSimpleTable(tableName: string, partitionKey: string): Promise<void> {
   await dynamo.send(new CreateTableCommand({
     TableName: tableName,
     AttributeDefinitions: [{ AttributeName: partitionKey, AttributeType: 'S' }],
@@ -47,15 +54,73 @@ async function createTableIfNotExists(tableName: string, partitionKey: string): 
   console.log(`  Created ${tableName}`);
 }
 
-async function seedAdminTable(tableName: string): Promise<void> {
-  const items = [
-    { userSub: 'ed805890-d66b-4126-a5d9-0b22e70fce80', userEmail: 'example@devika.com' },
-    { userSub: 'ed805890-d66b-4126-a5d9-0b22e70fce81', userEmail: 'example+1@devika.com' },
-    { userSub: 'ed805890-d66b-4126-a5d9-0b22e70fce82', userEmail: 'example+2@devika.com' },
-  ];
+async function createPermissionTable(tableName: string): Promise<void> {
+  await dynamo.send(new CreateTableCommand({
+    TableName: tableName,
+    AttributeDefinitions: [
+      { AttributeName: 'permissionId', AttributeType: 'S' },
+      { AttributeName: 'ownerId',      AttributeType: 'S' },
+      { AttributeName: 'compositeKey', AttributeType: 'S' },
+      { AttributeName: 'type',         AttributeType: 'S' },
+    ],
+    KeySchema: [{ AttributeName: 'permissionId', KeyType: 'HASH' }],
+    BillingMode: 'PAY_PER_REQUEST',
+    GlobalSecondaryIndexes: [
+      {
+        IndexName: 'ownerId-compositeKey-index',
+        KeySchema: [
+          { AttributeName: 'ownerId',      KeyType: 'HASH' },
+          { AttributeName: 'compositeKey', KeyType: 'RANGE' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+      {
+        IndexName: 'type-compositeKey-index',
+        KeySchema: [
+          { AttributeName: 'type',         KeyType: 'HASH' },
+          { AttributeName: 'compositeKey', KeyType: 'RANGE' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+      },
+    ],
+  }));
+  console.log(`  Created ${tableName} with GSIs`);
+}
+
+async function seedSuperPermission(tableName: string, ownerSub: string): Promise<void> {
+  const now = new Date().toISOString();
   await dynamo.send(new BatchWriteItemCommand({
     RequestItems: {
-      [tableName]: items.map((item) => ({
+      [tableName]: [
+        {
+          PutRequest: {
+            Item: {
+              permissionId: { S: `prm_local_super_${ownerSub.slice(0, 8)}` },
+              type:         { S: 'SUPER' },
+              compositeKey: { S: 'SUPER' },
+              ownerId:      { S: ownerSub },
+              createdAt:    { S: now },
+              updatedAt:    { S: now },
+            },
+          },
+        },
+      ],
+    },
+  }));
+  console.log(`  Seeded SUPER permission for ${ownerSub}`);
+}
+
+async function seedAdminTable(
+  tableName: string,
+  users: Array<{ userSub: string; userEmail: string }>,
+): Promise<void> {
+  if (users.length === 0) {
+    console.warn('  No users to seed — skipping admin table seed');
+    return;
+  }
+  await dynamo.send(new BatchWriteItemCommand({
+    RequestItems: {
+      [tableName]: users.map((item) => ({
         PutRequest: {
           Item: {
             userSub: { S: item.userSub },
@@ -65,7 +130,7 @@ async function seedAdminTable(tableName: string): Promise<void> {
       })),
     },
   }));
-  console.log(`  Seeded ${tableName}`);
+  console.log(`  Seeded ${tableName} with ${users.length} admin(s)`);
 }
 
 async function getOrCreateUserPool(poolName: string): Promise<string> {
@@ -107,7 +172,29 @@ async function getOrCreateUserPoolClient(poolId: string, clientName: string): Pr
   return UserPoolClient!.ClientId!;
 }
 
-async function seedCognitoUser(poolId: string, email: string, password: string): Promise<void> {
+async function cleanCognitoUsers(poolId: string): Promise<void> {
+  let paginationToken: string | undefined;
+  let deleted = 0;
+  do {
+    const { Users, PaginationToken } = await cognito.send(
+      new ListUsersCommand({ UserPoolId: poolId, PaginationToken: paginationToken }),
+    );
+    for (const user of Users ?? []) {
+      if (!user.Username) continue;
+      await cognito.send(new AdminDeleteUserCommand({ UserPoolId: poolId, Username: user.Username }));
+      deleted++;
+    }
+    paginationToken = PaginationToken;
+  } while (paginationToken);
+  console.log(`  Deleted ${deleted} existing Cognito user(s)`);
+}
+
+async function getOrCreateCognitoUser(
+  poolId: string,
+  email: string,
+  password: string,
+): Promise<string> {
+  // Create user, ignoring already-exists errors
   try {
     await cognito.send(new AdminCreateUserCommand({
       UserPoolId: poolId,
@@ -130,6 +217,20 @@ async function seedCognitoUser(poolId: string, email: string, password: string):
       console.warn(`  Warning: could not create ${email}: ${(err as Error).message}`);
     }
   }
+
+  // Always fetch the real sub via AdminGetUser — don't rely on create response
+  try {
+    const { UserAttributes } = await cognito.send(new AdminGetUserCommand({
+      UserPoolId: poolId,
+      Username: email,
+    }));
+    const sub = UserAttributes?.find((a) => a.Name === 'sub')?.Value ?? '';
+    console.log(`  ${email} → sub: ${sub}`);
+    return sub;
+  } catch (err: unknown) {
+    console.warn(`  Warning: could not get sub for ${email}: ${(err as Error).message}`);
+    return '';
+  }
 }
 
 async function bootstrap(): Promise<void> {
@@ -140,23 +241,41 @@ async function bootstrap(): Promise<void> {
   const poolName        = `${APP_NAME}-${STAGE}-user-pool`;
   const clientName      = `${APP_NAME}-${STAGE}-client`;
 
-  console.log('Creating DynamoDB tables...');
-  await createTableIfNotExists(adminTable,      'userSub');
-  await createTableIfNotExists(contactTable,    'id');
-  await createTableIfNotExists(permissionTable, 'permissionId');
-  await createTableIfNotExists(workspaceTable,  'workspaceId');
+  console.log('Dropping existing DynamoDB tables...');
+  await dropTableIfExists(adminTable);
+  await dropTableIfExists(contactTable);
+  await dropTableIfExists(permissionTable);
+  await dropTableIfExists(workspaceTable);
 
-  console.log('Seeding admin table...');
-  await seedAdminTable(adminTable);
+  console.log('Creating DynamoDB tables...');
+  await createSimpleTable(adminTable,     'userSub');
+  await createSimpleTable(contactTable,   'id');
+  await createPermissionTable(permissionTable);
+  await createSimpleTable(workspaceTable, 'workspaceId');
 
   console.log('Setting up Cognito user pool...');
   const poolId   = await getOrCreateUserPool(poolName);
   const clientId = await getOrCreateUserPoolClient(poolId, clientName);
 
+  console.log('Cleaning existing Cognito users...');
+  await cleanCognitoUsers(poolId);
+
   console.log('Seeding Cognito users...');
-  await seedCognitoUser(poolId, 'example@devika.com',   'Password123');
-  await seedCognitoUser(poolId, 'example+1@devika.com', 'Password123');
-  await seedCognitoUser(poolId, 'example+2@devika.com', 'Password123');
+  const primarySub = await getOrCreateCognitoUser(poolId, 'example@devika.com',   'Password123');
+  const sub1       = await getOrCreateCognitoUser(poolId, 'example+1@devika.com', 'Password123');
+  const sub2       = await getOrCreateCognitoUser(poolId, 'example+2@devika.com', 'Password123');
+
+  const adminUsers = [
+    { userSub: primarySub, userEmail: 'example@devika.com' },
+    { userSub: sub1,       userEmail: 'example+1@devika.com' },
+    { userSub: sub2,       userEmail: 'example+2@devika.com' },
+  ].filter((u) => !!u.userSub);
+
+  console.log('Seeding admin table...');
+  await seedAdminTable(adminTable, adminUsers);
+
+  console.log('Seeding SUPER permission...');
+  if (primarySub) await seedSuperPermission(permissionTable, primarySub);
 
   // Write .cognito/local-config.json at repo root (four levels up from src/local/)
   const repoRoot  = path.resolve(__dirname, '..', '..', '..', '..');
@@ -175,6 +294,8 @@ async function bootstrap(): Promise<void> {
   const envLocal = [
     `export COGNITO_USER_POOL_ID=${poolId}`,
     `export COGNITO_CLIENT_ID=${clientId}`,
+    `export PRIMARY_USER_SUB=${primarySub}`,
+    `export PRIMARY_USER_EMAIL=example@devika.com`,
     '',
   ].join('\n');
   fs.writeFileSync(path.resolve(__dirname, '..', '..', '.env.local'), envLocal);

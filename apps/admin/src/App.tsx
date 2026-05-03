@@ -13,6 +13,8 @@ import '@aws-amplify/ui-react/styles.css';
 import Dashboard from './baseblocks/dashboard/pages/Dashboard';
 import User, { userLoader } from './baseblocks/user/pages/User';
 import Admins, { adminListLoader } from './baseblocks/admin/pages/Admins';
+import Workspaces, { workspaceListLoader } from './baseblocks/workspace/pages/Workspaces';
+import Permissions, { permissionListLoader } from './baseblocks/permission/pages/Permissions';
 import Components from './baseblocks/components/pages/Components';
 import {
   createRequestHandler,
@@ -134,14 +136,12 @@ const router = createBrowserRouter([
     Component: Layout,
     loader: protectedLoader,
     children: [
-      { path: '/dashboard', Component: Dashboard },
-      {
-        path: '/admins',
-        Component: Admins,
-        loader: adminListLoader,
-      },
-      { path: '/components', Component: Components },
-      { path: '/settings', Component: User, loader: userLoader },
+      { path: '/dashboard',   Component: Dashboard },
+      { path: '/admins',      Component: Admins,      loader: adminListLoader },
+      { path: '/workspaces',  Component: Workspaces,  loader: workspaceListLoader },
+      { path: '/permissions', Component: Permissions, loader: permissionListLoader },
+      { path: '/components',  Component: Components },
+      { path: '/settings',    Component: User,        loader: userLoader },
     ],
   },
 ]);

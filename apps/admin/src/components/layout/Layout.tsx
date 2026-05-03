@@ -11,6 +11,8 @@ import UserMenu from '../user-menu/UserMenu';
 const ROUTE_TITLES: Array<[RegExp, string]> = [
   [/^\/dashboard\/?$/, 'Dashboard'],
   [/^\/admins\/?/, 'Admins'],
+  [/^\/workspaces\/?/, 'Workspaces'],
+  [/^\/permissions\/?/, 'Permissions'],
   [/^\/components\/?/, 'Components'],
   [/^\/settings\/?/, 'Account settings'],
 ];

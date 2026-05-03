@@ -45,6 +45,9 @@ importers:
       '@baseline/client-api':
         specifier: workspace:1.0.0
         version: link:../../packages/client-api
+      '@baseline/swr-client':
+        specifier: workspace:1.0.0
+        version: link:../../packages/swr-client
       '@baseline/types':
         specifier: workspace:1.0.0
         version: link:../../packages/types
@@ -87,6 +90,9 @@ importers:
       react-select:
         specifier: 5.8.0
         version: 5.8.0(@types/react@18.2.67)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      swr:
+        specifier: 2.3.5
+        version: 2.3.5(react@18.2.0)
       tailwindcss:
         specifier: 4.1.4
         version: 4.1.4
@@ -127,6 +133,9 @@ importers:
       '@baseline/types':
         specifier: workspace:1.0.0
         version: link:../../packages/types
+      '@baseline/utils':
+        specifier: workspace:1.0.0
+        version: link:../../packages/utils
       '@baselinejs/dynamodb':
         specifier: 0.2.4
         version: 0.2.4

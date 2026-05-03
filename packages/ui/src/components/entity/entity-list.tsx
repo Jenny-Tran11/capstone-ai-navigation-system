@@ -3,7 +3,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DataTable, DataTableFilter } from '../data-table/data-table';
 
 export interface EntityListProps<TData, TValue> {
-  title: string;
+  title: React.ReactNode;
   description?: string;
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -12,6 +12,9 @@ export interface EntityListProps<TData, TValue> {
   searchColumn?: string;
   filters?: DataTableFilter[];
   emptyMessage?: string;
+  /** Forwarded to underlying DataTable — hide column visibility menu. */
+  showViewOptions?: boolean;
+  toolbarActions?: React.ReactNode;
 }
 
 export function EntityList<TData, TValue>({
@@ -24,6 +27,8 @@ export function EntityList<TData, TValue>({
   searchColumn,
   filters,
   emptyMessage,
+  showViewOptions,
+  toolbarActions,
 }: EntityListProps<TData, TValue>) {
   return (
     <div className="flex flex-col gap-6">
@@ -43,7 +48,8 @@ export function EntityList<TData, TValue>({
         searchColumn={searchColumn}
         filters={filters}
         emptyMessage={emptyMessage}
-        toolbarActions={undefined}
+        showViewOptions={showViewOptions}
+        toolbarActions={toolbarActions}
       />
     </div>
   );

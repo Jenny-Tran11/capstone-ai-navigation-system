@@ -1,7 +1,9 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
+  IconBuilding,
   IconDashboard,
+  IconKey,
   IconLayoutGrid,
   IconSettings,
   IconUsers,
@@ -10,9 +12,11 @@ import { AppSidebar } from '@baseline/ui/components/app-sidebar';
 import type { NavItem } from '@baseline/ui/components/nav-main';
 
 const navMain: NavItem[] = [
-  { title: 'Dashboard', url: '/dashboard', icon: IconDashboard },
-  { title: 'Admins', url: '/admins', icon: IconUsers },
-  { title: 'Components', url: '/components', icon: IconLayoutGrid },
+  { title: 'Dashboard',   url: '/dashboard',   icon: IconDashboard },
+  { title: 'Admins',      url: '/admins',      icon: IconUsers },
+  { title: 'Workspaces',  url: '/workspaces',  icon: IconBuilding },
+  { title: 'Permissions', url: '/permissions', icon: IconKey },
+  { title: 'Components',  url: '/components',  icon: IconLayoutGrid },
 ];
 
 const navSecondary: NavItem[] = [

@@ -71,11 +71,12 @@ export * from './components/site-header';
 // data-table
 export * from './components/data-table';
 export type {
+  CellContext,
   ColumnDef,
   ColumnFiltersState,
-  SortingState,
   PaginationState,
   Row,
+  SortingState,
   Table as TableInstance,
 } from '@tanstack/react-table';
 
