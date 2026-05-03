@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const Navbar = (): JSX.Element => {
@@ -7,7 +7,11 @@ const Navbar = (): JSX.Element => {
   return (
     <nav
       className="sticky top-0 z-50 border-b"
-      style={{ backgroundColor: 'rgba(248,246,241,0.85)', borderColor: 'var(--warm-border)', backdropFilter: 'blur(12px)' }}
+      style={{
+        backgroundColor: 'rgba(248,246,241,0.85)',
+        borderColor: 'var(--warm-border)',
+        backdropFilter: 'blur(12px)',
+      }}
     >
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
@@ -18,14 +22,24 @@ const Navbar = (): JSX.Element => {
           >
             <span className="text-white font-bold text-sm">B</span>
           </div>
-          <span className="text-xl font-medium tracking-tight" style={{ color: 'var(--warm-fg)' }}>
+          <span
+            className="text-xl font-medium tracking-tight"
+            style={{ color: 'var(--warm-fg)' }}
+          >
             Baseline Core
           </span>
         </Link>
 
         {/* Desktop nav links */}
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium" style={{ color: 'var(--warm-fg)' }}>
-          <Link to="/about" className="no-underline transition-colors hover:opacity-70" style={{ color: 'var(--warm-fg)' }}>
+        <div
+          className="hidden md:flex items-center gap-8 text-sm font-medium"
+          style={{ color: 'var(--warm-fg)' }}
+        >
+          <Link
+            to="/about"
+            className="no-underline transition-colors hover:opacity-70"
+            style={{ color: 'var(--warm-fg)' }}
+          >
             About
           </Link>
         </div>
@@ -43,8 +57,14 @@ const Navbar = (): JSX.Element => {
             to="/get-started"
             className="no-underline text-sm font-semibold text-white rounded-full px-6 py-2.5 transition-all duration-200"
             style={{ backgroundColor: 'var(--warm-primary)' }}
-            onMouseEnter={(e) => ((e.target as HTMLElement).style.backgroundColor = 'var(--warm-primary-hover)')}
-            onMouseLeave={(e) => ((e.target as HTMLElement).style.backgroundColor = 'var(--warm-primary)')}
+            onMouseEnter={(e) =>
+              ((e.target as HTMLElement).style.backgroundColor =
+                'var(--warm-primary-hover)')
+            }
+            onMouseLeave={(e) =>
+              ((e.target as HTMLElement).style.backgroundColor =
+                'var(--warm-primary)')
+            }
           >
             Get Started
           </Link>
@@ -52,13 +72,23 @@ const Navbar = (): JSX.Element => {
 
         {/* Hamburger */}
         <button
+          type="button"
           className="md:hidden flex flex-col justify-evenly w-6 h-6 cursor-pointer bg-transparent border-none p-0"
           onClick={() => setIsMobileOpen((o) => !o)}
           aria-label="Toggle menu"
         >
-          <div className="h-[2px] w-full" style={{ backgroundColor: 'var(--warm-fg)' }} />
-          <div className="h-[2px] w-full" style={{ backgroundColor: 'var(--warm-fg)' }} />
-          <div className="h-[2px] w-full" style={{ backgroundColor: 'var(--warm-fg)' }} />
+          <div
+            className="h-[2px] w-full"
+            style={{ backgroundColor: 'var(--warm-fg)' }}
+          />
+          <div
+            className="h-[2px] w-full"
+            style={{ backgroundColor: 'var(--warm-fg)' }}
+          />
+          <div
+            className="h-[2px] w-full"
+            style={{ backgroundColor: 'var(--warm-fg)' }}
+          />
         </button>
       </div>
 

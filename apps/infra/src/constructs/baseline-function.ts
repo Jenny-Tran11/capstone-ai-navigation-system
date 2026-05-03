@@ -1,11 +1,15 @@
-import * as path from 'path';
+import * as path from 'node:path';
 import { Duration } from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import { NodejsFunction, type NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
+import {
+  NodejsFunction,
+  type NodejsFunctionProps,
+} from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import type { StageConfig } from '../config/stage-config';
 
-export interface BaselineFunctionProps extends Omit<NodejsFunctionProps, 'entry' | 'handler' | 'runtime'> {
+export interface BaselineFunctionProps
+  extends Omit<NodejsFunctionProps, 'entry' | 'handler' | 'runtime'> {
   config: StageConfig;
   functionName: string;
   handler?: string;
@@ -19,13 +23,24 @@ export class BaselineFunction extends Construct {
   constructor(scope: Construct, id: string, props: BaselineFunctionProps) {
     super(scope, id);
 
-    const { config, functionName, handler, entry, environment, ...rest } = props;
+    const { config, functionName, handler, entry, environment, ...rest } =
+      props;
 
     this.fn = new NodejsFunction(this, 'Fn', {
       functionName: `${config.appName}-${config.stage}-${functionName}`,
-      entry: path.resolve(__dirname, '..', '..', '..', '..', 'apps', 'api', 'src', entry),
+      entry: path.resolve(
+        __dirname,
+        '..',
+        '..',
+        '..',
+        '..',
+        'apps',
+        'api',
+        'src',
+        entry,
+      ),
       handler: handler ?? 'handler',
-      runtime: lambda.Runtime.NODEJS_22_X,
+      runtime: new lambda.Runtime('nodejs24.x', lambda.RuntimeFamily.NODEJS),
       architecture: lambda.Architecture.ARM_64,
       timeout: Duration.seconds(29),
       memorySize: 2048,

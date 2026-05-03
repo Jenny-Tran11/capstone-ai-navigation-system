@@ -1,10 +1,10 @@
-import { Router, type Response } from 'express';
-import { type Workspace } from '@baseline/types/workspace';
-import { getErrorMessage } from '../../util/error-message';
+import type { Workspace } from '@baseline/types/workspace';
+import { type Response, Router } from 'express';
 import { checkPermission } from '../../middleware/check-permission';
+import { getErrorMessage } from '../../util/error-message';
+import type { RequestContext } from '../../util/request-context.type';
 import { workspaceMapper } from './workspace';
 import { workspaceService } from './workspace.service';
-import { RequestContext } from '../../util/request-context.type';
 
 export const adminWorkspaceRouter = Router();
 
@@ -12,7 +12,9 @@ adminWorkspaceRouter.post('/', [
   checkPermission([{ type: 'SUPER' }]),
   async (req: RequestContext, res: Response) => {
     try {
-      const body = req.body as Partial<Pick<Workspace, 'name' | 'description' | 'imageUrl'>>;
+      const body = req.body as Partial<
+        Pick<Workspace, 'name' | 'description' | 'imageUrl'>
+      >;
       const workspaceData: Partial<Workspace> = {
         name: body.name,
         description: body.description,
@@ -32,7 +34,9 @@ adminWorkspaceRouter.patch('/', [
   checkPermission([{ type: 'SUPER' }]),
   async (req: RequestContext, res: Response) => {
     try {
-      const body = req.body as Partial<Pick<Workspace, 'workspaceId' | 'name' | 'description' | 'imageUrl'>>;
+      const body = req.body as Partial<
+        Pick<Workspace, 'workspaceId' | 'name' | 'description' | 'imageUrl'>
+      >;
       const workspaceData: Partial<Workspace> = {
         workspaceId: body.workspaceId,
         name: body.name,
@@ -51,7 +55,7 @@ adminWorkspaceRouter.patch('/', [
 
 adminWorkspaceRouter.get('/list', [
   checkPermission([{ type: 'SUPER' }]),
-  async (req: RequestContext, res: Response) => {
+  async (_req: RequestContext, res: Response) => {
     try {
       const workspaces = await workspaceService.getAll();
       res.json(workspaces.map(workspaceMapper));

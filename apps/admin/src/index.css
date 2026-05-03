@@ -1,5 +1,5 @@
-@import '@baseline/ui/globals.css';
+@import "@baseline/ui/globals.css";
 
 /* Explicit scan roots so utilities used here + @baseline/ui emit CSS (Tailwind v4 monorepo) */
-@source '../src';
-@source '../../../packages/ui/src';
+@source "../src";
+@source "../../../packages/ui/src";

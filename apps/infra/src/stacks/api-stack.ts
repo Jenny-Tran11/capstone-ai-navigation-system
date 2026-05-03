@@ -1,13 +1,13 @@
 import { CfnOutput, Stack, type StackProps } from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
-import * as cognito from 'aws-cdk-lib/aws-cognito';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import type * as cognito from 'aws-cdk-lib/aws-cognito';
+import type * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import { Construct } from 'constructs';
-import { BaselineFunction } from '../constructs/baseline-function';
-import { BaselineAlarms } from '../constructs/baseline-alarms';
+import type * as s3 from 'aws-cdk-lib/aws-s3';
+import type { Construct } from 'constructs';
 import type { StageConfig } from '../config/stage-config';
+import { BaselineAlarms } from '../constructs/baseline-alarms';
+import { BaselineFunction } from '../constructs/baseline-function';
 
 export interface ApiStackProps extends StackProps {
   config: StageConfig;
@@ -26,7 +26,7 @@ export class ApiStack extends Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
     const { config, userPool, tables, fileBucket } = props;
-    const { appName, stage, corsOrigin, logRetentionDays } = config;
+    const { appName, stage, corsOrigin } = config;
 
     // ── REST API ─────────────────────────────────────
     const api = new apigateway.RestApi(this, 'Api', {
@@ -35,18 +35,25 @@ export class ApiStack extends Stack {
       defaultCorsPreflightOptions: {
         allowOrigins: [corsOrigin],
         allowHeaders: [
-          'Content-Type', 'X-Amz-Date', 'Authorization',
-          'X-Api-Key', 'X-Amz-Security-Token',
+          'Content-Type',
+          'X-Amz-Date',
+          'Authorization',
+          'X-Api-Key',
+          'X-Amz-Security-Token',
         ],
         allowCredentials: false,
       },
       minimumCompressionSize: 1024,
     });
 
-    const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'Authorizer', {
-      authorizerName: `${appName}-${stage}-authorizer`,
-      cognitoUserPools: [userPool],
-    });
+    const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
+      this,
+      'Authorizer',
+      {
+        authorizerName: `${appName}-${stage}-authorizer`,
+        cognitoUserPools: [userPool],
+      },
+    );
 
     const authOptions: apigateway.MethodOptions = {
       authorizer,
@@ -61,8 +68,12 @@ export class ApiStack extends Stack {
 
     const dynamoPolicy = new iam.PolicyStatement({
       actions: [
-        'dynamodb:Query', 'dynamodb:Scan', 'dynamodb:GetItem',
-        'dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem',
+        'dynamodb:Query',
+        'dynamodb:Scan',
+        'dynamodb:GetItem',
+        'dynamodb:PutItem',
+        'dynamodb:UpdateItem',
+        'dynamodb:DeleteItem',
         'dynamodb:BatchGetItem',
       ],
       resources: tableArns,
@@ -70,8 +81,10 @@ export class ApiStack extends Stack {
 
     const cognitoPolicy = new iam.PolicyStatement({
       actions: [
-        'cognito-idp:AdminCreateUser', 'cognito-idp:AdminGetUser',
-        'cognito-idp:AdminUpdateUserAttributes', 'cognito-idp:AdminResetUserPassword',
+        'cognito-idp:AdminCreateUser',
+        'cognito-idp:AdminGetUser',
+        'cognito-idp:AdminUpdateUserAttributes',
+        'cognito-idp:AdminResetUserPassword',
         'cognito-idp:ListUsers',
       ],
       resources: [userPool.userPoolArn],
@@ -79,9 +92,21 @@ export class ApiStack extends Stack {
 
     // ── API entities ─────────────────────────────────
     const apiEntities: ApiEntity[] = [
-      { name: 'ApiAdmin',      path: 'admin',      entry: 'baseblocks/admin/admin-api.ts' },
-      { name: 'ApiPermission', path: 'permission', entry: 'baseblocks/permission/permission-api.ts' },
-      { name: 'ApiWorkspace',  path: 'workspace',  entry: 'baseblocks/workspace/workspace-api.ts' },
+      {
+        name: 'ApiAdmin',
+        path: 'admin',
+        entry: 'baseblocks/admin/admin-api.ts',
+      },
+      {
+        name: 'ApiPermission',
+        path: 'permission',
+        entry: 'baseblocks/permission/permission-api.ts',
+      },
+      {
+        name: 'ApiWorkspace',
+        path: 'workspace',
+        entry: 'baseblocks/workspace/workspace-api.ts',
+      },
       // { name: 'ApiCognitoUser', path: 'cognito-user', entry: 'baseblocks/cognito-user/cognito-user-api.ts' },
     ];
 
@@ -104,7 +129,8 @@ export class ApiStack extends Stack {
       const resource = api.root.addResource(entity.path);
       const integration = new apigateway.LambdaIntegration(fn.fn);
       resource.addMethod('ANY', integration, authOptions);
-      resource.addProxy({ anyMethod: false, defaultIntegration: integration })
+      resource
+        .addProxy({ anyMethod: false, defaultIntegration: integration })
         .addMethod('ANY', integration, authOptions);
 
       lambdaFunctions.push(fn);

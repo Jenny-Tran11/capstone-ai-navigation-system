@@ -1,5 +1,4 @@
-import React from 'react';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import GetStarted from './pages/GetStarted';

@@ -1,7 +1,7 @@
 import type { PermissionType } from '@baseline/types/permission';
 import type { NextFunction, Response } from 'express';
 import { checkPermissionForUserId } from '../baseblocks/permission/permission-utils';
-import { RequestContext } from '../util/request-context.type';
+import type { RequestContext } from '../util/request-context.type';
 
 export interface MiddlewarePermissionCheck {
   type: PermissionType;

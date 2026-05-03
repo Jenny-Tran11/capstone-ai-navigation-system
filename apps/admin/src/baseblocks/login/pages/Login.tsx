@@ -1,4 +1,3 @@
-import React from 'react';
 import { Authenticator } from '@aws-amplify/ui-react';
 
 function Login() {

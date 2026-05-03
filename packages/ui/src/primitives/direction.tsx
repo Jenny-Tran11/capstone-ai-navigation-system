@@ -9,7 +9,10 @@ interface DirectionProviderProps {
   direction?: Direction;
 }
 
-function DirectionProvider({ children, direction = 'ltr' }: DirectionProviderProps) {
+function DirectionProvider({
+  children,
+  direction = 'ltr',
+}: DirectionProviderProps) {
   return (
     <DirectionContext.Provider value={direction}>
       <div dir={direction}>{children}</div>
@@ -21,4 +24,4 @@ function useDirection(): Direction {
   return React.useContext(DirectionContext);
 }
 
-export { DirectionProvider, useDirection, type Direction };
+export { type Direction, DirectionProvider, useDirection };

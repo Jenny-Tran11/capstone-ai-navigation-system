@@ -1,5 +1,6 @@
-import * as React from 'react';
 import { Loader2 } from 'lucide-react';
+import type * as React from 'react';
+import { cn } from '../../lib/utils';
 import { Button } from '../../primitives/button';
 import {
   Dialog,
@@ -10,7 +11,6 @@ import {
   DialogTitle,
 } from '../../primitives/dialog';
 import type { ModalSize } from './modal';
-import { cn } from '../../lib/utils';
 
 const sizeClasses: Record<ModalSize, string> = {
   sm: 'max-w-sm',

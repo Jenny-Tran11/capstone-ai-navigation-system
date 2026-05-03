@@ -1,4 +1,3 @@
-import React from 'react';
 import { Helmet } from 'react-helmet';
 import Footer from '../footer/Footer';
 import Navbar from '../navbar/Navbar';
@@ -12,14 +11,15 @@ const PageWrapper = (props: Props): JSX.Element => {
   const { children, title } = props;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--warm-bg)' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--warm-bg)' }}
+    >
       <Helmet>
         <title>{title ? `${title} | Baseline Core` : 'Baseline Core'}</title>
       </Helmet>
       <Navbar />
-      <div className="flex-1">
-        {children}
-      </div>
+      <div className="flex-1">{children}</div>
       <Footer />
     </div>
   );

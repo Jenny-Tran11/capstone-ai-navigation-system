@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { cn } from '@baseline/ui';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -12,7 +12,8 @@ import {
 import { Button } from '@baseline/ui/primitives/button';
 import { Input } from '@baseline/ui/primitives/input';
 import { Label } from '@baseline/ui/primitives/label';
-import { cn } from '@baseline/ui';
+import type React from 'react';
+import { useState } from 'react';
 
 interface Props {
   itemName: string;
@@ -92,8 +93,9 @@ const ConfirmDelete = (props: Props): JSX.Element => {
         </AlertDialogHeader>
         <div className="space-y-2">
           <Label htmlFor="delete">
-            Please type <span className="font-medium text-foreground">{deleteString}</span> to
-            confirm deletion.
+            Please type{' '}
+            <span className="font-medium text-foreground">{deleteString}</span>{' '}
+            to confirm deletion.
           </Label>
           <Input
             id="delete"

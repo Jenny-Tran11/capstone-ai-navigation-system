@@ -1,8 +1,7 @@
-import React from 'react';
-import PageContent from '../../../components/page-content/PageContent';
-import UserSettings from '../components/user-settings/UserSettings';
 import { fetchUserAttributes } from 'aws-amplify/auth';
 import { useLoaderData } from 'react-router-dom';
+import PageContent from '../../../components/page-content/PageContent';
+import UserSettings from '../components/user-settings/UserSettings';
 
 export async function userLoader() {
   const { email, email_verified } = await fetchUserAttributes();

@@ -1,18 +1,17 @@
-import { getErrorMessage } from './error-message';
+import type { ObjectIdPrefix } from '@baseline/types/service-object';
+import { generateId } from '@baseline/utils/service-object';
 import {
   batchGetItems,
+  type DynamoDbDocumentClient,
   deleteItem,
-  getItem,
   getAllItems,
+  getItem,
   putItem,
   updateItem,
-  DynamoDbDocumentClient,
 } from '@baselinejs/dynamodb';
-import { generateId } from '@baseline/utils/service-object';
-import { type ObjectIdPrefix } from '@baseline/types/service-object';
+import { getErrorMessage } from './error-message';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class ServiceObject<T extends Record<string, any>> {
+export class ServiceObject<T extends object> {
   table: string;
   dynamoDb: DynamoDbDocumentClient;
   objectName: string;
@@ -108,12 +107,14 @@ export class ServiceObject<T extends Record<string, any>> {
       if (!record[this.primaryKey]) {
         throw new Error(`Cannot update without ${this.primaryKey}`);
       }
-      const partial = { updatedAt: new Date().toISOString() } as unknown as Partial<T>;
-      Object.keys(record).forEach((key: keyof T) => {
-        if (key !== this.primaryKey) {
+      const partial = {
+        updatedAt: new Date().toISOString(),
+      } as unknown as Partial<T>;
+      for (const key of Object.keys(record) as (keyof T)[]) {
+        if (key !== (this.primaryKey as keyof T)) {
           partial[key] = record[key];
         }
-      });
+      }
       return await updateItem<T>({
         dynamoDb: this.dynamoDb,
         table: this.table,

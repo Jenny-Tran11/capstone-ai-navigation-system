@@ -1,5 +1,5 @@
-import { type Permission, type PermissionType } from '@baseline/types/permission';
-import { RequestHandler } from './request-handler';
+import type { Permission, PermissionType } from '@baseline/types/permission';
+import type { RequestHandler } from './request-handler';
 
 export const getMyPermissions = async (
   requestHandler: RequestHandler,

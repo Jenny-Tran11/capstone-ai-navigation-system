@@ -1,15 +1,15 @@
-import { Router, type Response } from 'express';
-import { permissionMapper } from './permission';
 import type { Permission, PermissionType } from '@baseline/types/permission';
+import { type Response, Router } from 'express';
+import { checkPermission } from '../../middleware/check-permission';
 import { getErrorMessage } from '../../util/error-message';
+import type { RequestContext } from '../../util/request-context.type';
+import { permissionMapper } from './permission';
 import {
   getPermissionsForOwnerId,
   getPermissionsForType,
   permissionService,
 } from './permission.service';
-import { checkPermission } from '../../middleware/check-permission';
 import { createPermission } from './permission-utils';
-import { RequestContext } from '../../util/request-context.type';
 
 export const adminPermissionRouter = Router();
 
@@ -80,7 +80,9 @@ adminPermissionRouter.get('/list', [
     } catch (error) {
       const message = getErrorMessage(error);
       console.error(`Failed to get permissions for current user: ${message}`);
-      res.status(400).json({ error: 'Failed to get permissions for current user' });
+      res
+        .status(400)
+        .json({ error: 'Failed to get permissions for current user' });
     }
   },
 ]);

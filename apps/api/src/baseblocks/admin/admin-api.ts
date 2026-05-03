@@ -1,15 +1,15 @@
-import { NextFunction, Response } from 'express';
-import { AdminMapper } from './admin';
+import type { Admin } from '@baseline/types/admin';
+import type { NextFunction, Response } from 'express';
 import { isAdmin } from '../../middleware/is-admin';
+import createAuthenticatedHandler from '../../util/create-authenticated-handler';
+import { getErrorMessage } from '../../util/error-message';
+import createApp from '../../util/express-app';
+import type { RequestContext } from '../../util/request-context.type';
 import {
   createUser,
   getUserAttributesByEmail,
 } from '../cognito/cognito.service';
-import { RequestContext } from '../../util/request-context.type';
-import { Admin } from '@baseline/types/admin';
-import { getErrorMessage } from '../../util/error-message';
-import createApp from '../../util/express-app';
-import createAuthenticatedHandler from '../../util/create-authenticated-handler';
+import { AdminMapper } from './admin';
 import { adminService } from './admin.service';
 
 const app = createApp();
@@ -20,12 +20,16 @@ if (process.env.NODE_ENV === 'local') {
   app.use((req: RequestContext, _res: Response, next: NextFunction) => {
     const authEnv = process.env.AUTHORIZER;
     if (authEnv) {
-      const parsed = JSON.parse(authEnv) as { claims: { sub?: string; email?: string } };
+      const parsed = JSON.parse(authEnv) as {
+        claims: { sub?: string; email?: string };
+      };
       req.context = { authorizer: parsed } as RequestContext['context'];
       req.currentUserSub = parsed.claims?.sub ?? '';
     } else {
-      const authHeader = req.headers['authorization'] as string | undefined;
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+      const authHeader = req.headers.authorization as string | undefined;
+      const token = authHeader?.startsWith('Bearer ')
+        ? authHeader.slice(7)
+        : null;
       if (token) {
         try {
           const claims = JSON.parse(
@@ -34,7 +38,9 @@ if (process.env.NODE_ENV === 'local') {
           req.context = { authorizer: { claims } } as RequestContext['context'];
           req.currentUserSub = claims.sub ?? '';
         } catch {
-          req.context = { authorizer: { claims: {} } } as RequestContext['context'];
+          req.context = {
+            authorizer: { claims: {} },
+          } as RequestContext['context'];
           req.currentUserSub = '';
         }
       }
@@ -164,7 +170,7 @@ app.delete('/admin/:userSub', [
 
 app.get('/admin/list', [
   isAdmin,
-  async (req: RequestContext, res: Response) => {
+  async (_req: RequestContext, res: Response) => {
     try {
       const admins = await adminService.getAll();
       const formattedAdmins = admins.map((data) => AdminMapper(data));

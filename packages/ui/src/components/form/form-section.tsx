@@ -1,5 +1,11 @@
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../primitives/card';
+import type * as React from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../primitives/card';
 
 export interface FormSectionProps {
   title: string;
@@ -7,7 +13,11 @@ export interface FormSectionProps {
   children: React.ReactNode;
 }
 
-export function FormSection({ title, description, children }: FormSectionProps) {
+export function FormSection({
+  title,
+  description,
+  children,
+}: FormSectionProps) {
   return (
     <Card>
       <CardHeader>

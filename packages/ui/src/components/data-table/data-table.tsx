@@ -1,10 +1,6 @@
-import * as React from 'react';
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  PaginationState,
-  SortingState,
-  VisibilityState,
+  type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFacetedRowModel,
@@ -12,9 +8,14 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
+  type SortingState,
   useReactTable,
+  type VisibilityState,
 } from '@tanstack/react-table';
+import * as React from 'react';
 import { cn } from '../../lib/utils';
+import { Skeleton } from '../../primitives/skeleton';
 import {
   Table,
   TableBody,
@@ -23,9 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from '../../primitives/table';
-import { Skeleton } from '../../primitives/skeleton';
-import { DataTableFilter, DataTableToolbar } from './data-table-toolbar';
 import { DataTablePagination } from './data-table-pagination';
+import { type DataTableFilter, DataTableToolbar } from './data-table-toolbar';
 
 export type { DataTableFilter };
 
@@ -61,8 +61,11 @@ export function DataTable<TData, TValue>({
   const isServerSide = pageCount !== undefined;
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -73,7 +76,12 @@ export function DataTable<TData, TValue>({
     data,
     columns,
     ...(isServerSide
-      ? { pageCount, manualPagination: true, manualSorting: true, manualFiltering: true }
+      ? {
+          pageCount,
+          manualPagination: true,
+          manualSorting: true,
+          manualFiltering: true,
+        }
       : {}),
     state: {
       sorting,
@@ -92,7 +100,8 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: (updater) => {
       setColumnFilters(updater);
       if (onFiltersChange) {
-        const next = typeof updater === 'function' ? updater(columnFilters) : updater;
+        const next =
+          typeof updater === 'function' ? updater(columnFilters) : updater;
         onFiltersChange(next);
       }
     },
@@ -101,7 +110,8 @@ export function DataTable<TData, TValue>({
     onPaginationChange: (updater) => {
       setPagination(updater);
       if (onPaginationChange) {
-        const next = typeof updater === 'function' ? updater(pagination) : updater;
+        const next =
+          typeof updater === 'function' ? updater(pagination) : updater;
         onPaginationChange(next);
       }
     },
@@ -126,7 +136,10 @@ export function DataTable<TData, TValue>({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-muted/30 hover:bg-muted/30">
+              <TableRow
+                key={headerGroup.id}
+                className="bg-muted/30 hover:bg-muted/30"
+              >
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
@@ -141,7 +154,10 @@ export function DataTable<TData, TValue>({
                   >
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -150,8 +166,10 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: skeleton rows have no identity
                 <TableRow key={i}>
                   {columns.map((_, j) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: skeleton cells have no identity
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
@@ -160,7 +178,10 @@ export function DataTable<TData, TValue>({
               ))
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
@@ -172,14 +193,20 @@ export function DataTable<TData, TValue>({
                         )?.cellClassName,
                       )}
                     >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   {emptyMessage}
                 </TableCell>
               </TableRow>

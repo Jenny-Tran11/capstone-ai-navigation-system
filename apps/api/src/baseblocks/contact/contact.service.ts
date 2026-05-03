@@ -1,4 +1,4 @@
-import { ContactSubmission } from '@baseline/types/contact';
+import type { ContactSubmission } from '@baseline/types/contact';
 import { getDynamodbConnection } from '@baselinejs/dynamodb';
 import { ServiceObject } from '../../util/service-object';
 

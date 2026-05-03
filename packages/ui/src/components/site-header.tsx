@@ -1,7 +1,7 @@
-import * as React from 'react';
+import type * as React from 'react';
+import { cn } from '../lib/utils';
 import { Separator } from '../primitives/separator';
 import { SidebarTrigger } from '../primitives/sidebar';
-import { cn } from '../lib/utils';
 
 export interface SiteHeaderProps
   extends Omit<React.HTMLAttributes<HTMLElement>, 'title'> {
@@ -37,7 +37,9 @@ export function SiteHeader({
         ) : null}
         {children}
         {actions ? (
-          <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {actions}
+          </div>
         ) : null}
       </div>
     </header>

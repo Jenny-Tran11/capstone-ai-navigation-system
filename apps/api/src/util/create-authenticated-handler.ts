@@ -1,7 +1,7 @@
+import type { APIGatewayProxyEventBase } from 'aws-lambda';
+import type { Application } from 'express';
 import serverless from 'serverless-http';
-import { APIGatewayProxyEventBase } from 'aws-lambda';
-import { Authorizer, RequestContext } from './request-context.type';
-import { Application } from 'express';
+import type { Authorizer, RequestContext } from './request-context.type';
 
 const createAuthenticatedHandler = (app: Application) => {
   const handler = serverless(app, {

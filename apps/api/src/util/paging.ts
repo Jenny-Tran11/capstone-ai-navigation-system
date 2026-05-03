@@ -1,4 +1,4 @@
-import { PagedResponse } from '@baseline/types/paging';
+import type { PagedResponse } from '@baseline/types/paging';
 
 export interface PageDataParams<T> {
   items: T[];
@@ -7,8 +7,8 @@ export interface PageDataParams<T> {
 }
 
 export function pageData<T>(params: PageDataParams<T>): PagedResponse<T> {
-  const limit = parseInt(`${params.limit}`) || 10;
-  const offset = parseInt(`${params.offset}`) || 0;
+  const limit = parseInt(`${params.limit}`, 10) || 10;
+  const offset = parseInt(`${params.offset}`, 10) || 0;
   const items = params.items;
   return {
     data: items.slice(offset, offset + limit),
@@ -16,8 +16,8 @@ export function pageData<T>(params: PageDataParams<T>): PagedResponse<T> {
       limit: limit,
       totalRecords: items.length,
       nextFrom: offset + limit < items.length ? offset + limit : undefined,
-      pages: parseInt(`${Math.ceil(items.length / limit) - 1}`),
-      currentPage: parseInt(`${offset / limit}`),
+      pages: parseInt(`${Math.ceil(items.length / limit) - 1}`, 10),
+      currentPage: parseInt(`${offset / limit}`, 10),
     },
   };
 }

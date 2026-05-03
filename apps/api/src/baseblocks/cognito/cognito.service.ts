@@ -5,7 +5,9 @@ const { CognitoIdentityProvider: CognitoIdentityServiceProvider } =
 
 const cognito = new CognitoIdentityServiceProvider({
   region: process.env.API_REGION || 'ap-southeast-2',
-  ...(process.env.AWS_ENDPOINT_URL && { endpoint: process.env.AWS_ENDPOINT_URL }),
+  ...(process.env.AWS_ENDPOINT_URL && {
+    endpoint: process.env.AWS_ENDPOINT_URL,
+  }),
 });
 
 export async function getUserAttributesByEmail(userEmail: string) {
@@ -54,12 +56,15 @@ export async function createUser(userEmail: string) {
 
     console.log(JSON.stringify(cognitoUser, null, 2));
 
-    const attributes = cognitoUser.User?.Attributes?.reduce((prev, attr) => {
-      if (attr.Name) {
-        prev[attr.Name] = `${attr.Value}`;
-      }
-      return prev;
-    }, {} as { [key: string]: string });
+    const attributes = cognitoUser.User?.Attributes?.reduce(
+      (prev, attr) => {
+        if (attr.Name) {
+          prev[attr.Name] = `${attr.Value}`;
+        }
+        return prev;
+      },
+      {} as { [key: string]: string },
+    );
 
     return attributes;
   } catch (error) {

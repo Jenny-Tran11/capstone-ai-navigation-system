@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { Column } from '@tanstack/react-table';
+import type { Column } from '@tanstack/react-table';
 import { Check, PlusCircle } from 'lucide-react';
+import type * as React from 'react';
 import { cn } from '../../lib/utils';
 import { Badge } from '../../primitives/badge';
 import { Button } from '../../primitives/button';
@@ -13,7 +13,11 @@ import {
   CommandList,
   CommandSeparator,
 } from '../../primitives/command';
-import { Popover, PopoverContent, PopoverTrigger } from '../../primitives/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '../../primitives/popover';
 import { Separator } from '../../primitives/separator';
 
 interface DataTableFacetedFilterProps<TData, TValue> {
@@ -43,12 +47,18 @@ export function DataTableFacetedFilter<TData, TValue>({
           {selectedValues?.size > 0 && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge variant="secondary" className="rounded-sm px-1 font-normal lg:hidden">
+              <Badge
+                variant="secondary"
+                className="rounded-sm px-1 font-normal lg:hidden"
+              >
                 {selectedValues.size}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.size > 2 ? (
-                  <Badge variant="secondary" className="rounded-sm px-1 font-normal">
+                  <Badge
+                    variant="secondary"
+                    className="rounded-sm px-1 font-normal"
+                  >
                     {selectedValues.size} selected
                   </Badge>
                 ) : (
@@ -87,7 +97,9 @@ export function DataTableFacetedFilter<TData, TValue>({
                         selectedValues.add(option.value);
                       }
                       const filterValues = Array.from(selectedValues);
-                      column?.setFilterValue(filterValues.length ? filterValues : undefined);
+                      column?.setFilterValue(
+                        filterValues.length ? filterValues : undefined,
+                      );
                     }}
                   >
                     <div

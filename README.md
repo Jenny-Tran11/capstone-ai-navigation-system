@@ -1,157 +1,40 @@
-![1688515420018](https://github.com/Baseline-JS/core/assets/151841910/620fa869-4bca-418d-af2c-3a3f8b2d2719)
+# Baseline
 
-# BaselineJS
+A fullstack TypeScript monorepo for building cloud-native applications on AWS. Built with React, Express, AWS CDK, and a shared design system.
 
-BaselineJS is an open-source, fullstack TypeScript, serverless first framework designed to make building cloud native applications easier. Our framework utilizes a combination of modern technologies, architectures and operational processes to help teams to efficiently build and deploy robust applications
+## Project Structure
 
-If you like BaselineJS give us a ⭐️
+```
+apps/
+├── admin       — Admin dashboard (React + Vite)
+├── api         — Express API (Lambda-deployed)
+├── infra       — AWS CDK infrastructure
+└── web         — Public website (React + Vite + Amplify auth)
 
-[Website](https://baselinejs.com/) |
-[Documentation](https://docs.baselinejs.com/) |
-[Discord](https://discord.gg/beCj9VDeMm) |
-[LinkedIn](https://www.linkedin.com/company/baselinejs) |
-[YouTube](https://www.youtube.com/@Baseline-JS)
+packages/
+├── client-api  — Shared API client (axios singleton)
+├── swr-client  — SWR data-fetching hooks
+├── types       — Shared TypeScript types
+├── ui          — Design system (Tailwind v4 + shadcn/ui)
+└── utils       — Shared utilities and Zod schemas
 
-Startups, want $1k USD of AWS Credits to Get Started? [Apply Here](https://share.hsforms.com/1P6p_G9Q_Q-SJAESAYtLftgqm3as)
-
-# Getting Started
-
-Video walkthroughs setting up Baseline
-
-- [Baseline Demo](https://www.youtube.com/watch?v=db5gxYWAf1E)
-- [Baseline with Windows Subsystem Linux](https://www.youtube.com/watch?v=sxrQxoibUgI)
-- [Baseline with GitHub Codespaces](https://www.youtube.com/watch?v=uvL9PxdijXA)
-- [Baseline Simplified Workshop](https://youtu.be/YWh5iVaTq_w)
-
-# Setup
-
-## Quick Start
-
-`npx @baselinejs/quickstart`
-
-The quick start command will:
-
-- Install all requirements
-- Create a new Baseline project
-- Set up AWS credentials
-- Deploy to staging
-- Create an admin user
-- Output the URLs for the project
-
-You may need to install npm if npx is not available, you can do this by installing [Node.js](https://nodejs.org/en/download/)
-
-## Create App
-
-If you prefer a more manual setup, follow the steps below.
-
-1. [Install requirements](#local-requirements) `pnpm run install:requirements`
-2. `npx @baselinejs/create-app my-app-name`
-3. `pnpm install`
-4. `pnpm run setup` to name your project and set the region
-5. `pnpm run aws:profile` to setup your AWS credentials profile (if you have issues please [update aws cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html]))
-6. `pnpm run deploy:staging` to deploy api/web/admin
-7. `pnpm run add:user:staging` to add an admin user to the application
-8. `pnpm run urls:staging` To see your project URLs
-
-## Local Requirements
-
-These must be installed before following the setup instructions. These can be installed manually or by using the requirements installation script.
-
-- Macos/Linux OS/Windows Subsystem for Linux
-  - Node.js v20 (v20 or higher) & npm@10.5.0 or higher [(we suggest installing and using nvm)](https://github.com/nvm-sh/nvm#install--update-script) follow instructions in the link to install, you will generally need to create a new terminal session after installing. If you already have nvm update it before proceeding.
-    - If nvm is installed you can switch versions with `nvm install 20 && nvm use 20 && nvm alias default 20 && nvm install-latest-npm`
-    - If not using nvm you can manually install node and npm, download from <https://nodejs.org/en/download/> alternatively use the operating system package manager or any other appropriate tool to install node
-    - Current versions can be checked with `node -v`, `npm -v`
-  - pnpm version 9, version can be checked with `pnpm -v`, install with `npm install -g pnpm@9` [or other methods](https://pnpm.io/installation)
-  - [AWS CLI v2](https://aws.amazon.com/cli)
-  - Homebrew, for Mac users only, follow install instructions [here](https://brew.sh/)
-  - [jq](https://stedolan.github.io/jq/download/) for extracting Cloudformation outputs
-    - Install on mac `brew install jq`
-    - Install on Linux `sudo yum install jq` or `sudo apt-get install jq`, or other appropriate methods
-  - Java Runtime Environment (JRE) version 8.x or newer, it is only required for [DynamoDB local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html)
-    - Install on mac `brew install temurin`
-    - Install on linux `sudo yum install java` or `sudo apt-get install openjdk-8-jdk`, or other appropriate methods
-    - DynamoDB local will automatically install in the project when the api is started, java needs to installed before this occurs
-  - curl which is used in some of the bash scripts, [curl install instructions](https://everything.curl.dev/get)
-  - An IDE such as [Visual Studio Code](https://code.visualstudio.com/)
-- Internet connectivity
-- AWS Account <https://aws.amazon.com/getting-started/>
-- IAM credentials <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-prereqs.html#getting-started-prereqs-iam> be sure to follow [Security best practices in IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
-
-### Requirements Installation
-
-Run the following command to install the requirements.
-
-If you are starting a new Baseline project.
-
-```bash
-curl -o- https://raw.githubusercontent.com/Baseline-JS/core/main/scripts/install-requirements.sh | bash
+commands/
+└── add-object  — CLI scaffolding tool
 ```
 
-or
+## Tech Stack
 
-```bash
-wget -qO- https://raw.githubusercontent.com/Baseline-JS/core/main/scripts/install-requirements.sh | bash
-```
-
-If you are joining an existing Baseline project make sure you run the requirements installation script in the root of the project. This will install the requirements for the project.
-
-```bash
-pnpm run install:requirements
-```
-
-## Run Locally
-
-If the project is already setup and you are trying run the project locally make sure you run `pnpm run aws:profile` first so that you have the correct credentials for AWS configured locally.
-
-### Commands
-
-Start the api, admin and web in their own terminal windows/tabs with the following commands.
-
-1. `pnpm run generate:env:local` to generate the env files for the frontend clients
-2. `pnpm run start:api`
-3. `pnpm run start:admin`
-4. `pnpm run start:web`
-
-### Running locally Limitations
-
-- API, Web & Admin: No S3, you will need to rely on AWS staging S3
-- API: No local Cognito Authorizer, the deployed staging cognito can be used (see `apps/api/serverless.local.yml`) or the payload set by `AUTHORIZER` in `apps/api/scripts/run-api-local.sh`.
-- Admin: Cognito UI relies on an active AWS Cognito user pool, use deployed staging
-
-## Deploy a Change
-
-Swap `staging` to `prod` to deploy to production. All environment variables will be automatically set in the process.
-
-1. `pnpm run deploy:staging` to deploy api/web/admin
-
-## Remove Stack
-
-To destroy the deployed cloudformation stacks so it is no longer on AWS run `pnpm run remove:staging`. This will likely destroy all data associated with the application.
-
-## Major Components
-
-- 🚀 API
-- 🖥️ React Admin Website
-- 🌐 React User Website
-- ⚙️ CI/CD
-- 🔧 Developer Tooling
-- 🔒 Authentication
-- 🔄 Multiple Environments
-- 💻 Run Locally
-- 🏗️ Infrastructure as Code (IaC)
-- 📦 Managed Environment Variables
-- ✨ Baseline Commands
-
-## Technology
-
-- 🎁 Package Management: Pnpm + Monorepo
-- 🔨 Language & Build: TypeScript + ESBuild
-- 🖼 Frontend: React + Vite
-- ⚙️ Backend: NodeJS + Express
-- 🎨 Linting & Formatting: Prettier + Eslint
-- 🏗 IaC: AWS + Serverless Framework
-- 🚀 Deploy: Local/Bitbucket/GitHub CI/CD
+| Category | Technologies |
+|---|---|
+| **Frontend** | React 18, Vite 5, TypeScript 5, React Router 6 |
+| **Styling** | Tailwind CSS v4, shadcn/ui |
+| **Backend** | Node.js 20+, Express, AWS Lambda |
+| **Infrastructure** | AWS CDK 2.x, CloudFormation |
+| **Database** | DynamoDB |
+| **Auth** | AWS Cognito + Amplify |
+| **Local AWS emulation** | MiniStack (via Docker) |
+| **Package Management** | pnpm 9+ monorepo |
+| **Linting & Formatting** | ESLint 9, Prettier |
 
 ## AWS Services
 
@@ -167,27 +50,91 @@ To destroy the deployed cloudformation stacks so it is no longer on AWS run `pnp
 - CloudWatch
 - SNS
 
-## What can you build with Baseline?
+## Features
 
-- 🌐 SaaS Solutions: Build software-as-a-service solutions tailored to your audience.
-- 🖥️ Web Applications: Develop responsive and scalable web applications.
-- 🛒 Marketplaces: Launch and manage online marketplaces with ease.
-- 📱 Mobile Applications: Create robust mobile apps for iOS and Android platforms.
-- 💼🛍️ B2B/B2C Applications: Seamlessly cater to both business and consumer audiences.
-- 🗄️ Headless CMS: Manage content efficiently using a headless content management system.
+- **Admin dashboard** — workspace and permission management, user admin
+- **Public website** — authenticated pages via Cognito + Amplify (Home, About, Contact, Sign In, Get Started)
+- **Workspace system** — create workspaces, assign users via `WORKSPACE` permissions
+- **Permission system** — `SUPER` and `WORKSPACE` permission types with middleware enforcement
+- **Design system** — 50+ shadcn/ui primitives + composite components in `@baseline/ui`
+- **SWR data layer** — `@baseline/swr-client` hooks wrapping all API calls
 
-## Benefits
+## Setup
 
-- Serverless First
-- Open source
-- Full control
-- Cost effective implementation
-- Hosted in your own AWS account
-- Uses popular technology
-- Scales on demand
-- Staging and production environments
-- Runs locally
+### Requirements
 
-# Baseline
+- macOS / Linux / WSL
+- Node.js v20+ [(install via nvm)](https://github.com/nvm-sh/nvm#install--update-script)
+- pnpm v9+ (`npm install -g pnpm@9`)
+- [AWS CLI v2](https://aws.amazon.com/cli)
+- [Docker](https://docs.docker.com/get-docker/) — for MiniStack local AWS emulation
+- [jq](https://stedolan.github.io/jq/download/)
 
-If you would like to learn more about what we do please visit [Baseline](https://baselinejs.com/)
+### Getting Started
+
+1. `pnpm install`
+2. `pnpm run setup` — name the project and set the AWS region
+3. `pnpm run aws:profile` — configure AWS credentials
+4. `pnpm run deploy:staging` — build and deploy to staging
+5. `pnpm run add:user:staging` — create an admin user
+6. `pnpm run urls:staging` — view deployment URLs
+
+## Local Development
+
+MiniStack emulates DynamoDB, Cognito, Lambda, and API Gateway locally via Docker. No AWS account needed for local dev.
+
+```bash
+# Start MiniStack (keep running in a dedicated terminal)
+docker compose up
+
+# Generate local env files
+pnpm run generate:env:local
+
+# Start all apps concurrently
+pnpm run start:all
+```
+
+Or start each individually:
+
+```bash
+pnpm run start:api     # Express API on port 4000 (creates tables + Cognito pool on first run)
+pnpm run start:admin   # Admin dashboard on port 5002
+pnpm run start:web     # Public website on port 5173
+```
+
+**Default local credentials:** `example@devika.com` / `Password123`
+
+**Reset local state:**
+
+```bash
+docker compose down -v   # wipe MiniStack state
+docker compose up -d
+```
+
+### Local Limitations
+
+- No local S3 — falls back to staging S3
+- Admin Cognito UI requires an active AWS Cognito user pool (staging or MiniStack)
+
+## Deployment
+
+Uses AWS CDK. Swap `staging` for `prod` to target production.
+
+```bash
+pnpm run deploy:staging       # build admin + web, then deploy via CDK
+pnpm run deploy:prod          # production deploy (requires approval)
+pnpm run diff:staging         # preview CDK changes before deploying
+pnpm run destroy:staging      # tear down staging stack
+```
+
+## Scaffolding
+
+Generate a new data model with the CLI tool:
+
+```bash
+pnpm run add:object
+```
+
+## License
+
+MIT

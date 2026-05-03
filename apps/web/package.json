@@ -11,9 +11,7 @@
     "preview": "npx vite preview",
     "generate:env:local": "pnpm -w run generate:env:local",
     "generate:env:staging": "pnpm -w run generate:env:staging",
-    "generate:env:prod": "pnpm -w run generate:env:prod",
-    "lint": "npx eslint 'src/**/*.{ts,tsx,jsx,js}'",
-    "pretty": "npx prettier --write 'src/**/*.{ts,tsx,js,json,css,md,yml,yaml,html}'"
+    "generate:env:prod": "pnpm -w run generate:env:prod"
   },
   "dependencies": {
     "@baseline/client-api": "workspace:1.0.0",
@@ -34,10 +32,7 @@
     "@types/react": "18.2.66",
     "@types/react-dom": "18.2.22",
     "@types/react-helmet": "6.1.11",
-    "eslint-plugin-react": "7.37.2",
-    "eslint-plugin-react-hooks": "5.1.0",
-    "postcss": "8.5.1",
-    "prettier": "2.4.1"
+    "postcss": "8.5.1"
   },
   "browserslist": {
     "production": [

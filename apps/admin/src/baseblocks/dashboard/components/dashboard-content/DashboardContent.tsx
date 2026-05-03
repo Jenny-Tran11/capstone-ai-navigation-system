@@ -1,18 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { getAllAdmins } from '@baseline/client-api/admin';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
-import {
-  IconArrowRight,
-  IconDotsVertical,
-  IconLayoutGrid,
-  IconMail,
-  IconServer,
-  IconShieldCheck,
-  IconSparkles,
-  IconTrendingUp,
-  IconUsers,
-} from '@tabler/icons-react';
 import { Avatar, AvatarFallback } from '@baseline/ui/primitives/avatar';
 import { Badge } from '@baseline/ui/primitives/badge';
 import { Button } from '@baseline/ui/primitives/button';
@@ -40,6 +27,20 @@ import {
   TableHeader,
   TableRow,
 } from '@baseline/ui/primitives/table';
+import {
+  IconArrowRight,
+  IconDotsVertical,
+  IconLayoutGrid,
+  IconMail,
+  IconServer,
+  IconShieldCheck,
+  IconSparkles,
+  IconTrendingUp,
+  IconUsers,
+} from '@tabler/icons-react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 type Tone = 'default' | 'muted' | 'positive';
 
@@ -228,11 +229,22 @@ const DashboardContent = (): JSX.Element => {
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              { name: 'Toby Belhome', email: 'contact@bundui.io', role: 'Viewer' },
-              { name: 'Jackson Lee', email: 'pre@example.com', role: 'Developer' },
+              {
+                name: 'Toby Belhome',
+                email: 'contact@bundui.io',
+                role: 'Viewer',
+              },
+              {
+                name: 'Jackson Lee',
+                email: 'pre@example.com',
+                role: 'Developer',
+              },
               { name: 'Hally Gray', email: 'hally@site.com', role: 'Viewer' },
             ].map((member) => (
-              <div key={member.email} className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 p-3">
+              <div
+                key={member.email}
+                className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 p-3"
+              >
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="text-xs">
                     {member.name
@@ -244,7 +256,9 @@ const DashboardContent = (): JSX.Element => {
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-sm">{member.name}</p>
-                  <p className="truncate text-muted-foreground text-xs">{member.email}</p>
+                  <p className="truncate text-muted-foreground text-xs">
+                    {member.email}
+                  </p>
                 </div>
                 <Badge variant="outline">{member.role}</Badge>
               </div>
@@ -280,15 +294,26 @@ const DashboardContent = (): JSX.Element => {
               {[
                 ['Kenneth Thompson', 'ken99@yahoo.com', '$316.00', 'success'],
                 ['Abraham Lincoln', 'abe45@gmail.com', '$242.00', 'success'],
-                ['Monserrat Rodriguez', 'monserrat44@gmail.com', '$837.00', 'processing'],
+                [
+                  'Monserrat Rodriguez',
+                  'monserrat44@gmail.com',
+                  '$837.00',
+                  'processing',
+                ],
                 ['Silas Johnson', 'silas22@gmail.com', '$874.00', 'success'],
               ].map(([name, email, amount, status]) => (
                 <TableRow key={String(email)}>
                   <TableCell className="pl-6 font-medium">{name}</TableCell>
-                  <TableCell className="text-muted-foreground">{email}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {email}
+                  </TableCell>
                   <TableCell>{amount}</TableCell>
                   <TableCell>
-                    <Badge variant={status === 'processing' ? 'secondary' : 'outline'}>
+                    <Badge
+                      variant={
+                        status === 'processing' ? 'secondary' : 'outline'
+                      }
+                    >
                       {status}
                     </Badge>
                   </TableCell>
@@ -318,14 +343,7 @@ const DashboardContent = (): JSX.Element => {
 };
 
 function StatCard(props: StatCardItem) {
-  const {
-    icon: Icon,
-    label,
-    value,
-    hint,
-    tone = 'default',
-    trend,
-  } = props;
+  const { icon: Icon, label, value, hint, tone = 'default', trend } = props;
 
   return (
     <Card className="@container/card">

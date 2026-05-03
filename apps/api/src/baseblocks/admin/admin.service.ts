@@ -1,6 +1,6 @@
-import { Admin } from '@baseline/types/admin';
-import { getErrorMessage } from '../../util/error-message';
+import type { Admin } from '@baseline/types/admin';
 import { getDynamodbConnection } from '@baselinejs/dynamodb';
+import { getErrorMessage } from '../../util/error-message';
 import { ServiceObject } from '../../util/service-object';
 
 const dynamoDb = getDynamodbConnection({

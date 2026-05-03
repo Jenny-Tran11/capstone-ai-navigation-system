@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { type Workspace } from '@baseline/types/workspace';
-import { createWorkspace } from '@baseline/client-api/workspace';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
+import { createWorkspace } from '@baseline/client-api/workspace';
+import type { Workspace } from '@baseline/types/workspace';
+import { Button } from '@baseline/ui/primitives/button';
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@baseline/ui/primitives/dialog';
-import { Button } from '@baseline/ui/primitives/button';
 import { Input } from '@baseline/ui/primitives/input';
 import { Label } from '@baseline/ui/primitives/label';
+import type React from 'react';
+import { useState } from 'react';
 
 interface Props {
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>;
@@ -47,7 +48,12 @@ const CreateWorkspace = ({ setWorkspaces }: Props) => {
 
   return (
     <div>
-      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
         Create
       </Button>
       <Dialog open={open} onOpenChange={handleClose}>

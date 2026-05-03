@@ -32,10 +32,7 @@
     "./globals.css": "./src/globals.css",
     "./package.json": "./package.json"
   },
-  "scripts": {
-    "lint": "npx eslint 'src/**/*.{ts,tsx}'",
-    "pretty": "npx prettier --write 'src/**/*.{ts,tsx,css}'"
-  },
+  "scripts": {},
   "dependencies": {
     "@radix-ui/react-accordion": "1.2.3",
     "@radix-ui/react-alert-dialog": "1.1.6",

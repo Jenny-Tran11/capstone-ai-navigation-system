@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { cn } from '../lib/utils';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -14,7 +15,6 @@ import {
 import { Button } from '../primitives/button';
 import { Input } from '../primitives/input';
 import { Label } from '../primitives/label';
-import { cn } from '../lib/utils';
 
 export interface ConfirmDeleteDialogProps {
   itemName: string;

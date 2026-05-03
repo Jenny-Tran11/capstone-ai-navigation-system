@@ -1,13 +1,15 @@
-import React from 'react';
-import { useLoaderData } from 'react-router-dom';
-import { type Permission, type PermissionType } from '@baseline/types/permission';
 import { getPermissionsForType } from '@baseline/client-api/permission';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
+import type { Permission, PermissionType } from '@baseline/types/permission';
+import { useLoaderData } from 'react-router-dom';
 import PageContent from '../../../components/page-content/PageContent';
 import PermissionList from '../components/permission-list/PermissionList';
 
 export async function permissionListLoader() {
-  const permissions = await getPermissionsForType(getRequestHandler(), 'SUPER' as PermissionType);
+  const permissions = await getPermissionsForType(
+    getRequestHandler(),
+    'SUPER' as PermissionType,
+  );
   return { permissions };
 }
 

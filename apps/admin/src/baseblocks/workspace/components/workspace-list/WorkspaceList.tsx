@@ -1,10 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { type Workspace } from '@baseline/types/workspace';
-import {
-  IconBuilding,
-  IconDotsVertical,
-  IconTrash,
-} from '@tabler/icons-react';
+import { getRequestHandler } from '@baseline/client-api/request-handler';
+import { deleteWorkspace } from '@baseline/client-api/workspace';
+import type { Workspace } from '@baseline/types/workspace';
+import { type ColumnDef, EntityList } from '@baseline/ui';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +21,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@baseline/ui/primitives/dropdown-menu';
-import { EntityList, type ColumnDef } from '@baseline/ui';
-import { deleteWorkspace } from '@baseline/client-api/workspace';
-import { getRequestHandler } from '@baseline/client-api/request-handler';
+import { IconBuilding, IconDotsVertical, IconTrash } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
 import CreateWorkspace from './CreateWorkspace';
 
 interface Props {
@@ -36,7 +32,9 @@ interface Props {
 type RowLike<T> = { original: T };
 
 const WorkspaceList = ({ workspaces: initial }: Props): JSX.Element => {
-  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>(initial ?? []);
+  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>(
+    initial ?? [],
+  );
   const [pendingDelete, setPendingDelete] = useState<Workspace | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 

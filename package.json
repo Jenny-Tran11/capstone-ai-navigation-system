@@ -2,7 +2,7 @@
   "name": "@baselinejs/core",
   "version": "0.0.20",
   "engines": {
-    "node": ">=20",
+    "node": ">=24",
     "pnpm": ">=9"
   },
   "homepage": "https://baselinejs.com",
@@ -30,9 +30,10 @@
     "generate:env:prod": "./scripts/generate-env-vars.sh prod",
     "urls:staging": "./scripts/project-urls.sh staging",
     "urls:prod": "./scripts/project-urls.sh prod",
-    "lint": "pnpm --if-present --recursive --parallel run lint",
+    "lint": "biome lint ./apps ./packages",
+    "format": "biome format --write ./apps ./packages",
+    "check": "biome check --write ./apps ./packages",
     "build": "pnpm --if-present --recursive --parallel run build",
-    "pretty": "pnpm --if-present --recursive --parallel run pretty",
     "add:object": "pnpm --filter @baseline/add-object start",
     "add:user:staging": "pnpm --filter @baseline/api run add:user:staging",
     "add:user:prod": "pnpm --filter @baseline/api run add:user:prod",
@@ -49,14 +50,8 @@
     "install:requirements": "./scripts/install-requirements.sh"
   },
   "devDependencies": {
-    "@eslint/js": "9.17.0",
-    "@typescript-eslint/eslint-plugin": "8.18.1",
-    "@typescript-eslint/parser": "8.18.1",
-    "concurrently": "^9.2.1",
-    "eslint": "9.17.0",
-    "eslint-config-prettier": "9.1.0",
-    "globals": "15.13.0",
-    "typescript-eslint": "8.18.1"
+    "@biomejs/biome": "^2.4.14",
+    "concurrently": "^9.2.1"
   },
   "resolutions": {
     "fast-xml-parser": "4.4.1",

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type * as React from 'react';
 import { SubmitRow } from '../form/submit-row';
 
 export interface EntityFormProps {
@@ -24,7 +24,9 @@ export function EntityForm({
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-lg font-semibold">{title}</h2>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        {description && (
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        )}
       </div>
       <form
         onSubmit={(e) => {

@@ -1,8 +1,8 @@
 import { Stack, type StackProps } from 'aws-cdk-lib';
-import * as cognito from 'aws-cdk-lib/aws-cognito';
-import { Construct } from 'constructs';
-import { BaselineCognito } from '../constructs/baseline-cognito';
+import type * as cognito from 'aws-cdk-lib/aws-cognito';
+import type { Construct } from 'constructs';
 import type { StageConfig } from '../config/stage-config';
+import { BaselineCognito } from '../constructs/baseline-cognito';
 
 export interface AuthStackProps extends StackProps {
   config: StageConfig;

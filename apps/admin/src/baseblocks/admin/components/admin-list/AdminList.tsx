@@ -1,12 +1,7 @@
-import React, { useMemo, useState } from 'react';
 import { deleteAdmin } from '@baseline/client-api/admin';
-import { Admin } from '@baseline/types/admin';
-import {
-  IconCopy,
-  IconDotsVertical,
-  IconTrash,
-  IconUsers,
-} from '@tabler/icons-react';
+import { getRequestHandler } from '@baseline/client-api/request-handler';
+import type { Admin } from '@baseline/types/admin';
+import { type ColumnDef, EntityList } from '@baseline/ui';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,10 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@baseline/ui/primitives/alert-dialog';
-import {
-  Avatar,
-  AvatarFallback,
-} from '@baseline/ui/primitives/avatar';
+import { Avatar, AvatarFallback } from '@baseline/ui/primitives/avatar';
 import { Badge } from '@baseline/ui/primitives/badge';
 import { Button } from '@baseline/ui/primitives/button';
 import {
@@ -30,8 +22,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@baseline/ui/primitives/dropdown-menu';
-import { EntityList, type ColumnDef } from '@baseline/ui';
-import { getRequestHandler } from '@baseline/client-api/request-handler';
+import {
+  IconCopy,
+  IconDotsVertical,
+  IconTrash,
+  IconUsers,
+} from '@tabler/icons-react';
+import { useCallback, useMemo, useState } from 'react';
 import AddUser from '../add-admin/AddAdmin';
 
 interface Props {
@@ -72,7 +69,7 @@ const AdminList = ({ admins }: Props): JSX.Element => {
     }
   };
 
-  const handleCopyId = async (id: string): Promise<void> => {
+  const handleCopyId = useCallback(async (id: string): Promise<void> => {
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(id);
@@ -82,7 +79,7 @@ const AdminList = ({ admins }: Props): JSX.Element => {
     } catch {
       // no-op
     }
-  };
+  }, []);
 
   const countLabel =
     allAdmins.length === 1
@@ -187,7 +184,7 @@ const AdminList = ({ admins }: Props): JSX.Element => {
         },
       },
     ],
-    [copiedId],
+    [copiedId, handleCopyId],
   );
 
   return (

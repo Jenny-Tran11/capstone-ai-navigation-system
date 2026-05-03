@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Link } from 'react-router-dom';
 
 const platformLinks: { label: string; to: string }[] = [
@@ -22,14 +22,19 @@ const connectLinks: { label: string; href: string }[] = [
 ];
 
 const linkHover = {
-  onMouseEnter: (e: React.MouseEvent<HTMLElement>) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-primary)'),
-  onMouseLeave: (e: React.MouseEvent<HTMLElement>) => ((e.currentTarget as HTMLElement).style.color = 'var(--warm-muted)'),
+  onMouseEnter: (e: React.MouseEvent<HTMLElement>) =>
+    ((e.currentTarget as HTMLElement).style.color = 'var(--warm-primary)'),
+  onMouseLeave: (e: React.MouseEvent<HTMLElement>) =>
+    ((e.currentTarget as HTMLElement).style.color = 'var(--warm-muted)'),
 };
 
 const Footer = (): JSX.Element => (
   <footer
     className="border-t py-16 px-6"
-    style={{ backgroundColor: 'var(--warm-surface)', borderColor: 'var(--warm-border)' }}
+    style={{
+      backgroundColor: 'var(--warm-surface)',
+      borderColor: 'var(--warm-border)',
+    }}
   >
     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
       {/* Brand column */}
@@ -41,18 +46,29 @@ const Footer = (): JSX.Element => (
           >
             <span className="text-white font-bold text-xs">B</span>
           </div>
-          <span className="text-lg font-medium tracking-tight" style={{ color: 'var(--warm-fg)' }}>
+          <span
+            className="text-lg font-medium tracking-tight"
+            style={{ color: 'var(--warm-fg)' }}
+          >
             Baseline Core
           </span>
         </div>
-        <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'var(--warm-muted)' }}>
+        <p
+          className="text-sm leading-relaxed max-w-xs"
+          style={{ color: 'var(--warm-muted)' }}
+        >
           Crafting human-centred software foundations for modern creative teams.
         </p>
       </div>
 
       {/* Platform */}
       <div className="space-y-4">
-        <h4 className="font-semibold text-sm" style={{ color: 'var(--warm-fg)' }}>Platform</h4>
+        <h4
+          className="font-semibold text-sm"
+          style={{ color: 'var(--warm-fg)' }}
+        >
+          Platform
+        </h4>
         <div className="flex flex-col gap-3">
           {platformLinks.map(({ label, to }) => (
             <Link
@@ -70,7 +86,12 @@ const Footer = (): JSX.Element => (
 
       {/* Company */}
       <div className="space-y-4">
-        <h4 className="font-semibold text-sm" style={{ color: 'var(--warm-fg)' }}>Company</h4>
+        <h4
+          className="font-semibold text-sm"
+          style={{ color: 'var(--warm-fg)' }}
+        >
+          Company
+        </h4>
         <div className="flex flex-col gap-3">
           {companyLinks.map(({ label, to }) => (
             <Link
@@ -88,7 +109,12 @@ const Footer = (): JSX.Element => (
 
       {/* Connect */}
       <div className="space-y-4">
-        <h4 className="font-semibold text-sm" style={{ color: 'var(--warm-fg)' }}>Connect</h4>
+        <h4
+          className="font-semibold text-sm"
+          style={{ color: 'var(--warm-fg)' }}
+        >
+          Connect
+        </h4>
         <div className="flex flex-col gap-3">
           {connectLinks.map(({ label, href }) => (
             <a
@@ -114,8 +140,20 @@ const Footer = (): JSX.Element => (
     >
       <p>© {new Date().getFullYear()} Baseline Core. All rights reserved.</p>
       <div className="flex items-center gap-6">
-        <Link to="/privacy" className="no-underline hover:opacity-70 transition-opacity" style={{ color: 'var(--warm-muted)' }}>Privacy Policy</Link>
-        <Link to="/terms" className="no-underline hover:opacity-70 transition-opacity" style={{ color: 'var(--warm-muted)' }}>Terms of Service</Link>
+        <Link
+          to="/privacy"
+          className="no-underline hover:opacity-70 transition-opacity"
+          style={{ color: 'var(--warm-muted)' }}
+        >
+          Privacy Policy
+        </Link>
+        <Link
+          to="/terms"
+          className="no-underline hover:opacity-70 transition-opacity"
+          style={{ color: 'var(--warm-muted)' }}
+        >
+          Terms of Service
+        </Link>
       </div>
     </div>
   </footer>

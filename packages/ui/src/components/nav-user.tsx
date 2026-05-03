@@ -1,4 +1,3 @@
-import * as React from 'react';
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -6,6 +5,7 @@ import {
   IconNotification,
   IconUserCircle,
 } from '@tabler/icons-react';
+import type * as React from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import {

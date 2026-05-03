@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { InboxIcon } from 'lucide-react';
+import type * as React from 'react';
 
 export interface EntityEmptyProps {
   icon?: React.ComponentType<{ className?: string }>;
@@ -21,7 +21,9 @@ export function EntityEmpty({
       </div>
       <div className="space-y-1">
         <p className="text-sm font-medium">{title}</p>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
       </div>
       {action}
     </div>

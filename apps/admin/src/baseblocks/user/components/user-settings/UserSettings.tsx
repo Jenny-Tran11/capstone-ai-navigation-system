@@ -1,11 +1,3 @@
-import {
-  signOut,
-  updateUserAttributes,
-  confirmUserAttribute,
-  fetchUserAttributes,
-} from 'aws-amplify/auth';
-import React, { useState } from 'react';
-import { IconLogout, IconMail, IconShieldLock } from '@tabler/icons-react';
 import { Button } from '@baseline/ui/primitives/button';
 import {
   Card,
@@ -24,6 +16,14 @@ import {
   TabsList,
   TabsTrigger,
 } from '@baseline/ui/primitives/tabs';
+import { IconLogout, IconMail, IconShieldLock } from '@tabler/icons-react';
+import {
+  confirmUserAttribute,
+  fetchUserAttributes,
+  signOut,
+  updateUserAttributes,
+} from 'aws-amplify/auth';
+import { useState } from 'react';
 
 interface Props {
   user: { email: string; email_verified: boolean };
@@ -141,8 +141,7 @@ const UserSettings = (props: Props): JSX.Element => {
                     Verification code
                   </Label>
                   <p className="text-muted-foreground text-xs">
-                    Enter the code from the verification email Cognito sent
-                    you.
+                    Enter the code from the verification email Cognito sent you.
                   </p>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
                     <Input

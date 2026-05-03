@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "lint": "npx eslint '*.ts'",
-    "type-check": "npx tsc --noEmit",
-    "pretty": "npx prettier --write '*.{ts,tsx,js,json,css,scss,md,yml,yaml,html}'"
+    "type-check": "pnpm --filter @baseline/admin exec tsc --noEmit -p ../../packages/utils/tsconfig.json"
   },
   "dependencies": {
     "@baseline/types": "workspace:1.0.0",

@@ -1,4 +1,4 @@
-import { ContactSubmission } from '@baseline/types/contact';
+import type { ContactSubmission } from '@baseline/types/contact';
 
 export const ContactMapper = (data: ContactSubmission): ContactSubmission => {
   const submission: ContactSubmission = {

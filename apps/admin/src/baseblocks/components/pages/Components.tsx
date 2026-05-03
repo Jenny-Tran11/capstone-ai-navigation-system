@@ -1,14 +1,3 @@
-import React, { useState } from 'react';
-import {
-  IconAlertTriangle,
-  IconBell,
-  IconCheck,
-  IconCopy,
-  IconDotsVertical,
-  IconLayoutGrid,
-  IconSparkles,
-} from '@tabler/icons-react';
-import PageContent from '../../../components/page-content/PageContent';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,10 +9,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@baseline/ui/primitives/alert-dialog';
-import {
-  Avatar,
-  AvatarFallback,
-} from '@baseline/ui/primitives/avatar';
+import { Avatar, AvatarFallback } from '@baseline/ui/primitives/avatar';
 import { Badge } from '@baseline/ui/primitives/badge';
 import { Button } from '@baseline/ui/primitives/button';
 import {
@@ -69,6 +55,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@baseline/ui/primitives/tooltip';
+import {
+  IconAlertTriangle,
+  IconBell,
+  IconCheck,
+  IconCopy,
+  IconDotsVertical,
+  IconLayoutGrid,
+  IconSparkles,
+} from '@tabler/icons-react';
+import type React from 'react';
+import { useState } from 'react';
+import PageContent from '../../../components/page-content/PageContent';
 
 interface ShowcaseSectionProps {
   title: string;
@@ -164,7 +162,9 @@ const Components = (): JSX.Element => {
             <Card>
               <CardHeader>
                 <CardDescription>Monthly revenue</CardDescription>
-                <CardTitle className="font-semibold text-2xl">$12,430</CardTitle>
+                <CardTitle className="font-semibold text-2xl">
+                  $12,430
+                </CardTitle>
                 <CardAction>
                   <Badge variant="outline">+4.5%</Badge>
                 </CardAction>
@@ -191,17 +191,13 @@ const Components = (): JSX.Element => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() =>
-                        setProgress((p) => Math.max(0, p - 10))
-                      }
+                      onClick={() => setProgress((p) => Math.max(0, p - 10))}
                     >
                       -10
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() =>
-                        setProgress((p) => Math.min(100, p + 10))
-                      }
+                      onClick={() => setProgress((p) => Math.min(100, p + 10))}
                     >
                       +10
                     </Button>
@@ -247,23 +243,29 @@ const Components = (): JSX.Element => {
           </div>
         </ShowcaseSection>
 
-        <ShowcaseSection
-          title="Tabs"
-          description="Simple segmented control."
-        >
+        <ShowcaseSection title="Tabs" description="Simple segmented control.">
           <Tabs defaultValue="overview">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="reports">Reports</TabsTrigger>
             </TabsList>
-            <TabsContent value="overview" className="mt-4 text-muted-foreground text-sm">
+            <TabsContent
+              value="overview"
+              className="mt-4 text-muted-foreground text-sm"
+            >
               A quick summary of the most important signals.
             </TabsContent>
-            <TabsContent value="analytics" className="mt-4 text-muted-foreground text-sm">
+            <TabsContent
+              value="analytics"
+              className="mt-4 text-muted-foreground text-sm"
+            >
               Drill into traffic, conversion, and retention metrics.
             </TabsContent>
-            <TabsContent value="reports" className="mt-4 text-muted-foreground text-sm">
+            <TabsContent
+              value="reports"
+              className="mt-4 text-muted-foreground text-sm"
+            >
               Download the latest scheduled reports.
             </TabsContent>
           </Tabs>
@@ -330,7 +332,9 @@ const Components = (): JSX.Element => {
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     <Badge
-                      variant={row.status === 'Active' ? 'outline' : 'secondary'}
+                      variant={
+                        row.status === 'Active' ? 'outline' : 'secondary'
+                      }
                     >
                       {row.status}
                     </Badge>
@@ -431,7 +435,9 @@ const Components = (): JSX.Element => {
           </div>
           <p className="text-muted-foreground text-xs">
             Icons from{' '}
-            <span className="font-mono text-foreground">@tabler/icons-react</span>
+            <span className="font-mono text-foreground">
+              @tabler/icons-react
+            </span>
             .
           </p>
         </ShowcaseSection>

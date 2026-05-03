@@ -36,14 +36,18 @@ export class BaselineSpaApp extends Construct {
       autoDeleteObjects: !isProd,
     });
 
-    const noCachePolicy = new cloudfront.ResponseHeadersPolicy(this, 'NoCachePolicy', {
-      responseHeadersPolicyName: `${appName}-${stage}-${lower}-no-cache`,
-      customHeadersBehavior: {
-        customHeaders: [
-          { header: 'Cache-Control', value: 'no-cache', override: true },
-        ],
+    const noCachePolicy = new cloudfront.ResponseHeadersPolicy(
+      this,
+      'NoCachePolicy',
+      {
+        responseHeadersPolicyName: `${appName}-${stage}-${lower}-no-cache`,
+        customHeadersBehavior: {
+          customHeaders: [
+            { header: 'Cache-Control', value: 'no-cache', override: true },
+          ],
+        },
       },
-    });
+    );
 
     const oac = new cloudfront.S3OriginAccessControl(this, 'OAC', {
       description: `${appName}-${stage}-${lower} OAC`,
@@ -63,8 +67,16 @@ export class BaselineSpaApp extends Construct {
       defaultRootObject: 'index.html',
       httpVersion: cloudfront.HttpVersion.HTTP2,
       errorResponses: [
-        { httpStatus: 403, responseHttpStatus: 200, responsePagePath: '/index.html' },
-        { httpStatus: 404, responseHttpStatus: 200, responsePagePath: '/index.html' },
+        {
+          httpStatus: 403,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+        },
+        {
+          httpStatus: 404,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+        },
       ],
     });
 

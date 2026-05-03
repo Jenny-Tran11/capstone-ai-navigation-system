@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { DataTable, DataTableFilter } from '../data-table/data-table';
+import type { ColumnDef } from '@tanstack/react-table';
+import type * as React from 'react';
+import { DataTable, type DataTableFilter } from '../data-table/data-table';
 
 export interface EntityListProps<TData, TValue> {
   title: React.ReactNode;
@@ -35,7 +35,9 @@ export function EntityList<TData, TValue>({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold">{title}</h2>
-          {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+          {description && (
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          )}
         </div>
         {createAction && (
           <div className="flex shrink-0 items-center gap-2">{createAction}</div>

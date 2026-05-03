@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { Button } from '@baseline/ui/primitives/button';
 import { IconMoon, IconSun } from '@tabler/icons-react';
 import { useTheme } from 'next-themes';
-import { Button } from '@baseline/ui/primitives/button';
+import { useEffect, useState } from 'react';
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();

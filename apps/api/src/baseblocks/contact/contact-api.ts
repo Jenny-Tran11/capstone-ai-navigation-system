@@ -1,12 +1,12 @@
-import { Response } from 'express';
-import { ContactMapper } from './contact';
-import { ContactSubmission } from '@baseline/types/contact';
+import type { ContactSubmission } from '@baseline/types/contact';
+import type { Response } from 'express';
+import { isAdmin } from '../../middleware/is-admin';
+import createAuthenticatedHandler from '../../util/create-authenticated-handler';
 import { getErrorMessage } from '../../util/error-message';
 import createApp from '../../util/express-app';
-import createAuthenticatedHandler from '../../util/create-authenticated-handler';
+import type { RequestContext } from '../../util/request-context.type';
+import { ContactMapper } from './contact';
 import { contactService } from './contact.service';
-import { RequestContext } from '../../util/request-context.type';
-import { isAdmin } from '../../middleware/is-admin';
 
 const app = createApp();
 
@@ -19,7 +19,9 @@ app.post('/contact', [
       const { name, email, message } = req.body as Partial<ContactSubmission>;
 
       if (!name || !email || !message) {
-        res.status(400).json({ error: 'Name, email, and message are required' });
+        res
+          .status(400)
+          .json({ error: 'Name, email, and message are required' });
         return;
       }
 
@@ -40,7 +42,9 @@ app.post('/contact', [
     } catch (error) {
       const message = getErrorMessage(error);
       console.error(`Failed to save contact submission: ${message}`);
-      res.status(500).json({ error: 'Failed to send message, please try again' });
+      res
+        .status(500)
+        .json({ error: 'Failed to send message, please try again' });
     }
   },
 ]);

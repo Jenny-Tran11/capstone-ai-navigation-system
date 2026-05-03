@@ -1,10 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { type Permission } from '@baseline/types/permission';
-import {
-  IconDotsVertical,
-  IconKey,
-  IconTrash,
-} from '@tabler/icons-react';
+import { deletePermission } from '@baseline/client-api/permission';
+import { getRequestHandler } from '@baseline/client-api/request-handler';
+import type { Permission } from '@baseline/types/permission';
+import { type ColumnDef, EntityList } from '@baseline/ui';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +21,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@baseline/ui/primitives/dropdown-menu';
-import { EntityList, type ColumnDef } from '@baseline/ui';
-import { deletePermission } from '@baseline/client-api/permission';
-import { getRequestHandler } from '@baseline/client-api/request-handler';
+import { IconDotsVertical, IconKey, IconTrash } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
 import CreatePermission from './CreatePermission';
 
 interface Props {
@@ -36,7 +32,9 @@ interface Props {
 type RowLike<T> = { original: T };
 
 const PermissionList = ({ permissions: initial }: Props): JSX.Element => {
-  const [allPermissions, setAllPermissions] = useState<Permission[]>(initial ?? []);
+  const [allPermissions, setAllPermissions] = useState<Permission[]>(
+    initial ?? [],
+  );
   const [pendingDelete, setPendingDelete] = useState<Permission | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -60,7 +58,9 @@ const PermissionList = ({ permissions: initial }: Props): JSX.Element => {
         accessorKey: 'type',
         header: 'Type',
         cell: ({ row }: { row: RowLike<Permission> }) => (
-          <Badge variant={row.original.type === 'SUPER' ? 'default' : 'secondary'}>
+          <Badge
+            variant={row.original.type === 'SUPER' ? 'default' : 'secondary'}
+          >
             {row.original.type}
           </Badge>
         ),

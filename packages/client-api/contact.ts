@@ -1,5 +1,5 @@
-import { ContactSubmission } from '@baseline/types/contact';
-import { RequestHandler } from './request-handler';
+import type { ContactSubmission } from '@baseline/types/contact';
+import type { RequestHandler } from './request-handler';
 
 export interface ContactFormData {
   name: string;

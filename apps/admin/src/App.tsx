@@ -1,28 +1,32 @@
-import React, { useEffect } from 'react';
+import { checkAdmin } from '@baseline/client-api/admin';
 import { Amplify } from 'aws-amplify';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
-import { checkAdmin } from '@baseline/client-api/admin';
+import { useEffect } from 'react';
 import {
+  createBrowserRouter,
   Outlet,
   RouterProvider,
-  createBrowserRouter,
   redirect,
 } from 'react-router-dom';
 import '@aws-amplify/ui-react/styles.css';
-import Dashboard from './baseblocks/dashboard/pages/Dashboard';
-import User, { userLoader } from './baseblocks/user/pages/User';
-import Admins, { adminListLoader } from './baseblocks/admin/pages/Admins';
-import Workspaces, { workspaceListLoader } from './baseblocks/workspace/pages/Workspaces';
-import Permissions, { permissionListLoader } from './baseblocks/permission/pages/Permissions';
-import Components from './baseblocks/components/pages/Components';
 import {
   createRequestHandler,
   getRequestHandler,
 } from '@baseline/client-api/request-handler';
-import { AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
+import Admins, { adminListLoader } from './baseblocks/admin/pages/Admins';
+import Components from './baseblocks/components/pages/Components';
+import Dashboard from './baseblocks/dashboard/pages/Dashboard';
 import Login from './baseblocks/login/pages/Login';
 import NotAdmin from './baseblocks/not-admin/pages/NotAdmin';
+import Permissions, {
+  permissionListLoader,
+} from './baseblocks/permission/pages/Permissions';
+import User, { userLoader } from './baseblocks/user/pages/User';
+import Workspaces, {
+  workspaceListLoader,
+} from './baseblocks/workspace/pages/Workspaces';
 import Layout from './components/layout/Layout';
 import Loader from './components/page-content/loader/Loader';
 
@@ -136,12 +140,20 @@ const router = createBrowserRouter([
     Component: Layout,
     loader: protectedLoader,
     children: [
-      { path: '/dashboard',   Component: Dashboard },
-      { path: '/admins',      Component: Admins,      loader: adminListLoader },
-      { path: '/workspaces',  Component: Workspaces,  loader: workspaceListLoader },
-      { path: '/permissions', Component: Permissions, loader: permissionListLoader },
-      { path: '/components',  Component: Components },
-      { path: '/settings',    Component: User,        loader: userLoader },
+      { path: '/dashboard', Component: Dashboard },
+      { path: '/admins', Component: Admins, loader: adminListLoader },
+      {
+        path: '/workspaces',
+        Component: Workspaces,
+        loader: workspaceListLoader,
+      },
+      {
+        path: '/permissions',
+        Component: Permissions,
+        loader: permissionListLoader,
+      },
+      { path: '/components', Component: Components },
+      { path: '/settings', Component: User, loader: userLoader },
     ],
   },
 ]);

@@ -1,7 +1,7 @@
 import { createAdmin } from '@baseline/client-api/admin';
-import React, { useState } from 'react';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
-import { Admin } from '@baseline/types/admin';
+import type { Admin } from '@baseline/types/admin';
+import { Button } from '@baseline/ui/primitives/button';
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@baseline/ui/primitives/dialog';
-import { Button } from '@baseline/ui/primitives/button';
 import { Input } from '@baseline/ui/primitives/input';
 import { Label } from '@baseline/ui/primitives/label';
+import type React from 'react';
+import { useState } from 'react';
 
 interface Props {
   setAllAdmins: React.Dispatch<React.SetStateAction<Admin[]>>;

@@ -1,6 +1,6 @@
+import type { Workspace } from '@baseline/types/workspace';
 import { getDynamodbConnection } from '@baselinejs/dynamodb';
 import { ServiceObject } from '../../util/service-object';
-import { type Workspace } from '@baseline/types/workspace';
 
 const dynamoDb = getDynamodbConnection({
   region: process.env.API_REGION || '',

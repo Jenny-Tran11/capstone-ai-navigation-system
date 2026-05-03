@@ -1,10 +1,9 @@
-import React from 'react';
-import { Admin } from '@baseline/types/admin';
-import AdminList from '../components/admin-list/AdminList';
-import { useLoaderData } from 'react-router-dom';
 import { getAllAdmins } from '@baseline/client-api/admin';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
+import type { Admin } from '@baseline/types/admin';
+import { useLoaderData } from 'react-router-dom';
 import PageContent from '../../../components/page-content/PageContent';
+import AdminList from '../components/admin-list/AdminList';
 
 export async function adminListLoader() {
   const admins = await getAllAdmins(getRequestHandler());
@@ -18,10 +17,7 @@ const Admins = (): JSX.Element => {
 
   return (
     <PageContent
-      breadcrumbs={[
-        { label: 'Home', href: '/dashboard' },
-        { label: 'Admins' },
-      ]}
+      breadcrumbs={[{ label: 'Home', href: '/dashboard' }, { label: 'Admins' }]}
     >
       <AdminList admins={admins} />
     </PageContent>

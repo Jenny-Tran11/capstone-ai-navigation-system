@@ -1,18 +1,20 @@
-import { Router, type Response } from 'express';
-import { type Workspace } from '@baseline/types/workspace';
+import type { Workspace } from '@baseline/types/workspace';
+import { type Response, Router } from 'express';
 import { getErrorMessage } from '../../util/error-message';
-import { createPermission } from '../permission/permission-utils';
+import type { RequestContext } from '../../util/request-context.type';
 import { getPermissionsByOwnerIdAndCompositeKey } from '../permission/permission.service';
+import { createPermission } from '../permission/permission-utils';
 import { workspaceMapper } from './workspace';
 import { workspaceService } from './workspace.service';
-import { RequestContext } from '../../util/request-context.type';
 
 export const userWorkspaceRouter = Router();
 
 userWorkspaceRouter.post('/', [
   async (req: RequestContext, res: Response) => {
     try {
-      const body = req.body as Partial<Pick<Workspace, 'name' | 'description' | 'imageUrl'>>;
+      const body = req.body as Partial<
+        Pick<Workspace, 'name' | 'description' | 'imageUrl'>
+      >;
       const workspaceData: Partial<Workspace> = {
         name: body.name,
         description: body.description,

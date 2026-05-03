@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '../../primitives/button';
 
@@ -20,7 +19,12 @@ export function SubmitRow({
   return (
     <div className="flex items-center justify-end gap-2">
       {onCancel && (
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isPending}
+        >
           {cancelLabel}
         </Button>
       )}

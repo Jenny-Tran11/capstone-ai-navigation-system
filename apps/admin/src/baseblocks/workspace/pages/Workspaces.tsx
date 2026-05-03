@@ -1,8 +1,7 @@
-import React from 'react';
-import { useLoaderData } from 'react-router-dom';
-import { type Workspace } from '@baseline/types/workspace';
-import { getAllWorkspaces } from '@baseline/client-api/workspace';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
+import { getAllWorkspaces } from '@baseline/client-api/workspace';
+import type { Workspace } from '@baseline/types/workspace';
+import { useLoaderData } from 'react-router-dom';
 import PageContent from '../../../components/page-content/PageContent';
 import WorkspaceList from '../components/workspace-list/WorkspaceList';
 

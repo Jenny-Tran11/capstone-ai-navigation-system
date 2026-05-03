@@ -1,5 +1,5 @@
-import { Admin } from '@baseline/types/admin';
-import { RequestHandler } from './request-handler';
+import type { Admin } from '@baseline/types/admin';
+import type { RequestHandler } from './request-handler';
 
 export const getAllAdmins = async (
   requestHandler: RequestHandler,

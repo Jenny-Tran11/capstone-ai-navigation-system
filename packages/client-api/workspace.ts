@@ -1,5 +1,5 @@
-import { type Workspace } from '@baseline/types/workspace';
-import { RequestHandler } from './request-handler';
+import type { Workspace } from '@baseline/types/workspace';
+import type { RequestHandler } from './request-handler';
 
 export const getAllWorkspaces = async (
   requestHandler: RequestHandler,
@@ -28,7 +28,8 @@ export const getWorkspace = async (
 
 export const createWorkspace = async (
   requestHandler: RequestHandler,
-  data: Pick<Workspace, 'name'> & Partial<Pick<Workspace, 'description' | 'imageUrl'>>,
+  data: Pick<Workspace, 'name'> &
+    Partial<Pick<Workspace, 'description' | 'imageUrl'>>,
 ): Promise<Workspace> => {
   const response = await requestHandler.request<Workspace>({
     method: 'POST',
@@ -42,7 +43,8 @@ export const createWorkspace = async (
 
 export const updateWorkspace = async (
   requestHandler: RequestHandler,
-  data: Pick<Workspace, 'workspaceId'> & Partial<Pick<Workspace, 'name' | 'description' | 'imageUrl'>>,
+  data: Pick<Workspace, 'workspaceId'> &
+    Partial<Pick<Workspace, 'name' | 'description' | 'imageUrl'>>,
 ): Promise<Workspace> => {
   const response = await requestHandler.request<Workspace>({
     method: 'PATCH',

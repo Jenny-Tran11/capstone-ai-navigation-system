@@ -4,8 +4,8 @@ import {
   queryItems,
   queryItemsRange,
 } from '@baselinejs/dynamodb';
-import { ServiceObject } from '../../util/service-object';
 import { getErrorMessage } from '../../util/error-message';
+import { ServiceObject } from '../../util/service-object';
 
 const dynamoDb = getDynamodbConnection({
   region: process.env.API_REGION || '',
@@ -49,7 +49,9 @@ export const getPermissionsForOwnerId = async (
     });
   } catch (error) {
     const message = getErrorMessage(error);
-    console.error(`Failed to check ${permissionService.objectName}: ${message}`);
+    console.error(
+      `Failed to check ${permissionService.objectName}: ${message}`,
+    );
     throw new Error(message);
   }
 };
@@ -84,7 +86,9 @@ export const getPermissionsForType = async (
     });
   } catch (error) {
     const message = getErrorMessage(error);
-    console.error(`Failed to check ${permissionService.objectName}: ${message}`);
+    console.error(
+      `Failed to check ${permissionService.objectName}: ${message}`,
+    );
     throw new Error(message);
   }
 };
@@ -119,7 +123,9 @@ export const getPermissionsByOwnerIdAndCompositeKey = async (
     });
   } catch (error) {
     const message = getErrorMessage(error);
-    console.error(`Failed to get ${permissionService.objectName} by ownerId: ${message}`);
+    console.error(
+      `Failed to get ${permissionService.objectName} by ownerId: ${message}`,
+    );
     throw new Error(message);
   }
 };

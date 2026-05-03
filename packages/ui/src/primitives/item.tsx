@@ -10,16 +10,32 @@ interface ItemProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const Item = React.forwardRef<HTMLDivElement, ItemProps>(
-  ({ className, icon, label, description, action, children, ...props }, ref) => (
+  (
+    { className, icon, label, description, action, children, ...props },
+    ref,
+  ) => (
     <div
       ref={ref}
-      className={cn('flex items-center gap-3 rounded-md p-3 hover:bg-accent transition-colors', className)}
+      className={cn(
+        'flex items-center gap-3 rounded-md p-3 hover:bg-accent transition-colors',
+        className,
+      )}
       {...props}
     >
-      {icon && <div className="shrink-0 text-muted-foreground [&_svg]:size-5">{icon}</div>}
+      {icon && (
+        <div className="shrink-0 text-muted-foreground [&_svg]:size-5">
+          {icon}
+        </div>
+      )}
       <div className="flex-1 min-w-0">
-        {label && <div className="text-sm font-medium leading-none">{label}</div>}
-        {description && <div className="text-xs text-muted-foreground mt-1">{description}</div>}
+        {label && (
+          <div className="text-sm font-medium leading-none">{label}</div>
+        )}
+        {description && (
+          <div className="text-xs text-muted-foreground mt-1">
+            {description}
+          </div>
+        )}
         {children}
       </div>
       {action && <div className="shrink-0">{action}</div>}

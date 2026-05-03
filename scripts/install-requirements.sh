@@ -35,7 +35,7 @@ install_node() {
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
   fi
   echo "Setting correct node, npm, and pnpm versions..."
-  bash -i -c 'source ~/.bashrc; nvm install 20; nvm use 20; nvm alias default 20; nvm install-latest-npm; npm install -g pnpm@9; exit;'
+  bash -i -c 'source ~/.bashrc; nvm install 24; nvm use 24; nvm alias default 24; nvm install-latest-npm; npm install -g pnpm@9; exit;'
 }
 
 install_aws_cli() {

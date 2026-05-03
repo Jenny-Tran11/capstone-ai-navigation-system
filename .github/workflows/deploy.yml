@@ -19,7 +19,7 @@ jobs:
         run: ./scripts/project-variables-github.sh
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - uses: pnpm/action-setup@v3
         with:
           version: 9

@@ -1,8 +1,8 @@
 import { CfnOutput, Duration } from 'aws-cdk-lib';
+import type * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as cloudwatchActions from 'aws-cdk-lib/aws-cloudwatch-actions';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import type * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as snsSubscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import { Construct } from 'constructs';
@@ -26,7 +26,9 @@ export class BaselineAlarms extends Construct {
 
     this.topic = alarmTopicArn
       ? sns.Topic.fromTopicArn(this, 'Topic', alarmTopicArn)
-      : new sns.Topic(this, 'Topic', { topicName: `${appName}-${stage}-alarms` });
+      : new sns.Topic(this, 'Topic', {
+          topicName: `${appName}-${stage}-alarms`,
+        });
 
     if (alarmEmail && !alarmTopicArn) {
       (this.topic as sns.Topic).addSubscription(
@@ -45,29 +47,43 @@ export class BaselineAlarms extends Construct {
         metric: fn.metricErrors({ period: Duration.minutes(5) }),
         threshold: 5,
         evaluationPeriods: 1,
-        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        comparisonOperator:
+          cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
       });
       errorAlarm.addAlarmAction(action);
 
-      const throttleAlarm = new cloudwatch.Alarm(this, `${fn.node.id}Throttles`, {
-        alarmName: `${base}-throttles`,
-        metric: fn.metricThrottles({ period: Duration.minutes(5) }),
-        threshold: 10,
-        evaluationPeriods: 1,
-        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      });
+      const throttleAlarm = new cloudwatch.Alarm(
+        this,
+        `${fn.node.id}Throttles`,
+        {
+          alarmName: `${base}-throttles`,
+          metric: fn.metricThrottles({ period: Duration.minutes(5) }),
+          threshold: 10,
+          evaluationPeriods: 1,
+          comparisonOperator:
+            cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+          treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+        },
+      );
       throttleAlarm.addAlarmAction(action);
 
-      const durationAlarm = new cloudwatch.Alarm(this, `${fn.node.id}Duration`, {
-        alarmName: `${base}-duration-p99`,
-        metric: fn.metricDuration({ period: Duration.minutes(5), statistic: 'p99' }),
-        threshold: timeoutSeconds * 1000 * 0.8,
-        evaluationPeriods: 3,
-        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      });
+      const durationAlarm = new cloudwatch.Alarm(
+        this,
+        `${fn.node.id}Duration`,
+        {
+          alarmName: `${base}-duration-p99`,
+          metric: fn.metricDuration({
+            period: Duration.minutes(5),
+            statistic: 'p99',
+          }),
+          threshold: timeoutSeconds * 1000 * 0.8,
+          evaluationPeriods: 3,
+          comparisonOperator:
+            cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+          treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+        },
+      );
       durationAlarm.addAlarmAction(action);
     }
 
@@ -77,7 +93,8 @@ export class BaselineAlarms extends Construct {
         metric: api.metricServerError({ period: Duration.minutes(5) }),
         threshold: 5,
         evaluationPeriods: 1,
-        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        comparisonOperator:
+          cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
       });
       apiAlarm.addAlarmAction(action);

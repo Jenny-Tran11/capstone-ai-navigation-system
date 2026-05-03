@@ -1,9 +1,9 @@
 import { CfnOutput, Stack, type StackProps } from 'aws-cdk-lib';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import { Construct } from 'constructs';
-import { BaselineTable } from '../constructs/baseline-table';
-import { getTableDefs } from '../config/tables';
+import type * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import type { Construct } from 'constructs';
 import type { StageConfig } from '../config/stage-config';
+import { getTableDefs } from '../config/tables';
+import { BaselineTable } from '../constructs/baseline-table';
 
 export interface DataStackProps extends StackProps {
   config: StageConfig;

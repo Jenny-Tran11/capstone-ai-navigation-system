@@ -1,6 +1,6 @@
-import * as React from 'react';
 import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
-
+import type * as React from 'react';
+import { cn } from '../lib/utils';
 import { Badge } from '../primitives/badge';
 import {
   Card,
@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '../primitives/card';
-import { cn } from '../lib/utils';
 
 export type SectionCardTrend = {
   direction: 'up' | 'down' | 'flat';
@@ -30,13 +29,21 @@ export interface SectionCardsProps
   items: SectionCardData[];
 }
 
-function TrendIcon({ direction }: { direction: SectionCardTrend['direction'] }) {
+function TrendIcon({
+  direction,
+}: {
+  direction: SectionCardTrend['direction'];
+}) {
   if (direction === 'down') return <IconTrendingDown />;
   if (direction === 'up') return <IconTrendingUp />;
   return null;
 }
 
-export function SectionCards({ items, className, ...props }: SectionCardsProps) {
+export function SectionCards({
+  items,
+  className,
+  ...props
+}: SectionCardsProps) {
   return (
     <div
       className={cn(
@@ -46,11 +53,8 @@ export function SectionCards({ items, className, ...props }: SectionCardsProps) 
       {...props}
     >
       {items.map((item, index) => (
-        <Card
-          // eslint-disable-next-line react/no-array-index-key
-          key={index}
-          className="@container/card"
-        >
+        // biome-ignore lint/suspicious/noArrayIndexKey: section cards have no stable id
+        <Card key={index} className="@container/card">
           <CardHeader>
             <CardDescription>{item.description}</CardDescription>
             <CardTitle className="font-semibold text-2xl tabular-nums @[250px]/card:text-3xl">

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { type Permission, type PermissionType } from '@baseline/types/permission';
 import { createPermission } from '@baseline/client-api/permission';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
 import { useAdmins } from '@baseline/swr-client/admin';
 import { useWorkspaces } from '@baseline/swr-client/workspace';
+import type { Permission, PermissionType } from '@baseline/types/permission';
+import { Button } from '@baseline/ui/primitives/button';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@baseline/ui/primitives/dialog';
-import { Button } from '@baseline/ui/primitives/button';
 import { Label } from '@baseline/ui/primitives/label';
 import {
   Select,
@@ -20,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@baseline/ui/primitives/select';
+import type React from 'react';
+import { useState } from 'react';
 
 interface Props {
   setPermissions: React.Dispatch<React.SetStateAction<Permission[]>>;
@@ -63,7 +64,12 @@ const CreatePermission = ({ setPermissions }: Props) => {
 
   return (
     <div>
-      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
         Grant
       </Button>
       <Dialog open={open} onOpenChange={handleClose}>
@@ -90,7 +96,13 @@ const CreatePermission = ({ setPermissions }: Props) => {
 
             <div className="space-y-2">
               <Label>Type</Label>
-              <Select value={type} onValueChange={(v) => { setType(v as PermissionType); setWorkspaceId(''); }}>
+              <Select
+                value={type}
+                onValueChange={(v) => {
+                  setType(v as PermissionType);
+                  setWorkspaceId('');
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

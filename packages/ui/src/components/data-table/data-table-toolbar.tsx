@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { Table } from '@tanstack/react-table';
+import type { Table } from '@tanstack/react-table';
 import { X } from 'lucide-react';
+import type * as React from 'react';
 import { Button } from '../../primitives/button';
 import { Input } from '../../primitives/input';
 import { DataTableFacetedFilter } from './data-table-faceted-filter';
@@ -9,7 +9,11 @@ import { DataTableViewOptions } from './data-table-view-options';
 export interface DataTableFilter {
   column: string;
   title: string;
-  options: { label: string; value: string; icon?: React.ComponentType<{ className?: string }> }[];
+  options: {
+    label: string;
+    value: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }[];
 }
 
 interface DataTableToolbarProps<TData> {
@@ -35,7 +39,9 @@ export function DataTableToolbar<TData>({
         {searchColumn && (
           <Input
             placeholder="Search..."
-            value={(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ''}
+            value={
+              (table.getColumn(searchColumn)?.getFilterValue() as string) ?? ''
+            }
             onChange={(event) =>
               table.getColumn(searchColumn)?.setFilterValue(event.target.value)
             }

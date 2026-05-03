@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Outlet, useLocation, useNavigation } from 'react-router-dom';
-import { fetchUserAttributes, signOut } from 'aws-amplify/auth';
 import type { NavUserData } from '@baseline/ui/components/nav-user';
-import { SidebarInset, SidebarProvider } from '@baseline/ui/primitives/sidebar';
 import { SiteHeader } from '@baseline/ui/components/site-header';
+import { SidebarInset, SidebarProvider } from '@baseline/ui/primitives/sidebar';
+import { fetchUserAttributes, signOut } from 'aws-amplify/auth';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Outlet, useLocation, useNavigation } from 'react-router-dom';
 import AdminSidebar from '../app-sidebar/AdminSidebar';
 import Loader from '../page-content/loader/Loader';
 import UserMenu from '../user-menu/UserMenu';
@@ -79,11 +80,7 @@ const Layout = () => {
       <SidebarInset className="min-h-0 overflow-y-auto">
         <SiteHeader
           heading={heading}
-          actions={
-            <>
-              <UserMenu user={user} onSignOut={handleSignOut} />
-            </>
-          }
+          actions={<UserMenu user={user} onSignOut={handleSignOut} />}
         />
         <div className="@container/main flex min-h-0 flex-1 flex-col overflow-x-hidden bg-background">
           {isLoading ? (

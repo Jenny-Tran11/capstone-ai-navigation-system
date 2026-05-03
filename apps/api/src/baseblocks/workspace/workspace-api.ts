@@ -1,5 +1,5 @@
-import createApp from '../../util/express-app';
 import createAuthenticatedHandler from '../../util/create-authenticated-handler';
+import createApp from '../../util/express-app';
 import { adminWorkspaceRouter } from './workspace-admin-api';
 import { userWorkspaceRouter } from './workspace-user-api';
 

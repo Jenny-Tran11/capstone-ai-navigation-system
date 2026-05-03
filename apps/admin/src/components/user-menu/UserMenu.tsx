@@ -1,15 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  IconDeviceDesktop,
-  IconLogout,
-  IconMoon,
-  IconSettings,
-  IconSun,
-} from '@tabler/icons-react';
-import { useTheme } from 'next-themes';
 import type { NavUserData } from '@baseline/ui/components/nav-user';
-import { Avatar, AvatarFallback, AvatarImage } from '@baseline/ui/primitives/avatar';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@baseline/ui/primitives/avatar';
 import { Button } from '@baseline/ui/primitives/button';
 import {
   DropdownMenu,
@@ -19,6 +13,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@baseline/ui/primitives/dropdown-menu';
+import {
+  IconDeviceDesktop,
+  IconLogout,
+  IconMoon,
+  IconSettings,
+  IconSun,
+} from '@tabler/icons-react';
+import { useTheme } from 'next-themes';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface UserMenuProps {
   user: NavUserData;
@@ -51,9 +55,16 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="icon" className="size-8 rounded-full">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 rounded-full"
+        >
           <Avatar className="size-8">
-            {user.avatar ? <AvatarImage src={user.avatar} alt={user.name} /> : null}
+            {user.avatar ? (
+              <AvatarImage src={user.avatar} alt={user.name} />
+            ) : null}
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </Button>
@@ -61,8 +72,12 @@ export default function UserMenu({ user, onSignOut }: UserMenuProps) {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
           <div className="grid gap-0.5">
-            <span className="truncate font-medium text-sm">{user.name || 'Admin'}</span>
-            <span className="truncate text-muted-foreground text-xs">{user.email}</span>
+            <span className="truncate font-medium text-sm">
+              {user.name || 'Admin'}
+            </span>
+            <span className="truncate text-muted-foreground text-xs">
+              {user.email}
+            </span>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

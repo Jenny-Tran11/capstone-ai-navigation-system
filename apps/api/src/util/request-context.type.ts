@@ -1,8 +1,8 @@
-import {
+import type {
   APIGatewayEventDefaultAuthorizerContext,
   APIGatewayEventRequestContextWithAuthorizer,
 } from 'aws-lambda';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 export type RequestContext = Request & {
   context: APIGatewayEventRequestContextWithAuthorizer<Authorizer>;

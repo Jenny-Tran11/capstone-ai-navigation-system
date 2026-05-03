@@ -1,4 +1,4 @@
-import { Admin } from '@baseline/types/admin';
+import type { Admin } from '@baseline/types/admin';
 
 export const AdminMapper = (data: Admin): Admin => {
   const admin: Admin = {

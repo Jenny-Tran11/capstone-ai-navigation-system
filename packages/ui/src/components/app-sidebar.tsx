@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { IconInnerShadowTop } from '@tabler/icons-react';
+import type * as React from 'react';
 
 import {
   Sidebar,
@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '../primitives/sidebar';
-import { NavMain, type NavItem } from './nav-main';
+import { type NavItem, NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
 import { NavUser, type NavUserData } from './nav-user';
 

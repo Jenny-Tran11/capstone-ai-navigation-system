@@ -1,6 +1,6 @@
 import compression from 'compression';
 import cors from 'cors';
-import express, { Application } from 'express';
+import express, { type Application } from 'express';
 import { logRoute } from '../middleware/log-route';
 
 const createApp = (): Application => {

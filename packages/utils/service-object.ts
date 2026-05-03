@@ -1,5 +1,8 @@
+import {
+  type ObjectIdPrefix,
+  ObjectIdPrefixes,
+} from '@baseline/types/service-object';
 import { customAlphabet } from 'nanoid';
-import { ObjectIdPrefixes, type ObjectIdPrefix } from '@baseline/types/service-object';
 
 const alphabet =
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';

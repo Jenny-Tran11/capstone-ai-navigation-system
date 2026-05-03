@@ -1,5 +1,5 @@
-import { RemovalPolicy } from 'aws-cdk-lib';
 import type * as cdk from 'aws-cdk-lib';
+import { RemovalPolicy } from 'aws-cdk-lib';
 
 export type Stage = 'local' | 'staging' | 'prod';
 
@@ -16,14 +16,21 @@ export interface StageConfig {
 }
 
 export function getStageConfig(app: cdk.App): StageConfig {
-  const stage = (app.node.tryGetContext('stage') as string | undefined) as Stage | undefined;
-  if (!stage) throw new Error('Missing required context: --context stage=<staging|prod>');
+  const stage = app.node.tryGetContext('stage') as string | undefined as
+    | Stage
+    | undefined;
+  if (!stage)
+    throw new Error('Missing required context: --context stage=<staging|prod>');
 
-  const appName = process.env['APP_NAME'];
-  if (!appName) throw new Error('Missing required environment variable: APP_NAME');
+  const appName = process.env.APP_NAME;
+  if (!appName)
+    throw new Error('Missing required environment variable: APP_NAME');
 
-  const region = process.env['AWS_REGION'] ?? process.env['CDK_DEFAULT_REGION'] ?? 'ap-southeast-2';
-  const account = process.env['CDK_DEFAULT_ACCOUNT'];
+  const region =
+    process.env.AWS_REGION ??
+    process.env.CDK_DEFAULT_REGION ??
+    'ap-southeast-2';
+  const account = process.env.CDK_DEFAULT_ACCOUNT;
   const isProd = stage === 'prod';
 
   return {

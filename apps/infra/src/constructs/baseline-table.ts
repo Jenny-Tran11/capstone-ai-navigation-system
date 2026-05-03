@@ -1,8 +1,7 @@
-import { RemovalPolicy } from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
-import type { TableDefinition } from '../config/tables';
 import type { StageConfig } from '../config/stage-config';
+import type { TableDefinition } from '../config/tables';
 
 export interface BaselineTableProps {
   config: StageConfig;
@@ -40,7 +39,12 @@ export class BaselineTable extends Construct {
       pointInTimeRecovery: config.pitrEnabled,
       removalPolicy: config.removalPolicy,
       stream: tableDef.stream
-        ? (dynamodb.StreamViewType[tableDef.stream.replace(/-/g, '_') as keyof typeof dynamodb.StreamViewType] ?? undefined)
+        ? (dynamodb.StreamViewType[
+            tableDef.stream.replace(
+              /-/g,
+              '_',
+            ) as keyof typeof dynamodb.StreamViewType
+          ] ?? undefined)
         : undefined,
     });
 

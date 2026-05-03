@@ -1,4 +1,4 @@
-import { type Workspace } from '@baseline/types/workspace';
+import type { Workspace } from '@baseline/types/workspace';
 
 export const workspaceMapper = (data: Workspace): Workspace => {
   const workspace: Workspace = {

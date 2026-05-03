@@ -1,9 +1,9 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { Stack, type StackProps } from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-import { BaselineSpaApp } from '../constructs/baseline-spa-app';
+import type { Construct } from 'constructs';
 import type { StageConfig } from '../config/stage-config';
+import { BaselineSpaApp } from '../constructs/baseline-spa-app';
 
 export interface SpaStackProps extends StackProps {
   config: StageConfig;
@@ -20,7 +20,16 @@ export class SpaStack extends Stack {
       name: 'Admin',
     });
 
-    const webSourceDir = path.resolve(__dirname, '..', '..', '..', '..', 'apps', 'web', '.dist');
+    const webSourceDir = path.resolve(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      'apps',
+      'web',
+      '.dist',
+    );
 
     new BaselineSpaApp(this, 'WebSpa', {
       config,

@@ -1,5 +1,8 @@
 import type { Permission, PermissionType } from '@baseline/types/permission';
-import { getPermissionsForOwnerId, permissionService } from './permission.service';
+import {
+  getPermissionsForOwnerId,
+  permissionService,
+} from './permission.service';
 
 export const checkPermissionForUserId = async (
   ownerId: string,

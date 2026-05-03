@@ -1,5 +1,3 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,6 +6,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@baseline/ui/primitives/breadcrumb';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 export type PageBreadcrumbItem = {
   label: string;
@@ -27,7 +27,7 @@ const PageContent = ({ children, breadcrumbs }: Props) => {
           <Breadcrumb>
             <BreadcrumbList>
               {breadcrumbs.map((item, i) => (
-                <React.Fragment key={`${item.label}-${i}`}>
+                <React.Fragment key={item.href ?? item.label}>
                   <BreadcrumbItem>
                     {item.href ? (
                       <BreadcrumbLink asChild>

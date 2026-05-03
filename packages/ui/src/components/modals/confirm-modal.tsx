@@ -66,7 +66,11 @@ export function ConfirmModal({
         {requireTyped && (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              Type <span className="font-mono font-medium text-foreground">{requireTyped}</span> to confirm.
+              Type{' '}
+              <span className="font-mono font-medium text-foreground">
+                {requireTyped}
+              </span>{' '}
+              to confirm.
             </p>
             <Input
               value={typedValue}
@@ -77,11 +81,17 @@ export function ConfirmModal({
           </div>
         )}
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>
+            {cancelLabel}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={isConfirmDisabled || isPending}
-            className={variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : undefined}
+            className={
+              variant === 'destructive'
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                : undefined
+            }
           >
             {isPending ? 'Please wait…' : confirmLabel}
           </AlertDialogAction>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Hero = (): JSX.Element => (
@@ -16,16 +15,27 @@ const Hero = (): JSX.Element => (
       {/* Badge */}
       <div
         className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium mb-2"
-        style={{ borderColor: 'rgba(204,89,51,0.25)', color: 'var(--warm-primary)', backgroundColor: 'rgba(204,89,51,0.06)' }}
+        style={{
+          borderColor: 'rgba(204,89,51,0.25)',
+          color: 'var(--warm-primary)',
+          backgroundColor: 'rgba(204,89,51,0.06)',
+        }}
       >
-        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--warm-primary)' }} />
+        <span
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: 'var(--warm-primary)' }}
+        />
         Introducing Baseline Core 2.0
       </div>
 
       {/* Headline */}
       <h1
         className="text-3xl sm:text-5xl md:text-7xl leading-tight tracking-tight"
-        style={{ color: 'var(--warm-fg)', fontWeight: 300, letterSpacing: '-0.02em' }}
+        style={{
+          color: 'var(--warm-fg)',
+          fontWeight: 300,
+          letterSpacing: '-0.02em',
+        }}
       >
         Software that feels <strong style={{ fontWeight: 600 }}>human</strong>.
         <br />
@@ -37,8 +47,9 @@ const Hero = (): JSX.Element => (
         className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-light"
         style={{ color: 'var(--warm-muted)' }}
       >
-        We believe technology should adapt to your rhythm, not the other way around.
-        Baseline Core is the flexible foundation for teams that value craft as much as velocity.
+        We believe technology should adapt to your rhythm, not the other way
+        around. Baseline Core is the flexible foundation for teams that value
+        craft as much as velocity.
       </p>
 
       {/* CTAs */}
@@ -47,20 +58,49 @@ const Hero = (): JSX.Element => (
           to="/get-started"
           className="no-underline inline-flex items-center gap-2 text-white text-base font-semibold rounded-full px-8 py-4 w-full sm:w-auto transition-all duration-200 shadow-lg group"
           style={{ backgroundColor: 'var(--warm-primary)' }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = 'var(--warm-primary-hover)')}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.backgroundColor = 'var(--warm-primary)')}
+          onMouseEnter={(e) =>
+            ((e.currentTarget as HTMLElement).style.backgroundColor =
+              'var(--warm-primary-hover)')
+          }
+          onMouseLeave={(e) =>
+            ((e.currentTarget as HTMLElement).style.backgroundColor =
+              'var(--warm-primary)')
+          }
         >
           Start your journey
-          <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          <svg
+            className="w-4 h-4 transition-transform group-hover:translate-x-1"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </Link>
         <Link
           to="/about"
           className="no-underline inline-flex items-center text-base font-medium rounded-full px-8 py-4 w-full sm:w-auto transition-all duration-200 border"
-          style={{ color: 'var(--warm-fg)', borderColor: 'var(--warm-border)', backgroundColor: 'transparent' }}
-          onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--warm-primary)'; el.style.color = 'var(--warm-primary)'; }}
-          onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--warm-border)'; el.style.color = 'var(--warm-fg)'; }}
+          style={{
+            color: 'var(--warm-fg)',
+            borderColor: 'var(--warm-border)',
+            backgroundColor: 'transparent',
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.borderColor = 'var(--warm-primary)';
+            el.style.color = 'var(--warm-primary)';
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.borderColor = 'var(--warm-border)';
+            el.style.color = 'var(--warm-fg)';
+          }}
         >
           Read our story
         </Link>

@@ -1,6 +1,6 @@
-import { NextFunction, Response } from 'express';
+import type { NextFunction, Response } from 'express';
 import { isAdminSub } from '../baseblocks/admin/admin.service';
-import { RequestContext } from '../util/request-context.type';
+import type { RequestContext } from '../util/request-context.type';
 
 export const isAdmin = async (
   req: RequestContext,

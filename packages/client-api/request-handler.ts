@@ -1,9 +1,9 @@
 import axios, {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosRequestHeaders,
-  AxiosResponse,
-  Method,
+  type AxiosError,
+  type AxiosRequestConfig,
+  type AxiosRequestHeaders,
+  type AxiosResponse,
+  type Method,
 } from 'axios';
 
 let requestHandler: RequestHandler;

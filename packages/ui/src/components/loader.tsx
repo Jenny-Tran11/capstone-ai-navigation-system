@@ -7,7 +7,11 @@ export interface LoaderProps {
   className?: string;
 }
 
-export function Loader({ isLoading, hasStartedLoading, className }: LoaderProps) {
+export function Loader({
+  isLoading,
+  hasStartedLoading,
+  className,
+}: LoaderProps) {
   const [isLoadingTextShowing, setIsLoadingTextShowing] = React.useState(false);
   const [isLoaderShowing, setIsLoaderShowing] = React.useState(false);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
@@ -44,7 +48,7 @@ export function Loader({ isLoading, hasStartedLoading, className }: LoaderProps)
           height="81"
           xmlns="http://www.w3.org/2000/svg"
           className="animate-pulse"
-          aria-hidden
+          aria-hidden="true"
         >
           <g>
             <path
