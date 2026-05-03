@@ -8,6 +8,10 @@ inputs:
   staging_aws_role_arn:
     description: IAM role ARN for OIDC for all other refs
     required: true
+  configure_aws:
+    description: Assume IAM role and configure AWS CLI (skip for build-only jobs)
+    required: false
+    default: 'true'
 
 runs:
   using: composite
@@ -41,6 +45,7 @@ runs:
       run: pnpm install
 
     - name: Select AWS OIDC role
+      if: inputs.configure_aws == 'true'
       shell: bash
       run: |
         if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
@@ -50,6 +55,7 @@ runs:
         fi
 
     - name: Configure AWS credentials (OIDC)
+      if: inputs.configure_aws == 'true'
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-region: ${{ env.AWS_REGION }}
@@ -57,6 +63,7 @@ runs:
         output-credentials: true
 
     - name: Configure AWS CLI profile
+      if: inputs.configure_aws == 'true'
       shell: bash
       run: |
         echo "Configuring AWS profile ${{ env.AWS_PROFILE_GITHUB }}"

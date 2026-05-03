@@ -12,71 +12,74 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  deploy-api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Project variables
-        run: ./scripts/project-variables-github.sh
-
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/ci-setup
         with:
-          node-version: 24
-
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
-
-      - uses: actions/cache@v4
-        name: Setup pnpm cache
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Select AWS OIDC role
-        shell: bash
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
-            echo "ROLE_ARN=${{ secrets.PRODUCTION_AWS_ROLE_ARN }}" >> "$GITHUB_ENV"
-          else
-            echo "ROLE_ARN=${{ secrets.STAGING_AWS_ROLE_ARN }}" >> "$GITHUB_ENV"
-          fi
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ env.ROLE_ARN }}
-          output-credentials: true
-
-      - name: Configure AWS CLI profile
-        shell: bash
-        run: |
-          echo "Configuring AWS profile ${{ env.AWS_PROFILE_GITHUB }}"
-          aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE_GITHUB }}
-          aws configure set aws_access_key_id ${{ env.AWS_ACCESS_KEY_ID }} --profile ${{ env.AWS_PROFILE_GITHUB }}
-          aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE_GITHUB }}
-          aws configure set aws_session_token ${{ env.AWS_SESSION_TOKEN }} --profile ${{ env.AWS_PROFILE_GITHUB }}
-          aws sts get-caller-identity --query "Account" --output text --profile "${{ env.AWS_PROFILE_GITHUB }}"
+          production_aws_role_arn: ${{ secrets.PRODUCTION_AWS_ROLE_ARN }}
+          staging_aws_role_arn: ${{ secrets.STAGING_AWS_ROLE_ARN }}
+          configure_aws: 'false'
 
       - name: Build API
         run: pnpm --filter @baseline/api run build
 
-      - name: Build admin & web (concurrent)
-        run: |
-          pnpm exec concurrently -n admin,web -c cyan,magenta \
-            "pnpm --filter @baseline/admin run build" \
-            "pnpm --filter @baseline/web run build"
+  deploy-admin-web:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: admin
+            filter: '@baseline/admin'
+            artifact: admin-dist
+            dist: apps/admin/.dist
+          - name: web
+            filter: '@baseline/web'
+            artifact: web-dist
+            dist: apps/web/.dist
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/ci-setup
+        with:
+          production_aws_role_arn: ${{ secrets.PRODUCTION_AWS_ROLE_ARN }}
+          staging_aws_role_arn: ${{ secrets.STAGING_AWS_ROLE_ARN }}
+          configure_aws: 'false'
+
+      - name: Build ${{ matrix.name }}
+        run: pnpm --filter ${{ matrix.filter }} run build
+
+      - name: Upload ${{ matrix.name }} bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.dist }}
+
+  deploy-infra:
+    needs: [deploy-api, deploy-admin-web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/ci-setup
+        with:
+          production_aws_role_arn: ${{ secrets.PRODUCTION_AWS_ROLE_ARN }}
+          staging_aws_role_arn: ${{ secrets.STAGING_AWS_ROLE_ARN }}
+
+      - name: Download admin bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: admin-dist
+          path: apps/admin/.dist
+
+      - name: Download web bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/.dist
 
       - name: Deploy infrastructure (CDK)
         run: |
