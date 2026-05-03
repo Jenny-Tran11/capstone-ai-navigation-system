@@ -39,10 +39,13 @@ export class BaselineAlarms extends Construct {
     const action = new cloudwatchActions.SnsAction(this.topic as sns.Topic);
     const timeoutSeconds = 29;
 
-    for (const fn of functions) {
+    // fn.node.id is often "Fn" for every NodejsFunction child — use index for unique construct ids.
+    for (let i = 0; i < functions.length; i++) {
+      const fn = functions[i]!;
       const base = fn.functionName;
+      const id = `Lambda${i}`;
 
-      const errorAlarm = new cloudwatch.Alarm(this, `${fn.node.id}Errors`, {
+      const errorAlarm = new cloudwatch.Alarm(this, `${id}Errors`, {
         alarmName: `${base}-errors`,
         metric: fn.metricErrors({ period: Duration.minutes(5) }),
         threshold: 5,
@@ -55,7 +58,7 @@ export class BaselineAlarms extends Construct {
 
       const throttleAlarm = new cloudwatch.Alarm(
         this,
-        `${fn.node.id}Throttles`,
+        `${id}Throttles`,
         {
           alarmName: `${base}-throttles`,
           metric: fn.metricThrottles({ period: Duration.minutes(5) }),
@@ -70,7 +73,7 @@ export class BaselineAlarms extends Construct {
 
       const durationAlarm = new cloudwatch.Alarm(
         this,
-        `${fn.node.id}Duration`,
+        `${id}Duration`,
         {
           alarmName: `${base}-duration-p99`,
           metric: fn.metricDuration({

@@ -36,7 +36,9 @@ export class BaselineTable extends Construct {
         },
       }),
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      pointInTimeRecovery: config.pitrEnabled,
+      pointInTimeRecoverySpecification: {
+        pointInTimeRecoveryEnabled: config.pitrEnabled,
+      },
       removalPolicy: config.removalPolicy,
       stream: tableDef.stream
         ? (dynamodb.StreamViewType[

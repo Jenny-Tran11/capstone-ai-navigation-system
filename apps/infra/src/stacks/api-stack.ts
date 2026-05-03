@@ -1,4 +1,4 @@
-import { CfnOutput, Stack, type StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Size, Stack, type StackProps } from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import type * as cognito from 'aws-cdk-lib/aws-cognito';
 import type * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
@@ -32,6 +32,7 @@ export class ApiStack extends Stack {
     const api = new apigateway.RestApi(this, 'Api', {
       restApiName: `${appName}-${stage}-api`,
       deployOptions: { stageName: stage },
+      minCompressionSize: Size.bytes(1024),
       defaultCorsPreflightOptions: {
         allowOrigins: [corsOrigin],
         allowHeaders: [
@@ -43,7 +44,6 @@ export class ApiStack extends Stack {
         ],
         allowCredentials: false,
       },
-      minimumCompressionSize: 1024,
     });
 
     const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
