@@ -69,7 +69,8 @@ tsconfig.tsbuildinfo
 # Local MiniStack config
 .cognito/
 
-# Python model weights (large binary files)
+# PyTorch / YOLO weights — large binaries; keep out of normal Git history.
+# Use a local copy (see apps/model/.env), CI artifacts, or Git LFS if you must version them.
 *.pt
 *.pth
 apps/model/.venv/
