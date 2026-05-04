@@ -1,6 +1,12 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import {
+  ClockIcon,
+  Cog6ToothIcon,
+  EyeIcon,
+  MagnifyingGlassIcon,
+} from 'react-native-heroicons/outline';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { addRecentDestination, getRecentDestinations, type Destination } from '@/lib/storage';
 
@@ -28,7 +34,7 @@ export default function HomeScreen() {
 
       <View className="px-5 mb-6">
         <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 py-3 gap-3">
-          <Text className="text-lg">🔍</Text>
+          <MagnifyingGlassIcon size={22} color="#64748b" />
           <TextInput
             className="flex-1 text-base text-gray-900"
             placeholder="Search destination..."
@@ -69,7 +75,7 @@ export default function HomeScreen() {
                 className="flex-row items-center py-3 gap-3"
                 accessibilityRole="button"
               >
-                <Text className="text-lg">🕐</Text>
+                <ClockIcon size={22} color="#64748b" />
                 <View className="flex-1">
                   <Text className="text-base text-gray-900" numberOfLines={1}>{item.label}</Text>
                   <Text className="text-sm text-gray-500" numberOfLines={1}>{item.address}</Text>
@@ -87,7 +93,7 @@ export default function HomeScreen() {
           className="flex-1 bg-blue-50 rounded-2xl p-4 items-center gap-1"
           accessibilityRole="button"
         >
-          <Text className="text-3xl">👁️</Text>
+          <EyeIcon size={32} color="#1d4ed8" />
           <Text className="text-sm font-medium text-gray-700">Detect</Text>
         </Pressable>
         <Pressable
@@ -95,7 +101,7 @@ export default function HomeScreen() {
           className="flex-1 bg-gray-50 rounded-2xl p-4 items-center gap-1"
           accessibilityRole="button"
         >
-          <Text className="text-3xl">⚙️</Text>
+          <Cog6ToothIcon size={32} color="#475569" />
           <Text className="text-sm font-medium text-gray-700">Settings</Text>
         </Pressable>
       </View>

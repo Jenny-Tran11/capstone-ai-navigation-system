@@ -50,8 +50,9 @@
     "start:admin": "pnpm --filter @baseline/admin run start",
     "start:web": "pnpm --filter @baseline/web run start",
     "start:mobile": "pnpm --filter @baseline/mobile run start",
-    "start:model": "docker compose --project-directory apps/model up",
-    "start:all": "concurrently -n api,web,admin,model -c blue,cyan,magenta,yellow \"pnpm --filter @baseline/api run start\" \"pnpm --filter @baseline/web run start\" \"pnpm --filter @baseline/admin run start\" \"docker compose --project-directory apps/model up\"",
+    "prestart:all": "bash -c 'docker info >/dev/null 2>&1 || { echo \"Docker is not running; start Docker Desktop (or the daemon) and retry.\" >&2; exit 1; }'",
+    "start:model": "docker compose --project-directory apps/model up --build --remove-orphans",
+    "start:all": "concurrently -n api,web,admin,model -c blue,cyan,magenta,yellow \"pnpm --filter @baseline/api run start\" \"pnpm --filter @baseline/web run start\" \"pnpm --filter @baseline/admin run start\" \"docker compose --project-directory apps/model up --build --remove-orphans\"",
     "install:requirements": "./scripts/install-requirements.sh"
   },
   "devDependencies": {

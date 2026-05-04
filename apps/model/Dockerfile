@@ -5,13 +5,17 @@ RUN groupadd -r app && useradd -r -g app app
 
 WORKDIR /app
 
-# System libs required by OpenCV
+# System libs for OpenCV; curl for docker-compose healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 libsm6 libxrender1 libxext6 \
+    curl \
+    libglib2.0-0 libsm6 libxrender1 libxext6 libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install deps, then force headless OpenCV last so `import cv2` always works (ultralytics may pull opencv-python).
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir --force-reinstall "opencv-python-headless>=4.10.0" \
+    && python -c "import cv2; print('opencv', cv2.__version__)"
 
 COPY src/ ./src/
 

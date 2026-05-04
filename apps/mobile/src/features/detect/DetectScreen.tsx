@@ -1,9 +1,11 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreferences } from '@/hooks/use-preferences';
 import { useLiveDetection } from './use-live-detection';
+
+const MAX_ERRORS_BEFORE_PAUSE = 3;
 
 export default function DetectScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -12,7 +14,7 @@ export default function DetectScreen() {
   const [active, setActive] = useState(false);
   const { prefs } = usePreferences();
 
-  const captureImage = async (): Promise<string | null> => {
+  const captureImage = useCallback(async (): Promise<string | null> => {
     if (!cameraRef.current || !cameraReady) return null;
     try {
       const photo = await cameraRef.current.takePictureAsync({
@@ -25,7 +27,7 @@ export default function DetectScreen() {
     } catch {
       return null;
     }
-  };
+  }, [cameraReady]);
 
   const { isRunning, lastDescription, errorCount } = useLiveDetection({
     intervalSec: prefs?.detectionIntervalSec ?? 10,
@@ -110,5 +112,3 @@ export default function DetectScreen() {
     </View>
   );
 }
-
-const MAX_ERRORS_BEFORE_PAUSE = 3;

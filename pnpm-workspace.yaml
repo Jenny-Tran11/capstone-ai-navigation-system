@@ -2,3 +2,7 @@ packages:
   - 'apps/*'
   - 'packages/*'
   - 'commands/*'
+
+# Hoisted installs avoid duplicate / mis-resolved react-native in Metro (TurboModule / PlatformConstants errors in monorepos).
+# See: https://docs.expo.dev/guides/monorepos/#package-managers-with-isolated-dependencies
+nodeLinker: hoisted

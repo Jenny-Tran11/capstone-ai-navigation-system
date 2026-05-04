@@ -1,8 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
-
-type TabIconProps = { color: string; label: string };
-const TabIcon = ({ label }: TabIconProps) => <Text className="text-xs">{label}</Text>;
+import { Cog6ToothIcon, EyeIcon, HomeIcon, MapIcon } from 'react-native-heroicons/outline';
 
 export default function TabsLayout() {
   return (
@@ -18,28 +15,28 @@ export default function TabsLayout() {
         name="home/index"
         options={{
           title: 'Home',
-          tabBarIcon: (props) => <TabIcon {...props} label="🏠" />,
+          tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="navigate/index"
         options={{
           title: 'Navigate',
-          tabBarIcon: (props) => <TabIcon {...props} label="🗺️" />,
+          tabBarIcon: ({ color, size }) => <MapIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="detect/index"
         options={{
           title: 'Detect',
-          tabBarIcon: (props) => <TabIcon {...props} label="👁️" />,
+          tabBarIcon: ({ color, size }) => <EyeIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="settings/index"
         options={{
           title: 'Settings',
-          tabBarIcon: (props) => <TabIcon {...props} label="⚙️" />,
+          tabBarIcon: ({ color, size }) => <Cog6ToothIcon color={color} size={size} />,
         }}
       />
     </Tabs>

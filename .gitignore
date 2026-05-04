@@ -79,3 +79,6 @@ apps/model/runs/
 apps/model/revised-pedestrian-obstacle-1/
 apps/model/src/__pycache__/
 .claude/
+
+# Run train items
+runs/
