@@ -32,31 +32,55 @@ const DEFAULT_PREFS: UserPreferences = {
 };
 
 export async function getRecentDestinations(): Promise<Destination[]> {
-  const raw = await AsyncStorage.getItem(KEYS.RECENT_DESTINATIONS);
-  return raw ? (JSON.parse(raw) as Destination[]) : [];
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.RECENT_DESTINATIONS);
+    return raw ? (JSON.parse(raw) as Destination[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function addRecentDestination(dest: Destination): Promise<void> {
-  const existing = await getRecentDestinations();
-  const deduped = existing.filter((d) => d.address !== dest.address);
-  const updated = [dest, ...deduped].slice(0, 5);
-  await AsyncStorage.setItem(KEYS.RECENT_DESTINATIONS, JSON.stringify(updated));
+  try {
+    const existing = await getRecentDestinations();
+    const deduped = existing.filter((d) => d.address !== dest.address);
+    const updated = [dest, ...deduped].slice(0, 5);
+    await AsyncStorage.setItem(KEYS.RECENT_DESTINATIONS, JSON.stringify(updated));
+  } catch {
+    // non-fatal — recents are best-effort
+  }
 }
 
 export async function getPreferences(): Promise<UserPreferences> {
-  const raw = await AsyncStorage.getItem(KEYS.PREFERENCES);
-  return raw ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<UserPreferences>) } : DEFAULT_PREFS;
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.PREFERENCES);
+    return raw ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<UserPreferences>) } : DEFAULT_PREFS;
+  } catch {
+    return DEFAULT_PREFS;
+  }
 }
 
 export async function savePreferences(prefs: Partial<UserPreferences>): Promise<void> {
-  const current = await getPreferences();
-  await AsyncStorage.setItem(KEYS.PREFERENCES, JSON.stringify({ ...current, ...prefs }));
+  try {
+    const current = await getPreferences();
+    await AsyncStorage.setItem(KEYS.PREFERENCES, JSON.stringify({ ...current, ...prefs }));
+  } catch {
+    // non-fatal — preferences will revert on next launch
+  }
 }
 
 export async function isOnboardingDone(): Promise<boolean> {
-  return (await AsyncStorage.getItem(KEYS.ONBOARDING_DONE)) === 'true';
+  try {
+    return (await AsyncStorage.getItem(KEYS.ONBOARDING_DONE)) === 'true';
+  } catch {
+    return false;
+  }
 }
 
 export async function markOnboardingDone(): Promise<void> {
-  await AsyncStorage.setItem(KEYS.ONBOARDING_DONE, 'true');
+  try {
+    await AsyncStorage.setItem(KEYS.ONBOARDING_DONE, 'true');
+  } catch {
+    // non-fatal
+  }
 }

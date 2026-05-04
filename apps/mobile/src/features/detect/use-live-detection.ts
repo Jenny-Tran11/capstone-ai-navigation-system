@@ -1,16 +1,18 @@
 import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import { postDetect, type DetectResponse } from './detection-api';
 
 type Options = {
   intervalSec: number;
   maxScansPerHour: number;
+  hapticEnabled: boolean;
   enabled: boolean;
-  captureImage: () => Promise<string | null>; // returns base64 or null
+  captureImage: () => Promise<string | null>;
 };
 
-type State = {
+type LiveDetectionState = {
   isRunning: boolean;
   lastDescription: string | null;
   errorCount: number;
@@ -23,36 +25,64 @@ const SIMILARITY_THRESHOLD = 0.85;
 function wordOverlap(a: string, b: string): number {
   const setA = new Set(a.toLowerCase().split(/\s+/));
   const setB = new Set(b.toLowerCase().split(/\s+/));
-  const intersection = [...setA].filter((w) => setB.has(w)).length;
+  let intersection = 0;
+  for (const w of setA) if (setB.has(w)) intersection++;
   return intersection / Math.max(setA.size, setB.size, 1);
 }
 
-export function useLiveDetection({ intervalSec, maxScansPerHour, enabled, captureImage }: Options) {
-  const [state, setState] = useState<State>({ isRunning: false, lastDescription: null, errorCount: 0 });
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+export function useLiveDetection({
+  intervalSec,
+  maxScansPerHour,
+  hapticEnabled,
+  enabled,
+  captureImage,
+}: Options) {
+  const [state, setState] = useState<LiveDetectionState>({
+    isRunning: false,
+    lastDescription: null,
+    errorCount: 0,
+  });
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hourResetRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scansThisHourRef = useRef(0);
-  const hourResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSpeechRef = useRef(0);
-  const lastDescRef = useRef<string | null>(null);
+  const lastSpeechAtRef = useRef(0);
+  const lastDescriptionRef = useRef<string | null>(null);
   const consecutiveErrorsRef = useRef(0);
+  // Track whether app is in background so we don't run detections offscreen
+  const isActiveRef = useRef(true);
+
+  const stopInterval = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
 
   const speak = useCallback((text: string) => {
     const now = Date.now();
-    if (now - lastSpeechRef.current < MIN_TTS_INTERVAL_MS) return;
-    if (lastDescRef.current && wordOverlap(text, lastDescRef.current) > SIMILARITY_THRESHOLD) return;
-    lastSpeechRef.current = now;
-    lastDescRef.current = text;
+    if (now - lastSpeechAtRef.current < MIN_TTS_INTERVAL_MS) return;
+    if (
+      lastDescriptionRef.current !== null &&
+      wordOverlap(text, lastDescriptionRef.current) > SIMILARITY_THRESHOLD
+    ) {
+      return;
+    }
+    lastSpeechAtRef.current = now;
+    lastDescriptionRef.current = text;
     Speech.speak(text, { language: 'en-AU', rate: 1.0 });
   }, []);
 
   const runOnce = useCallback(async () => {
+    if (!isActiveRef.current) return;
     if (scansThisHourRef.current >= maxScansPerHour) return;
     if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
+      stopInterval();
       setState((s) => ({ ...s, isRunning: false }));
       return;
     }
 
-    scansThisHourRef.current++;
+    scansThisHourRef.current += 1;
 
     const image = await captureImage();
     if (!image) return;
@@ -63,33 +93,50 @@ export function useLiveDetection({ intervalSec, maxScansPerHour, enabled, captur
       const desc = result.scene_description;
       setState((s) => ({ ...s, lastDescription: desc, errorCount: 0 }));
       speak(desc);
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      consecutiveErrorsRef.current++;
+      if (hapticEnabled) {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch (err) {
+      consecutiveErrorsRef.current += 1;
+      console.warn('[useLiveDetection] detect error:', err);
       setState((s) => ({ ...s, errorCount: s.errorCount + 1 }));
     }
-  }, [captureImage, maxScansPerHour, speak]);
+  }, [captureImage, hapticEnabled, maxScansPerHour, speak, stopInterval]);
 
+  // Pause when app goes to background, resume when foregrounded
   useEffect(() => {
-    if (!enabled) {
-      setState((s) => ({ ...s, isRunning: false }));
-      if (timerRef.current) clearInterval(timerRef.current);
-      return;
-    }
+    const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
+      isActiveRef.current = status === 'active';
+    });
+    return () => sub.remove();
+  }, []);
 
-    setState((s) => ({ ...s, isRunning: true }));
-    timerRef.current = setInterval(runOnce, intervalSec * 1000);
-
-    // Reset hourly scan counter every 60 minutes
+  // Reset hourly scan counter every 60 minutes
+  useEffect(() => {
     hourResetRef.current = setInterval(() => {
       scansThisHourRef.current = 0;
     }, 60 * 60 * 1000);
-
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
       if (hourResetRef.current) clearInterval(hourResetRef.current);
     };
-  }, [enabled, intervalSec, runOnce]);
+  }, []);
+
+  useEffect(() => {
+    stopInterval();
+
+    if (!enabled) {
+      setState((s) => ({ ...s, isRunning: false }));
+      return;
+    }
+
+    consecutiveErrorsRef.current = 0;
+    setState((s) => ({ ...s, isRunning: true, errorCount: 0 }));
+    intervalRef.current = setInterval(() => {
+      void runOnce();
+    }, intervalSec * 1000);
+
+    return stopInterval;
+  }, [enabled, intervalSec, runOnce, stopInterval]);
 
   return state;
 }

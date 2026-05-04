@@ -287,6 +287,7 @@ async function getOrCreateCognitoUser(
 async function bootstrap(): Promise<void> {
   const adminTable = `${APP_NAME}-${STAGE}-admin`;
   const contactTable = `${APP_NAME}-${STAGE}-contact`;
+  const detectionTable = `${APP_NAME}-${STAGE}-detection`;
   const permissionTable = `${APP_NAME}-${STAGE}-permission`;
   const workspaceTable = `${APP_NAME}-${STAGE}-workspace`;
   const poolName = `${APP_NAME}-${STAGE}-user-pool`;
@@ -295,12 +296,14 @@ async function bootstrap(): Promise<void> {
   console.log('Dropping existing DynamoDB tables...');
   await dropTableIfExists(adminTable);
   await dropTableIfExists(contactTable);
+  await dropTableIfExists(detectionTable);
   await dropTableIfExists(permissionTable);
   await dropTableIfExists(workspaceTable);
 
   console.log('Creating DynamoDB tables...');
   await createSimpleTable(adminTable, 'userSub');
   await createSimpleTable(contactTable, 'id');
+  await createSimpleTable(detectionTable, 'detectionId');
   await createPermissionTable(permissionTable);
   await createSimpleTable(workspaceTable, 'workspaceId');
 
