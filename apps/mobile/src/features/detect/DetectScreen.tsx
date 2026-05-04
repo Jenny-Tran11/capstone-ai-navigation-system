@@ -17,8 +17,9 @@ export default function DetectScreen() {
     try {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
-        quality: 0.5,
+        quality: 0.3,
         skipProcessing: true,
+        exif: false,
       });
       return photo?.base64 ?? null;
     } catch {

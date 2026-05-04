@@ -11,6 +11,27 @@ from .config import settings
 
 logger = logging.getLogger(__name__)
 
+# How urgently each class needs to be reported. Higher = spoken first regardless of size.
+_DANGER_LEVEL: dict[str, int] = {
+    "Pothole": 2, "Step": 2, "Stairs": 2, "Stones": 2,
+    "Traffic signal": 2, "Person": 2,
+    "Bicycle": 1, "Motorcycle": 1, "Dog": 1,
+    "Auto": 1, "Car": 1, "Bus": 1, "Truck": 1,
+    "Barrier": 1, "Gate": 1,
+}
+
+
+def _proximity_score(box: list[float], img_height: int) -> float:
+    """0–1 score: higher = closer to camera.
+
+    Combines bounding-box height (larger object fills more frame) and vertical
+    position (objects lower in frame are closer on a ground plane).
+    """
+    _, y1, _, y2 = box
+    box_h = y2 - y1
+    bottom = y2 / img_height
+    return (box_h / img_height) * 0.6 + bottom * 0.4
+
 
 class ObjectDetector:
     def __init__(self) -> None:
@@ -24,7 +45,7 @@ class ObjectDetector:
             return model
         except FileNotFoundError:
             logger.error(
-                "Model weights not found at %s. Place yolo12n.pt in the weights/ directory.",
+                "Model weights not found at %s. Place yolo12s.pt in the weights/ directory.",
                 settings.model_path,
             )
             return None
@@ -40,7 +61,7 @@ class ObjectDetector:
         if self.model is None:
             return []
 
-        results = self.model(image, verbose=False)[0]
+        results = self.model(image, imgsz=settings.input_size, verbose=False)[0]
         detections: list[dict[str, Any]] = []
 
         for box in results.boxes:
@@ -49,11 +70,17 @@ class ObjectDetector:
 
             if class_id not in settings.target_class_ids:
                 continue
-            if confidence <= settings.confidence_threshold:
+
+            name: str = results.names.get(class_id, f"class_{class_id}")
+            threshold = (
+                settings.low_confidence_threshold
+                if name in settings.low_threshold_classes
+                else settings.confidence_threshold
+            )
+            if confidence <= threshold:
                 continue
 
             coords: list[float] = box.xyxy[0].tolist()
-            name: str = results.names.get(class_id, f"class_{class_id}")
             detections.append({"name": name, "confidence": round(confidence, 4), "box": coords})
 
         return detections
@@ -62,14 +89,18 @@ class ObjectDetector:
         if not detections:
             return "Path is clear."
 
-        # Sort by bounding box height descending (largest = closest)
-        detections.sort(key=lambda x: (x["box"][3] - x["box"][1]), reverse=True)
-        top = detections[:3]
+        def _sort_key(d: dict[str, Any]) -> tuple[int, float]:
+            # Primary: danger level (high first). Secondary: proximity (closer first).
+            return (-_DANGER_LEVEL.get(d["name"], 0), -_proximity_score(d["box"], img_height))
 
-        def _distance(box_h: float) -> str:
-            if box_h > img_height * 0.6:
+        top = sorted(detections, key=_sort_key)[:3]
+
+        def _distance(box: list[float]) -> str:
+            box_h = box[3] - box[1]
+            bottom = box[3] / img_height
+            if box_h > img_height * 0.5 or bottom > 0.85:
                 return "very close"
-            if box_h > img_height * 0.3:
+            if box_h > img_height * 0.25 or bottom > 0.6:
                 return "nearby"
             return "detected"
 
@@ -84,7 +115,7 @@ class ObjectDetector:
         for det in top:
             x1, y1, x2, y2 = det["box"]
             phrases.append(
-                f"{det['name']} {_position((x1 + x2) / 2)}, {_distance(y2 - y1)}"
+                f"{det['name']} {_position((x1 + x2) / 2)}, {_distance(det['box'])}"
             )
 
         return ". ".join(phrases) + "."
