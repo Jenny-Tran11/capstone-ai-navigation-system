@@ -1,6 +1,6 @@
 import { Badge } from '@baseline/ui/primitives/badge';
 import { Button } from '@baseline/ui/primitives/button';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import PageContent from '../../../components/page-content/PageContent';
 
 type HealthResponse = { status: string; model_loaded: boolean };
@@ -12,7 +12,7 @@ const ModelStatus = (): JSX.Element => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const checkHealth = async () => {
+  const checkHealth = useCallback(async () => {
     if (!MODEL_URL) {
       setError('VITE_MODEL_API_URL is not configured.');
       return;
@@ -28,11 +28,11 @@ const ModelStatus = (): JSX.Element => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void checkHealth();
-  }, []);
+  }, [checkHealth]);
 
   return (
     <PageContent

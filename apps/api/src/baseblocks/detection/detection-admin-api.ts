@@ -1,4 +1,3 @@
-import type { Detection } from '@baseline/types/detection';
 import { type Response, Router } from 'express';
 import { checkPermission } from '../../middleware/check-permission';
 import { getErrorMessage } from '../../util/error-message';

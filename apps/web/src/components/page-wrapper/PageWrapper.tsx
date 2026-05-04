@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import Footer from '../footer/Footer';
 import Navbar from '../navbar/Navbar';
 

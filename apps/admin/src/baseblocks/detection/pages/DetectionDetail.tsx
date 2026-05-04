@@ -1,12 +1,12 @@
-import { getRequestHandler } from '@baseline/client-api/request-handler';
 import { getDetection } from '@baseline/client-api/detection';
+import { getRequestHandler } from '@baseline/client-api/request-handler';
 import type { Detection } from '@baseline/types/detection';
 import { Badge } from '@baseline/ui/primitives/badge';
-import { useLoaderData } from 'react-router-dom';
+import { useLoaderData, type LoaderFunctionArgs } from 'react-router-dom';
 import PageContent from '../../../components/page-content/PageContent';
 
-export async function detectionDetailLoader({ params }: { params: { detectionId: string } }) {
-  const detection = await getDetection(getRequestHandler(), params.detectionId);
+export async function detectionDetailLoader({ params }: LoaderFunctionArgs) {
+  const detection = await getDetection(getRequestHandler(), params.detectionId as string);
   return { detection };
 }
 
@@ -43,8 +43,8 @@ const DetectionDetail = (): JSX.Element => {
           </p>
           {detection.detections?.length > 0 ? (
             <div className="flex flex-col gap-2">
-              {detection.detections.map((d, i) => (
-                <div key={i} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
+              {detection.detections.map((d) => (
+                <div key={`${d.name}-${d.confidence}`} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                   <span className="font-medium text-sm">{d.name}</span>
                   <Badge variant="secondary">{Math.round(d.confidence * 100)}%</Badge>
                 </div>

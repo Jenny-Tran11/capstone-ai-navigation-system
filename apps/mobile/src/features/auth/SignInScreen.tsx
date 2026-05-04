@@ -20,7 +20,7 @@ export default function SignInScreen() {
       // TODO: replace with real Cognito sign-in
       // await signIn({ username: email, password });
       router.replace('/(app)/(tabs)/home');
-    } catch (e) {
+    } catch (_e) {
       setError('Sign in failed. Check your credentials.');
     } finally {
       setLoading(false);

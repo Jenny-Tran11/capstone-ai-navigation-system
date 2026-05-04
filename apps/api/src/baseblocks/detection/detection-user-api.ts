@@ -11,7 +11,7 @@ export const userDetectionRouter = Router();
 userDetectionRouter.post('/', [
   async (req: RequestContext, res: Response) => {
     try {
-      const userId = req.requestContext?.authorizer?.userId as string;
+      const userId = req.currentUserSub;
       const body = req.body as {
         sceneDescription: string;
         detections: DetectionResult[];
@@ -37,7 +37,7 @@ userDetectionRouter.post('/', [
 userDetectionRouter.get('/my', [
   async (req: RequestContext, res: Response) => {
     try {
-      const userId = req.requestContext?.authorizer?.userId as string;
+      const userId = req.currentUserSub;
       const all = await detectionService.getAll();
       const mine = all.filter((d) => d.userId === userId);
       res.json(mine.map(detectionMapper));

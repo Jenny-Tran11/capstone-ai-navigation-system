@@ -57,6 +57,16 @@
   },
   "overrides": [
     {
+      "includes": ["apps/mobile/**/*.css"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUnknownAtRules": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/*.html"],
       "linter": {
         "rules": {
