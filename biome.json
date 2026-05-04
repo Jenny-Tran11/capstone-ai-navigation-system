@@ -10,7 +10,10 @@
     "experimentalScannerIgnores": [
       "**/*.d.ts",
       "**/dist/**",
-      "**/.cognito/**"
+      "**/.cognito/**",
+      "apps/mobile/.expo/**",
+      "apps/mobile/node_modules/**",
+      "apps/model/**"
     ]
   },
   "formatter": {

@@ -68,3 +68,10 @@ tsconfig.tsbuildinfo
 
 # Local MiniStack config
 .cognito/
+
+# Python model weights (large binary files)
+*.pt
+*.pth
+apps/model/.venv/
+apps/model/__pycache__/
+apps/model/src/__pycache__/

@@ -18,6 +18,9 @@ import type { AxiosRequestConfig } from 'axios';
 import Admins, { adminListLoader } from './baseblocks/admin/pages/Admins';
 import Components from './baseblocks/components/pages/Components';
 import Dashboard from './baseblocks/dashboard/pages/Dashboard';
+import DetectionDetail, { detectionDetailLoader } from './baseblocks/detection/pages/DetectionDetail';
+import Detections, { detectionListLoader } from './baseblocks/detection/pages/Detections';
+import ModelStatus from './baseblocks/detection/pages/ModelStatus';
 import Login from './baseblocks/login/pages/Login';
 import NotAdmin from './baseblocks/not-admin/pages/NotAdmin';
 import Permissions, {
@@ -152,6 +155,13 @@ const router = createBrowserRouter([
         Component: Permissions,
         loader: permissionListLoader,
       },
+      { path: '/detections', Component: Detections, loader: detectionListLoader },
+      {
+        path: '/detections/:detectionId',
+        Component: DetectionDetail,
+        loader: detectionDetailLoader,
+      },
+      { path: '/model', Component: ModelStatus },
       { path: '/components', Component: Components },
       { path: '/settings', Component: User, loader: userLoader },
     ],

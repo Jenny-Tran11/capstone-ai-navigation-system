@@ -2,7 +2,9 @@ import { AppSidebar } from '@baseline/ui/components/app-sidebar';
 import type { NavItem } from '@baseline/ui/components/nav-main';
 import {
   IconBuilding,
+  IconCpu,
   IconDashboard,
+  IconEye,
   IconKey,
   IconLayoutGrid,
   IconSettings,
@@ -15,6 +17,8 @@ const navMain: NavItem[] = [
   { title: 'Admins', url: '/admins', icon: IconUsers },
   { title: 'Workspaces', url: '/workspaces', icon: IconBuilding },
   { title: 'Permissions', url: '/permissions', icon: IconKey },
+  { title: 'Detections', url: '/detections', icon: IconEye },
+  { title: 'Model', url: '/model', icon: IconCpu },
   { title: 'Components', url: '/components', icon: IconLayoutGrid },
 ];
 
@@ -39,7 +43,7 @@ export default function AdminSidebar() {
     <AppSidebar
       variant="inset"
       collapsible="icon"
-      brand={{ name: 'Baseline', url: '/dashboard' }}
+      brand={{ name: 'AI-Detect', url: '/dashboard' }}
       navMain={navMain}
       navSecondary={navSecondary}
       isItemActive={isItemActive}
