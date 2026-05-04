@@ -13,11 +13,8 @@ logger = logging.getLogger(__name__)
 
 # How urgently each class needs to be reported. Higher = spoken first regardless of size.
 _DANGER_LEVEL: dict[str, int] = {
-    "Pothole": 2, "Step": 2, "Stairs": 2, "Stones": 2,
-    "Traffic signal": 2, "Person": 2,
-    "Bicycle": 1, "Motorcycle": 1, "Dog": 1,
-    "Auto": 1, "Car": 1, "Bus": 1, "Truck": 1,
-    "Barrier": 1, "Gate": 1,
+    "stairs": 2, "hazard-sign": 2, "person": 2,
+    "bike": 1, "vehicle": 1, "animal": 1,
 }
 
 

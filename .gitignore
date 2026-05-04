@@ -74,5 +74,8 @@ tsconfig.tsbuildinfo
 *.pth
 apps/model/.venv/
 apps/model/__pycache__/
+apps/model/dataset.zip
+apps/model/runs/
+apps/model/revised-pedestrian-obstacle-1/
 apps/model/src/__pycache__/
 .claude/
