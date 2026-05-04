@@ -75,3 +75,4 @@ tsconfig.tsbuildinfo
 apps/model/.venv/
 apps/model/__pycache__/
 apps/model/src/__pycache__/
+.claude/
