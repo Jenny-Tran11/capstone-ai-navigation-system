@@ -7,6 +7,7 @@ import {
   IconEye,
   IconKey,
   IconLayoutGrid,
+  IconTool,
   IconSettings,
   IconUsers,
 } from '@tabler/icons-react';
@@ -19,6 +20,7 @@ const navMain: NavItem[] = [
   { title: 'Permissions', url: '/permissions', icon: IconKey },
   { title: 'Detections', url: '/detections', icon: IconEye },
   { title: 'Model', url: '/model', icon: IconCpu },
+  { title: 'Runtime config', url: '/runtime-config', icon: IconTool },
   { title: 'Components', url: '/components', icon: IconLayoutGrid },
 ];
 

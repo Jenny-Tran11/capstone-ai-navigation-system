@@ -82,8 +82,8 @@ const Contact = (): JSX.Element => {
             className="text-lg font-light"
             style={{ color: 'var(--warm-muted)' }}
           >
-            Have a question or want to work together? We'd love to hear from
-            you.
+            Have questions about AI-Detect? Interested in the project or want to
+            request a demo? We'd love to hear from you.
           </p>
         </div>
 
@@ -247,11 +247,11 @@ const Contact = (): JSX.Element => {
           <p className="text-sm" style={{ color: 'var(--warm-muted)' }}>
             Or reach us directly at{' '}
             <a
-              href="mailto:hello@baselinecore.com"
+              href="mailto:contact@ai-detect.app"
               className="no-underline font-medium"
               style={{ color: 'var(--warm-primary)' }}
             >
-              hello@baselinecore.com
+              contact@ai-detect.app
             </a>
           </p>
         </div>

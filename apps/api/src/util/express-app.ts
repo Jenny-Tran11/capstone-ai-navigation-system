@@ -9,9 +9,11 @@ const createApp = (): Application => {
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
   };
 
+  const bodySizeLimit = process.env.API_BODY_SIZE_LIMIT ?? '50mb';
+
   const app = express();
-  app.use(express.urlencoded({ extended: true }));
-  app.use(express.json());
+  app.use(express.urlencoded({ extended: true, limit: bodySizeLimit }));
+  app.use(express.json({ limit: bodySizeLimit }));
   app.use(compression());
   app.use(cors(corsOptions));
   app.options('*', cors(corsOptions));

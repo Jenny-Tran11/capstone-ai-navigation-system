@@ -6,6 +6,13 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@baseline/admin", "start"],
       "port": 5002
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@baseline/web", "start"],
+      "port": 5000,
+      "autoPort": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Cog6ToothIcon, EyeIcon, HomeIcon, MapIcon } from 'react-native-heroicons/outline';
+import { ClockIcon, Cog6ToothIcon, EyeIcon, HomeIcon, MapIcon, UserCircleIcon } from 'react-native-heroicons/outline';
 
 export default function TabsLayout() {
   return (
@@ -19,6 +19,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="detect/index"
+        options={{
+          title: 'Detect',
+          tabBarIcon: ({ color, size }) => <EyeIcon color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="history/index"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color, size }) => <ClockIcon color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="navigate/index"
         options={{
           title: 'Navigate',
@@ -26,10 +40,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="detect/index"
+        name="profile/index"
         options={{
-          title: 'Detect',
-          tabBarIcon: ({ color, size }) => <EyeIcon color={color} size={size} />,
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => <UserCircleIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen

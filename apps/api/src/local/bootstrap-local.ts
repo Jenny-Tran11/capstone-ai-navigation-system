@@ -61,6 +61,28 @@ async function createSimpleTable(
   console.log(`  Created ${tableName}`);
 }
 
+async function createDetectionTable(tableName: string): Promise<void> {
+  await dynamo.send(
+    new CreateTableCommand({
+      TableName: tableName,
+      AttributeDefinitions: [
+        { AttributeName: 'detectionId', AttributeType: 'S' },
+        { AttributeName: 'userId', AttributeType: 'S' },
+      ],
+      KeySchema: [{ AttributeName: 'detectionId', KeyType: 'HASH' }],
+      BillingMode: 'PAY_PER_REQUEST',
+      GlobalSecondaryIndexes: [
+        {
+          IndexName: 'userId-index',
+          KeySchema: [{ AttributeName: 'userId', KeyType: 'HASH' }],
+          Projection: { ProjectionType: 'ALL' },
+        },
+      ],
+    }),
+  );
+  console.log(`  Created ${tableName} with userId-index GSI`);
+}
+
 async function createPermissionTable(tableName: string): Promise<void> {
   await dynamo.send(
     new CreateTableCommand({
@@ -289,6 +311,8 @@ async function bootstrap(): Promise<void> {
   const contactTable = `${APP_NAME}-${STAGE}-contact`;
   const detectionTable = `${APP_NAME}-${STAGE}-detection`;
   const permissionTable = `${APP_NAME}-${STAGE}-permission`;
+  const appConfigTable = `${APP_NAME}-${STAGE}-app-config`;
+  const userProfileTable = `${APP_NAME}-${STAGE}-user-profile`;
   const workspaceTable = `${APP_NAME}-${STAGE}-workspace`;
   const poolName = `${APP_NAME}-${STAGE}-user-pool`;
   const clientName = `${APP_NAME}-${STAGE}-client`;
@@ -298,13 +322,17 @@ async function bootstrap(): Promise<void> {
   await dropTableIfExists(contactTable);
   await dropTableIfExists(detectionTable);
   await dropTableIfExists(permissionTable);
+  await dropTableIfExists(appConfigTable);
+  await dropTableIfExists(userProfileTable);
   await dropTableIfExists(workspaceTable);
 
   console.log('Creating DynamoDB tables...');
   await createSimpleTable(adminTable, 'userSub');
   await createSimpleTable(contactTable, 'id');
-  await createSimpleTable(detectionTable, 'detectionId');
+  await createDetectionTable(detectionTable);
   await createPermissionTable(permissionTable);
+  await createSimpleTable(appConfigTable, 'configId');
+  await createSimpleTable(userProfileTable, 'userId');
   await createSimpleTable(workspaceTable, 'workspaceId');
 
   console.log('Setting up Cognito user pool...');
@@ -318,17 +346,17 @@ async function bootstrap(): Promise<void> {
   const primarySub = await getOrCreateCognitoUser(
     poolId,
     'example@devika.com',
-    'Password123',
+    'Password123!',
   );
   const sub1 = await getOrCreateCognitoUser(
     poolId,
     'example+1@devika.com',
-    'Password123',
+    'Password123!',
   );
   const sub2 = await getOrCreateCognitoUser(
     poolId,
     'example+2@devika.com',
-    'Password123',
+    'Password123!',
   );
 
   const adminUsers = [
@@ -371,7 +399,7 @@ async function bootstrap(): Promise<void> {
   fs.writeFileSync(path.resolve(__dirname, '..', '..', '.env.local'), envLocal);
 
   console.log('\nBootstrap complete.');
-  console.log('  Sign in: example@devika.com / Password123');
+  console.log('  Sign in: example@devika.com / Password123!');
   console.log('  .cognito/local-config.json written');
 }
 

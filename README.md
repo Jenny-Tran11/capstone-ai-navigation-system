@@ -102,7 +102,7 @@ pnpm run start:admin   # Admin dashboard on port 5002
 pnpm run start:web     # Public website on port 5173
 ```
 
-**Default local credentials:** `example@devika.com` / `Password123`
+**Default local credentials:** `example@devika.com` / `Password123!`
 
 **Reset local state:**
 

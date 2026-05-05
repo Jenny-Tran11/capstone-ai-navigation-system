@@ -29,7 +29,7 @@ const SignIn = (): JSX.Element => {
               Welcome back
             </h1>
             <p className="text-sm" style={{ color: 'var(--warm-muted)' }}>
-              Sign in to your Baseline Bolt account
+              Sign in to your AI-Detect account
             </p>
           </div>
 

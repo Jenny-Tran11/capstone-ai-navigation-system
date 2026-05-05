@@ -1,7 +1,5 @@
 import axios from 'axios';
-
-const BASE_URL = process.env.EXPO_PUBLIC_DETECT_API_URL ?? '';
-const API_KEY = process.env.EXPO_PUBLIC_DETECT_API_KEY ?? '';
+import { getRuntimeConfig } from '@/lib/runtime-config';
 
 export type DetectionResult = {
   name: string;
@@ -85,6 +83,10 @@ function parseRoboflowDetectResponse(data: unknown): DetectResponse {
 }
 
 export async function postDetect(imageBase64: string): Promise<DetectResponse> {
+  const runtime = await getRuntimeConfig();
+  const BASE_URL = runtime.detectApiBaseUrl;
+  const API_KEY = runtime.detectApiKey;
+
   if (isRoboflowWorkflowEndpoint(BASE_URL)) {
     const { data } = await axios.post<unknown>(
       BASE_URL,

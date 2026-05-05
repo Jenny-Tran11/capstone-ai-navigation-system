@@ -2,20 +2,48 @@ import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
-import { postDetect, type DetectResponse } from './detection-api';
+import { apiClient } from '@/lib/api-client';
+import { postDetect, type DetectionResult, type DetectResponse } from './detection-api';
+import { DANGER_CLASSES, MEDIUM_CLASSES } from './detection-classes';
+
+function dangerLevel(detections: DetectionResult[]): 'high' | 'medium' | 'low' {
+  for (const d of detections) {
+    if (DANGER_CLASSES.has(d.name.toLowerCase())) return 'high';
+  }
+  for (const d of detections) {
+    if (MEDIUM_CLASSES.has(d.name.toLowerCase())) return 'medium';
+  }
+  return 'low';
+}
+
+async function fireHaptic(danger: 'high' | 'medium' | 'low'): Promise<void> {
+  if (danger === 'high') {
+    // short-long pulse pattern for high danger
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    await new Promise((r) => setTimeout(r, 150));
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+  } else if (danger === 'medium') {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  } else {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }
+}
 
 type Options = {
   intervalSec: number;
   maxScansPerHour: number;
   hapticEnabled: boolean;
   enabled: boolean;
-  captureImage: () => Promise<string | null>;
+  captureImage: () => Promise<{ base64: string; width: number; height: number } | null>;
 };
 
 type LiveDetectionState = {
   isRunning: boolean;
   lastDescription: string | null;
+  lastDetections: DetectionResult[];
+  imageSize: { width: number; height: number } | null;
   errorCount: number;
+  reset: () => void;
 };
 
 const MIN_TTS_INTERVAL_MS = 2500;
@@ -37,9 +65,11 @@ export function useLiveDetection({
   enabled,
   captureImage,
 }: Options) {
-  const [state, setState] = useState<LiveDetectionState>({
+  const [state, setState] = useState<Omit<LiveDetectionState, 'reset'>>({
     isRunning: false,
     lastDescription: null,
+    lastDetections: [],
+    imageSize: null,
     errorCount: 0,
   });
 
@@ -49,7 +79,6 @@ export function useLiveDetection({
   const lastSpeechAtRef = useRef(0);
   const lastDescriptionRef = useRef<string | null>(null);
   const consecutiveErrorsRef = useRef(0);
-  // Track whether app is in background so we don't run detections offscreen
   const isActiveRef = useRef(true);
 
   const stopInterval = useCallback(() => {
@@ -57,6 +86,11 @@ export function useLiveDetection({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+  }, []);
+
+  const reset = useCallback(() => {
+    consecutiveErrorsRef.current = 0;
+    setState((s) => ({ ...s, errorCount: 0 }));
   }, []);
 
   const speak = useCallback((text: string) => {
@@ -84,18 +118,34 @@ export function useLiveDetection({
 
     scansThisHourRef.current += 1;
 
-    const image = await captureImage();
-    if (!image) return;
+    const capture = await captureImage();
+    if (!capture) return;
+
+    const { base64, width: imgWidth, height: imgHeight } = capture;
 
     try {
-      const result: DetectResponse = await postDetect(image);
+      const result: DetectResponse = await postDetect(base64);
       consecutiveErrorsRef.current = 0;
       const desc = result.scene_description;
-      setState((s) => ({ ...s, lastDescription: desc, errorCount: 0 }));
+      setState((s) => ({
+        ...s,
+        lastDescription: desc,
+        lastDetections: result.detections,
+        imageSize: { width: imgWidth, height: imgHeight },
+        errorCount: 0,
+      }));
       speak(desc);
       if (hapticEnabled) {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await fireHaptic(dangerLevel(result.detections));
       }
+
+      // Fire-and-forget: save to API — silently swallow failures (offline-safe)
+      apiClient
+        .post('/detection/user', {
+          sceneDescription: desc,
+          detections: result.detections,
+        })
+        .catch(() => {});
     } catch (err) {
       consecutiveErrorsRef.current += 1;
       console.warn('[useLiveDetection] detect error:', err);
@@ -103,7 +153,6 @@ export function useLiveDetection({
     }
   }, [captureImage, hapticEnabled, maxScansPerHour, speak, stopInterval]);
 
-  // Pause when app goes to background, resume when foregrounded
   useEffect(() => {
     const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
       isActiveRef.current = status === 'active';
@@ -111,7 +160,6 @@ export function useLiveDetection({
     return () => sub.remove();
   }, []);
 
-  // Reset hourly scan counter every 60 minutes
   useEffect(() => {
     hourResetRef.current = setInterval(() => {
       scansThisHourRef.current = 0;
@@ -138,5 +186,5 @@ export function useLiveDetection({
     return stopInterval;
   }, [enabled, intervalSec, runOnce, stopInterval]);
 
-  return state;
+  return { ...state, reset };
 }

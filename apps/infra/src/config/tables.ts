@@ -41,5 +41,19 @@ export function getTableDefs(): TableDefinition[] {
       partitionKey: { name: 'workspaceId', type: 'S' },
       stream: 'NEW_AND_OLD_IMAGES',
     },
+    {
+      entityName: 'detection',
+      partitionKey: { name: 'detectionId', type: 'S' },
+      gsis: [
+        {
+          indexName: 'userId-index',
+          partitionKey: { name: 'userId', type: 'S' },
+        },
+      ],
+    },
+    {
+      entityName: 'user-profile',
+      partitionKey: { name: 'userId', type: 'S' },
+    },
   ];
 }

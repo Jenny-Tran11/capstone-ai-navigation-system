@@ -1,133 +1,148 @@
-import type React from 'react';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import PageWrapper from '../components/page-wrapper/PageWrapper';
 
-const GetStarted = (): JSX.Element => {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
+const steps = [
+  {
+    number: '1',
+    title: 'Download the App',
+    description:
+      'Install AI-Detect on your iOS or Android device. The app is built with React Native and Expo, targeting both platforms from a single codebase.',
+    detail: (
+      <div className="flex gap-3 mt-4 flex-wrap">
+        {['Available on iOS', 'Available on Android'].map((label) => (
+          <span
+            key={label}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-medium"
+            style={{
+              borderColor: 'var(--warm-border)',
+              color: 'var(--warm-muted)',
+              backgroundColor: 'var(--warm-bg)',
+            }}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    ),
+  },
+  {
+    number: '2',
+    title: 'Create Your Profile',
+    description:
+      'Sign up using your email. AWS Cognito secures your authentication. Once registered, configure your feedback preferences — voice speed, haptic intensity, and detection sensitivity.',
+    detail: null,
+  },
+  {
+    number: '3',
+    title: 'Start Navigating',
+    description:
+      "Point your phone's camera toward your path and tap Start. AI-Detect continuously analyses your surroundings and guides you with audio cues and vibration feedback.",
+    detail: null,
+  },
+];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-  };
-
-  return (
-    <PageWrapper title="Get Started">
-      <div className="flex items-center justify-center min-h-[80vh] px-6 py-16">
+const GetStarted = (): JSX.Element => (
+  <PageWrapper title="Get Started">
+    <div className="max-w-3xl mx-auto px-6 py-24 space-y-16">
+      {/* Header */}
+      <div className="space-y-4">
         <div
-          className="w-full max-w-md rounded-3xl border p-10 space-y-8"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium"
           style={{
-            backgroundColor: 'var(--warm-surface)',
-            borderColor: 'var(--warm-border)',
+            borderColor: 'rgba(204,89,51,0.25)',
+            color: 'var(--warm-primary)',
+            backgroundColor: 'rgba(204,89,51,0.06)',
           }}
         >
-          <div className="text-center space-y-2">
-            <h1
-              className="text-3xl font-light tracking-tight"
-              style={{ color: 'var(--warm-fg)' }}
-            >
-              Start your journey
-            </h1>
-            <p className="text-sm" style={{ color: 'var(--warm-muted)' }}>
-              Create your free Baseline Bolt account
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="getstarted-name"
-                className="text-sm font-medium"
-                style={{ color: 'var(--warm-fg)' }}
-              >
-                Full name
-              </label>
-              <input
-                id="getstarted-name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Jane Smith"
-                required
-                className="w-full rounded-xl px-4 py-3 text-sm border outline-none transition-colors"
-                style={{
-                  backgroundColor: 'var(--warm-bg)',
-                  borderColor: 'var(--warm-border)',
-                  color: 'var(--warm-fg)',
-                }}
-                onFocus={(e) =>
-                  (e.currentTarget.style.borderColor = 'var(--warm-primary)')
-                }
-                onBlur={(e) =>
-                  (e.currentTarget.style.borderColor = 'var(--warm-border)')
-                }
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                htmlFor="getstarted-email"
-                className="text-sm font-medium"
-                style={{ color: 'var(--warm-fg)' }}
-              >
-                Work email
-              </label>
-              <input
-                id="getstarted-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                required
-                className="w-full rounded-xl px-4 py-3 text-sm border outline-none transition-colors"
-                style={{
-                  backgroundColor: 'var(--warm-bg)',
-                  borderColor: 'var(--warm-border)',
-                  color: 'var(--warm-fg)',
-                }}
-                onFocus={(e) =>
-                  (e.currentTarget.style.borderColor = 'var(--warm-primary)')
-                }
-                onBlur={(e) =>
-                  (e.currentTarget.style.borderColor = 'var(--warm-border)')
-                }
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full rounded-full py-3 text-sm font-semibold text-white transition-all duration-200"
-              style={{ backgroundColor: 'var(--warm-primary)' }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  'var(--warm-primary-hover)')
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  'var(--warm-primary)')
-              }
-            >
-              Create free account
-            </button>
-          </form>
-
-          <p
-            className="text-center text-sm"
-            style={{ color: 'var(--warm-muted)' }}
-          >
-            Already have an account?{' '}
-            <Link
-              to="/signin"
-              className="font-medium no-underline"
-              style={{ color: 'var(--warm-primary)' }}
-            >
-              Sign in
-            </Link>
-          </p>
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: 'var(--warm-primary)' }}
+          />
+          Get the App
         </div>
+        <h1
+          className="text-4xl sm:text-5xl font-light tracking-tight"
+          style={{ color: 'var(--warm-fg)', letterSpacing: '-0.02em' }}
+        >
+          Start navigating with AI-Detect.
+        </h1>
+        <p
+          className="text-lg font-light"
+          style={{ color: 'var(--warm-muted)' }}
+        >
+          AI-Detect is a mobile application for iOS and Android, built with
+          React Native and Expo.
+        </p>
       </div>
-    </PageWrapper>
-  );
-};
+
+      {/* Steps */}
+      <div className="space-y-6">
+        {steps.map((step) => (
+          <div
+            key={step.number}
+            className="rounded-2xl border p-8 flex gap-6"
+            style={{
+              backgroundColor: 'var(--warm-surface)',
+              borderColor: 'var(--warm-border)',
+            }}
+          >
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
+              style={{ backgroundColor: 'var(--warm-primary)' }}
+            >
+              {step.number}
+            </div>
+            <div>
+              <h2
+                className="text-lg font-semibold mb-2"
+                style={{ color: 'var(--warm-fg)' }}
+              >
+                {step.title}
+              </h2>
+              <p
+                className="text-sm leading-relaxed"
+                style={{ color: 'var(--warm-muted)' }}
+              >
+                {step.description}
+              </p>
+              {step.detail}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Evaluators info box */}
+      <div
+        className="rounded-2xl border p-8 space-y-3"
+        style={{
+          backgroundColor: 'rgba(204,89,51,0.04)',
+          borderColor: 'rgba(204,89,51,0.2)',
+        }}
+      >
+        <h3
+          className="text-base font-semibold"
+          style={{ color: 'var(--warm-fg)' }}
+        >
+          For Evaluators
+        </h3>
+        <p
+          className="text-sm leading-relaxed"
+          style={{ color: 'var(--warm-muted)' }}
+        >
+          This project is a University of Wollongong capstone submission. The
+          source code and architecture documentation are available on request.
+          Please use the{' '}
+          <a
+            href="/contact"
+            className="no-underline font-medium"
+            style={{ color: 'var(--warm-primary)' }}
+          >
+            contact page
+          </a>{' '}
+          to request a demo or access credentials for the test environment.
+        </p>
+      </div>
+    </div>
+  </PageWrapper>
+);
 
 export default GetStarted;

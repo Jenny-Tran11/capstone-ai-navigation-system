@@ -1,6 +1,7 @@
+import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
-import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,42 +9,107 @@ import {
   Text,
   View,
 } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import {
   ArrowsRightLeftIcon,
   ClockIcon,
+  MapPinIcon,
   SpeakerWaveIcon,
 } from 'react-native-heroicons/outline';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getWalkingRoute, type Route, type RouteStep } from './routing-service';
+import { getWalkingRoute, type Route, type RouteStep, type MapPoint } from './routing-service';
 
 export default function NavigatePlanScreen() {
-  const { address } = useLocalSearchParams<{ address?: string }>();
+  const { address, lat: latParam, lng: lngParam } = useLocalSearchParams<{
+    address?: string;
+    lat?: string;
+    lng?: string;
+  }>();
+  const destCoords = {
+    lat: latParam ? Number.parseFloat(latParam) : 0,
+    lng: lngParam ? Number.parseFloat(lngParam) : 0,
+  };
   const [route, setRoute] = useState<Route | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(0);
+  const [userLocation, setUserLocation] = useState<MapPoint | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const mapRef = useRef<MapView>(null);
+  const fetchedWithRealOriginRef = useRef(false);
 
+  // Fetch route; re-fetch once when real GPS becomes available if first fetch used lat:0
   useEffect(() => {
     if (!address) return;
+    const hasRealOrigin =
+      !!userLocation &&
+      (userLocation.latitude !== 0 || userLocation.longitude !== 0);
+    if (fetchedWithRealOriginRef.current && hasRealOrigin) return;
     setLoading(true);
     setError(null);
-    // Using mock coordinates; real app would geocode the address
-    getWalkingRoute(
-      { lat: -33.8688, lng: 151.2093 },
-      { lat: -33.8703, lng: 151.2117 },
-    )
-      .then(setRoute)
+    const origin = hasRealOrigin
+      ? { lat: userLocation.latitude, lng: userLocation.longitude }
+      : { lat: 0, lng: 0 };
+    getWalkingRoute(origin, destCoords)
+      .then((r) => {
+        setRoute(r);
+        fetchedWithRealOriginRef.current = hasRealOrigin;
+        if (r.polylinePoints.length > 0) {
+          setTimeout(() => {
+            mapRef.current?.fitToCoordinates(r.polylinePoints, {
+              edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+              animated: true,
+            });
+          }, 500);
+        }
+      })
       .catch(() => setError('Could not find a route. Check your connection.'))
       .finally(() => setLoading(false));
-  }, [address]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, latParam, lngParam, userLocation]);
+
+  // Watch user GPS position
+  useEffect(() => {
+    let sub: Location.LocationSubscription | null = null;
+
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationDenied(true);
+        return;
+      }
+
+      sub = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, distanceInterval: 5 },
+        (loc) => {
+          setUserLocation({
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          });
+        },
+      );
+    })();
+
+    return () => {
+      sub?.remove();
+    };
+  }, []);
 
   const speakStep = (step: RouteStep) => {
     Speech.speak(step.instruction, { language: 'en-AU', rate: 1.0 });
   };
 
+  const destPoint: MapPoint = {
+    latitude: destCoords.lat || -33.8703,
+    longitude: destCoords.lng || 151.2117,
+  };
+
+  const mapCenter = route?.polylinePoints?.[0] ?? destPoint;
+
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="px-5 pt-6 pb-4 border-b border-gray-100">
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      {/* Header */}
+      <View className="px-5 pt-4 pb-3 border-b border-gray-100">
         <Text className="text-2xl font-bold text-gray-900">Navigate</Text>
         {address ? (
           <Text className="text-gray-500 mt-1" numberOfLines={1}>
@@ -59,6 +125,14 @@ export default function NavigatePlanScreen() {
         </View>
       )}
 
+      {locationDenied ? (
+        <View className="px-5 py-2 bg-yellow-50 border-b border-yellow-100">
+          <Text className="text-yellow-800 text-sm text-center">
+            Location access denied — route starts from destination area
+          </Text>
+        </View>
+      ) : null}
+
       {error && (
         <View className="flex-1 items-center justify-center px-6">
           <Text className="text-red-500 text-base text-center">{error}</Text>
@@ -66,26 +140,62 @@ export default function NavigatePlanScreen() {
       )}
 
       {!loading && route && (
-        <>
-          <View className="px-5 py-3 bg-blue-50 flex-row gap-4 items-center">
+        <View className="flex-1">
+          {/* Map — top 40% of screen */}
+          <View style={{ height: '40%' }}>
+            <MapView
+              ref={mapRef}
+              style={{ flex: 1 }}
+              initialRegion={{
+                latitude: mapCenter.latitude,
+                longitude: mapCenter.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+              showsUserLocation={false}
+              showsMyLocationButton={false}
+            >
+              {route.polylinePoints.length > 0 ? (
+                <Polyline
+                  coordinates={route.polylinePoints}
+                  strokeColor="#2563eb"
+                  strokeWidth={4}
+                />
+              ) : null}
+
+              <Marker
+                coordinate={destPoint}
+                title={address ?? 'Destination'}
+                pinColor="#ef4444"
+              />
+
+              {userLocation ? (
+                <Marker
+                  coordinate={userLocation}
+                  title="You are here"
+                  pinColor="#2563eb"
+                />
+              ) : null}
+            </MapView>
+          </View>
+
+          {/* Route summary strip */}
+          <View className="px-5 py-3 bg-blue-50 flex-row gap-4 items-center border-b border-blue-100">
             <View className="flex-row items-center gap-1.5">
               <ArrowsRightLeftIcon size={16} color="#475569" />
-              <Text className="text-sm text-gray-600">
-                {route.totalDistance}
-              </Text>
+              <Text className="text-sm text-gray-600">{route.totalDistance}</Text>
             </View>
             <View className="flex-row items-center gap-1.5">
               <ClockIcon size={16} color="#475569" />
-              <Text className="text-sm text-gray-600">
-                {route.totalDuration}
-              </Text>
+              <Text className="text-sm text-gray-600">{route.totalDuration}</Text>
             </View>
           </View>
 
+          {/* Step list */}
           <FlatList
             data={route.steps}
             keyExtractor={(_, i) => String(i)}
-            contentContainerStyle={{ padding: 20, gap: 8 }}
+            contentContainerStyle={{ padding: 16, gap: 8 }}
             renderItem={({ item, index }) => (
               <Pressable
                 onPress={() => {
@@ -101,14 +211,10 @@ export default function NavigatePlanScreen() {
                 accessibilityLabel={`Step ${index + 1}: ${item.instruction}`}
               >
                 <View className="w-7 h-7 rounded-full bg-primary items-center justify-center shrink-0 mt-0.5">
-                  <Text className="text-white text-xs font-bold">
-                    {index + 1}
-                  </Text>
+                  <Text className="text-white text-xs font-bold">{index + 1}</Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-base text-gray-900">
-                    {item.instruction}
-                  </Text>
+                  <Text className="text-base text-gray-900">{item.instruction}</Text>
                   <Text className="text-sm text-gray-500 mt-1">
                     {item.distance} · {item.duration}
                   </Text>
@@ -117,20 +223,33 @@ export default function NavigatePlanScreen() {
             )}
           />
 
-          <View className="px-5 pb-6">
+          {/* Action buttons */}
+          <View className="px-5 pb-6 pt-2 gap-3">
             <Pressable
-              onPress={() => speakStep(route.steps[activeStep])}
-              className="bg-primary rounded-2xl py-4 flex-row items-center justify-center gap-2"
+              onPress={() => route.steps[activeStep] && speakStep(route.steps[activeStep])}
+              className="bg-slate-100 rounded-2xl py-4 flex-row items-center justify-center gap-2"
               accessibilityRole="button"
               accessibilityLabel="Read current step aloud"
             >
-              <SpeakerWaveIcon size={22} color="#ffffff" />
-              <Text className="text-white font-semibold text-lg">
-                Read step
-              </Text>
+              <SpeakerWaveIcon size={22} color="#475569" />
+              <Text className="text-slate-700 font-semibold text-lg">Read step</Text>
+            </Pressable>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/(app)/navigate-active' as never,
+                  params: { address, lat: latParam, lng: lngParam },
+                })
+              }
+              className="bg-primary rounded-2xl py-4 flex-row items-center justify-center gap-2"
+              accessibilityRole="button"
+              accessibilityLabel="Start navigation with detection"
+            >
+              <MapPinIcon size={22} color="#ffffff" />
+              <Text className="text-white font-semibold text-lg">Start Navigation</Text>
             </Pressable>
           </View>
-        </>
+        </View>
       )}
 
       {!loading && !route && !error && (

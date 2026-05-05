@@ -20,6 +20,13 @@ export type UserPreferences = {
   hapticEnabled: boolean;
   detectionIntervalSec: number;
   maxScansPerHour: number;
+  preferredLocations: Array<{
+    tag: 'home' | 'work' | 'other';
+    label: string;
+    address: string;
+    lat: number;
+    lng: number;
+  }>;
 };
 
 const DEFAULT_PREFS: UserPreferences = {
@@ -29,6 +36,7 @@ const DEFAULT_PREFS: UserPreferences = {
   hapticEnabled: true,
   detectionIntervalSec: 10,
   maxScansPerHour: 30,
+  preferredLocations: [],
 };
 
 export async function getRecentDestinations(): Promise<Destination[]> {
@@ -45,7 +53,10 @@ export async function addRecentDestination(dest: Destination): Promise<void> {
     const existing = await getRecentDestinations();
     const deduped = existing.filter((d) => d.address !== dest.address);
     const updated = [dest, ...deduped].slice(0, 5);
-    await AsyncStorage.setItem(KEYS.RECENT_DESTINATIONS, JSON.stringify(updated));
+    await AsyncStorage.setItem(
+      KEYS.RECENT_DESTINATIONS,
+      JSON.stringify(updated),
+    );
   } catch {
     // non-fatal — recents are best-effort
   }
@@ -54,16 +65,23 @@ export async function addRecentDestination(dest: Destination): Promise<void> {
 export async function getPreferences(): Promise<UserPreferences> {
   try {
     const raw = await AsyncStorage.getItem(KEYS.PREFERENCES);
-    return raw ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<UserPreferences>) } : DEFAULT_PREFS;
+    return raw
+      ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<UserPreferences>) }
+      : DEFAULT_PREFS;
   } catch {
     return DEFAULT_PREFS;
   }
 }
 
-export async function savePreferences(prefs: Partial<UserPreferences>): Promise<void> {
+export async function savePreferences(
+  prefs: Partial<UserPreferences>,
+): Promise<void> {
   try {
     const current = await getPreferences();
-    await AsyncStorage.setItem(KEYS.PREFERENCES, JSON.stringify({ ...current, ...prefs }));
+    await AsyncStorage.setItem(
+      KEYS.PREFERENCES,
+      JSON.stringify({ ...current, ...prefs }),
+    );
   } catch {
     // non-fatal — preferences will revert on next launch
   }

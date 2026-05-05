@@ -23,7 +23,7 @@
     "@tabler/icons-react": "3.26.0",
     "@tailwindcss/vite": "4.1.4",
     "@vitejs/plugin-react": "4.3.4",
-    "aws-amplify": "6.6.6",
+    "aws-amplify": "6.16.3",
     "axios": "1.7.7",
     "next-themes": "^0.4.4",
     "react": "18.2.0",

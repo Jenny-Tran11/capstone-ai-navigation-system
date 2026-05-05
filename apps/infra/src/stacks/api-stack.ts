@@ -107,7 +107,16 @@ export class ApiStack extends Stack {
         path: 'workspace',
         entry: 'baseblocks/workspace/workspace-api.ts',
       },
-      // { name: 'ApiCognitoUser', path: 'cognito-user', entry: 'baseblocks/cognito-user/cognito-user-api.ts' },
+      {
+        name: 'ApiDetection',
+        path: 'detection',
+        entry: 'baseblocks/detection/detection-api.ts',
+      },
+      {
+        name: 'ApiUserProfile',
+        path: 'user-profile',
+        entry: 'baseblocks/user-profile/user-profile-api.ts',
+      },
     ];
 
     const lambdaFunctions: BaselineFunction[] = [];
@@ -135,6 +144,27 @@ export class ApiStack extends Stack {
 
       lambdaFunctions.push(fn);
     }
+
+    // ── Transit API (Gemini-powered bus OCR, authenticated) ───────────────────
+    const transitFn = new BaselineFunction(this, 'ApiTransit', {
+      config,
+      functionName: 'ApiTransit',
+      entry: 'baseblocks/transit/transit-api.ts',
+      environment: {
+        COGNITO_USER_POOL_ID: userPool.userPoolId,
+        GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY ?? '',
+      },
+    });
+    transitFn.fn.addToRolePolicy(cognitoPolicy);
+
+    const transitIntegration = new apigateway.LambdaIntegration(transitFn.fn);
+    const transitResource = api.root.addResource('transit');
+    transitResource.addMethod('ANY', transitIntegration, authOptions);
+    transitResource
+      .addProxy({ anyMethod: false, defaultIntegration: transitIntegration })
+      .addMethod('ANY', transitIntegration, authOptions);
+
+    lambdaFunctions.push(transitFn);
 
     // ── Contact API (mixed auth: POST public, GET admin-only) ─────────────────
     const contactFn = new BaselineFunction(this, 'ApiContact', {

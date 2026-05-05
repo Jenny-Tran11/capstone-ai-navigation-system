@@ -4,7 +4,7 @@
 # scripts (or inside them if in `./scripts`). This makes it easier to manage these values
 # across the project as it grows.
 
-export APP_NAME="baseline-bolt"
-export AWS_PROFILE="baseline-bolt"
+export APP_NAME="ai-detect"
+export AWS_PROFILE="ai-detect"
 export REGION="ap-southeast-2"
 export AWS_REGION="ap-southeast-2"

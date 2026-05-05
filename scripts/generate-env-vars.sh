@@ -78,4 +78,22 @@ printf "\033[32m[%s] has been generated successfully!\033[39m\n" "./web/${OUTPUT
 echo "$OUTPUT" >./apps/admin/$OUTPUT_FILENAME
 printf "\033[32m[%s] has been generated successfully!\033[39m\n" "./admin/${OUTPUT_FILENAME}"
 
+MOBILE_OUTPUT=$(
+  cat <<EOF
+# Local model API example: http://localhost:8080
+# Roboflow workflow example: https://serverless.roboflow.com/<workspace>/workflows/<workflow-id>
+EXPO_PUBLIC_DETECT_API_URL=${MODEL_API_URL:-}
+EXPO_PUBLIC_DETECT_API_KEY=
+
+EXPO_PUBLIC_COGNITO_USER_POOL_ID=${UserPoolId:-}
+EXPO_PUBLIC_COGNITO_CLIENT_ID=${UserPoolClientId:-}
+EXPO_PUBLIC_AWS_REGION=${REGION:-}
+EXPO_PUBLIC_COGNITO_ENDPOINT=${COGNITO_ENDPOINT}
+
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=
+EOF
+)
+echo "$MOBILE_OUTPUT" >./apps/mobile/$OUTPUT_FILENAME
+printf "\033[32m[%s] has been generated successfully!\033[39m\n" "./mobile/${OUTPUT_FILENAME}"
+
 cd "$CURRENT_DIR" || exit

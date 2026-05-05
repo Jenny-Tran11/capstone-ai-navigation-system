@@ -16,11 +16,11 @@ import {
 } from '@baseline/client-api/request-handler';
 import type { AxiosRequestConfig } from 'axios';
 import Admins, { adminListLoader } from './baseblocks/admin/pages/Admins';
-import Components from './baseblocks/components/pages/Components';
 import Dashboard from './baseblocks/dashboard/pages/Dashboard';
 import DetectionDetail, { detectionDetailLoader } from './baseblocks/detection/pages/DetectionDetail';
 import Detections, { detectionListLoader } from './baseblocks/detection/pages/Detections';
 import ModelStatus from './baseblocks/detection/pages/ModelStatus';
+import AppConfigPage from './baseblocks/app-config/pages/AppConfig';
 import Login from './baseblocks/login/pages/Login';
 import NotAdmin from './baseblocks/not-admin/pages/NotAdmin';
 import Permissions, {
@@ -162,7 +162,7 @@ const router = createBrowserRouter([
         loader: detectionDetailLoader,
       },
       { path: '/model', Component: ModelStatus },
-      { path: '/components', Component: Components },
+      { path: '/runtime-config', Component: AppConfigPage },
       { path: '/settings', Component: User, loader: userLoader },
     ],
   },

@@ -1,4 +1,5 @@
 import type { Detection, DetectionResult } from '@baseline/types/detection';
+import { queryItems } from '@baselinejs/dynamodb';
 import { type Response, Router } from 'express';
 import { getErrorMessage } from '../../util/error-message';
 import type { RequestContext } from '../../util/request-context.type';
@@ -38,8 +39,13 @@ userDetectionRouter.get('/my', [
   async (req: RequestContext, res: Response) => {
     try {
       const userId = req.currentUserSub;
-      const all = await detectionService.getAll();
-      const mine = all.filter((d) => d.userId === userId);
+      const mine = await queryItems<Detection>({
+        dynamoDb: detectionService.dynamoDb,
+        table: detectionService.table,
+        keyName: 'userId',
+        keyValue: userId,
+        indexName: 'userId-index',
+      });
       res.json(mine.map(detectionMapper));
     } catch (error) {
       const message = getErrorMessage(error);
