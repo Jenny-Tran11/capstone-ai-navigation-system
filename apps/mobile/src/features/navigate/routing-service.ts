@@ -64,7 +64,9 @@ export function parseDurationSeconds(raw: string): number {
 export function formatDuration(seconds: number): string {
   if (seconds <= 0) return '0 min';
   const mins = Math.round(seconds / 60);
-  return mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} h ${mins % 60} min`;
+  return mins < 60
+    ? `${mins} min`
+    : `${Math.floor(mins / 60)} h ${mins % 60} min`;
 }
 
 export function haversineDistance(a: MapPoint, b: MapPoint): number {
@@ -77,11 +79,15 @@ export function haversineDistance(a: MapPoint, b: MapPoint): number {
     sinLat * sinLat +
     Math.cos((a.latitude * Math.PI) / 180) *
       Math.cos((b.latitude * Math.PI) / 180) *
-      sinLng * sinLng;
+      sinLng *
+      sinLng;
   return R * 2 * Math.atan2(Math.sqrt(c), Math.sqrt(1 - c));
 }
 
-export async function getWalkingRoute(origin: LatLng, destination: LatLng): Promise<Route> {
+export async function getWalkingRoute(
+  origin: LatLng,
+  destination: LatLng,
+): Promise<Route> {
   const runtime = await getRuntimeConfig();
   const GOOGLE_API_KEY = runtime.googleMapsApiKey;
   if (!GOOGLE_API_KEY) return getMockRoute(origin, destination);
@@ -94,16 +100,19 @@ export async function getWalkingRoute(origin: LatLng, destination: LatLng): Prom
     units: 'METRIC',
   };
 
-  const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': GOOGLE_API_KEY,
-      'X-Goog-FieldMask':
-        'routes.legs.steps.navigationInstruction,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration,routes.legs.steps.polyline,routes.polyline,routes.distanceMeters,routes.duration',
+  const res = await fetch(
+    'https://routes.googleapis.com/directions/v2:computeRoutes',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_API_KEY,
+        'X-Goog-FieldMask':
+          'routes.legs.steps.navigationInstruction,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration,routes.legs.steps.polyline,routes.polyline,routes.distanceMeters,routes.duration',
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  });
+  );
 
   if (!res.ok) throw new Error(`Routes API error: ${res.status}`);
   const data = await res.json();
@@ -111,32 +120,40 @@ export async function getWalkingRoute(origin: LatLng, destination: LatLng): Prom
   if (!route) throw new Error('No route found');
 
   const leg = route.legs?.[0];
-  const steps: RouteStep[] = (leg?.steps ?? []).map((s: {
-    navigationInstruction?: { instructions?: string };
-    distanceMeters?: number;
-    staticDuration?: string;
-    polyline?: { encodedPolyline?: string };
-  }) => {
-    const distanceMeters = s.distanceMeters ?? 0;
-    const durationSeconds = parseDurationSeconds(s.staticDuration ?? '');
-    const stepPoints = s.polyline?.encodedPolyline
-      ? decodePolyline(s.polyline.encodedPolyline)
-      : [];
-    const endCoord = stepPoints.length > 0 ? stepPoints[stepPoints.length - 1] : undefined;
-    return {
-      instruction: (s.navigationInstruction?.instructions ?? '').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' '),
-      distance: `${Math.round(distanceMeters)} m`,
-      duration: formatDuration(durationSeconds),
-      distanceMeters,
-      durationSeconds,
-      endCoord,
-    };
-  });
+  const steps: RouteStep[] = (leg?.steps ?? []).map(
+    (s: {
+      navigationInstruction?: { instructions?: string };
+      distanceMeters?: number;
+      staticDuration?: string;
+      polyline?: { encodedPolyline?: string };
+    }) => {
+      const distanceMeters = s.distanceMeters ?? 0;
+      const durationSeconds = parseDurationSeconds(s.staticDuration ?? '');
+      const stepPoints = s.polyline?.encodedPolyline
+        ? decodePolyline(s.polyline.encodedPolyline)
+        : [];
+      const endCoord =
+        stepPoints.length > 0 ? stepPoints[stepPoints.length - 1] : undefined;
+      return {
+        instruction: (s.navigationInstruction?.instructions ?? '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&amp;/g, '&')
+          .replace(/&nbsp;/g, ' '),
+        distance: `${Math.round(distanceMeters)} m`,
+        duration: formatDuration(durationSeconds),
+        distanceMeters,
+        durationSeconds,
+        endCoord,
+      };
+    },
+  );
 
   const totalDistanceMeters = route.distanceMeters ?? 0;
   const totalDurationSeconds = parseDurationSeconds(route.duration ?? '');
   const encodedPolyline = route.polyline?.encodedPolyline ?? '';
-  const polylinePoints: MapPoint[] = encodedPolyline ? decodePolyline(encodedPolyline) : [];
+  const polylinePoints: MapPoint[] = encodedPolyline
+    ? decodePolyline(encodedPolyline)
+    : [];
 
   return {
     steps,
@@ -153,10 +170,34 @@ export async function getWalkingRoute(origin: LatLng, destination: LatLng): Prom
 function getMockRoute(_origin: LatLng, destination: LatLng): Route {
   return {
     steps: [
-      { instruction: 'Head north on the footpath', distance: '200 m', duration: '3 min', distanceMeters: 200, durationSeconds: 180 },
-      { instruction: 'Turn right at the intersection', distance: '150 m', duration: '2 min', distanceMeters: 150, durationSeconds: 120 },
-      { instruction: 'Continue straight for 300 metres', distance: '300 m', duration: '4 min', distanceMeters: 300, durationSeconds: 240 },
-      { instruction: 'Arrive at destination on the left', distance: '0 m', duration: '0 min', distanceMeters: 0, durationSeconds: 0 },
+      {
+        instruction: 'Head north on the footpath',
+        distance: '200 m',
+        duration: '3 min',
+        distanceMeters: 200,
+        durationSeconds: 180,
+      },
+      {
+        instruction: 'Turn right at the intersection',
+        distance: '150 m',
+        duration: '2 min',
+        distanceMeters: 150,
+        durationSeconds: 120,
+      },
+      {
+        instruction: 'Continue straight for 300 metres',
+        distance: '300 m',
+        duration: '4 min',
+        distanceMeters: 300,
+        durationSeconds: 240,
+      },
+      {
+        instruction: 'Arrive at destination on the left',
+        distance: '0 m',
+        duration: '0 min',
+        distanceMeters: 0,
+        durationSeconds: 0,
+      },
     ],
     polyline: '',
     polylinePoints: [],

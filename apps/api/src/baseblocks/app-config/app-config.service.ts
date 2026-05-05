@@ -14,4 +14,3 @@ export const appConfigService = new ServiceObject<AppConfig>({
 });
 
 export const MOBILE_CONFIG_ID = 'mobile';
-

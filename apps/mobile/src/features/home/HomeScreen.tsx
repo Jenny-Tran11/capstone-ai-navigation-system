@@ -149,44 +149,49 @@ export default function HomeScreen() {
     };
   }, [query, mapsKey]);
 
-  const handleNavigate = useCallback(async (dest: PlaceSuggestion) => {
-    setQuery('');
-    setSuggestions([]);
-    let geocoded = await geocodeDestination(dest, mapsKey);
+  const handleNavigate = useCallback(
+    async (dest: PlaceSuggestion) => {
+      setQuery('');
+      setSuggestions([]);
+      let geocoded = await geocodeDestination(dest, mapsKey);
 
-    // If still no coords (preferred location set via onboarding with lat:0), geocode by address text
-    if (geocoded.lat === 0 && geocoded.lng === 0 && geocoded.address) {
-      const resolved = await geocodeByAddress(geocoded.address, mapsKey);
-      if (resolved.lat !== 0 || resolved.lng !== 0) {
-        geocoded = { ...geocoded, ...resolved };
-        // Write-through: persist resolved coords back to preferences so future taps are instant
-        const updatedLocations = prefs?.preferredLocations?.map((loc) =>
-          loc.address === dest.address ? { ...loc, ...resolved } : loc,
-        );
-        if (updatedLocations) {
-          apiClient
-            .put('/user-profile/user/preferences', { preferredLocations: updatedLocations })
-            .catch(() => {});
+      // If still no coords (preferred location set via onboarding with lat:0), geocode by address text
+      if (geocoded.lat === 0 && geocoded.lng === 0 && geocoded.address) {
+        const resolved = await geocodeByAddress(geocoded.address, mapsKey);
+        if (resolved.lat !== 0 || resolved.lng !== 0) {
+          geocoded = { ...geocoded, ...resolved };
+          // Write-through: persist resolved coords back to preferences so future taps are instant
+          const updatedLocations = prefs?.preferredLocations?.map((loc) =>
+            loc.address === dest.address ? { ...loc, ...resolved } : loc,
+          );
+          if (updatedLocations) {
+            apiClient
+              .put('/user-profile/user/preferences', {
+                preferredLocations: updatedLocations,
+              })
+              .catch(() => {});
+          }
         }
       }
-    }
 
-    await addRecentDestination(geocoded);
-    setRecents((prev) =>
-      [geocoded, ...prev.filter((d) => d.address !== geocoded.address)].slice(
-        0,
-        5,
-      ),
-    );
-    router.push({
-      pathname: '/(app)/(tabs)/navigate',
-      params: {
-        address: geocoded.address,
-        lat: String(geocoded.lat),
-        lng: String(geocoded.lng),
-      },
-    });
-  }, [mapsKey, prefs?.preferredLocations]);
+      await addRecentDestination(geocoded);
+      setRecents((prev) =>
+        [geocoded, ...prev.filter((d) => d.address !== geocoded.address)].slice(
+          0,
+          5,
+        ),
+      );
+      router.push({
+        pathname: '/(app)/(tabs)/navigate',
+        params: {
+          address: geocoded.address,
+          lat: String(geocoded.lat),
+          lng: String(geocoded.lng),
+        },
+      });
+    },
+    [mapsKey, prefs?.preferredLocations],
+  );
 
   const toggleSaved = useCallback(
     async (dest: Destination) => {

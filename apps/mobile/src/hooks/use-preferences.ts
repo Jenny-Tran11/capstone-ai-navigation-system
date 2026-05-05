@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
-import { getPreferences, savePreferences, type UserPreferences } from '@/lib/storage';
+import {
+  getPreferences,
+  savePreferences,
+  type UserPreferences,
+} from '@/lib/storage';
 
 type SyncState = 'local' | 'syncing' | 'synced' | 'error';
 
@@ -14,7 +18,9 @@ export function usePreferences() {
     getPreferences().then(async (local) => {
       setPrefs(local);
       try {
-        const { data } = await apiClient.get<Partial<UserPreferences>>('/user-profile/user/preferences');
+        const { data } = await apiClient.get<Partial<UserPreferences>>(
+          '/user-profile/user/preferences',
+        );
         const merged: UserPreferences = { ...local, ...data };
         await savePreferences(merged);
         setPrefs(merged);
