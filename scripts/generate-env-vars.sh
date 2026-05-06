@@ -42,12 +42,17 @@ else
   . ./scripts/get-stack-outputs.sh "${STACK_STAGE}" >/dev/null
   OUTPUT_FILENAME=.env.production
 
-  if [ -z "${UserPoolId:-}" ] || [ -z "${UserPoolClientId:-}" ] || [ -z "${ServiceEndpoint:-}" ]; then
+  if [ -z "${UserPoolId:-}" ] ||
+    [ -z "${UserPoolClientId:-}" ] ||
+    [ -z "${IdentityPoolId:-}" ] ||
+    [ -z "${ServiceEndpoint:-}" ]; then
     echo "" >&2
-    echo "Warning: incomplete staging/prod env (UserPoolId, UserPoolClientId, and/or API URL)." >&2
-    echo "  • Credentials: aws cloudformation describe-stacks --region ${REGION}" >&2
+    echo "Error: incomplete ${STACK_STAGE} env from CloudFormation (need User Pool, Identity Pool, client, and API URL)." >&2
+    echo "  Auth stack outputs must exist (${APP_NAME}-${STACK_STAGE}-* stacks in ${REGION})." >&2
+    echo "  • Verify AWS credentials: aws cloudformation describe-stacks --region ${REGION}" >&2
     echo "  • Named profile only: BASELINE_AWS_USE_DEFAULT_CHAIN=0 pnpm run generate:env:${STACK_STAGE}" >&2
     echo "" >&2
+    exit 1
   fi
 fi
 

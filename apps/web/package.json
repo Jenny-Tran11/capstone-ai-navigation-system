@@ -6,7 +6,7 @@
   "scripts": {
     "aws:profile": "../../scripts/setup-aws-profile.sh",
     "start": "npx vite",
-    "build": "pnpm run generate:env:staging && npx vite build",
+    "build": "if [ \"${SKIP_GENERATE_ENV:-}\" != \"1\" ]; then pnpm run generate:env:staging; fi && npx vite build",
     "build:deploy": "npx vite build",
     "preview": "npx vite preview",
     "generate:env:local": "pnpm -w run generate:env:local",

@@ -44,6 +44,8 @@
     "diff:prod": "pnpm --filter @baseline/infra run diff:prod",
     "deploy:staging": "pnpm --filter @baseline/admin run build && pnpm --filter @baseline/web run build && pnpm --filter @baseline/infra run deploy:staging",
     "deploy:prod": "pnpm --filter @baseline/admin run build && pnpm --filter @baseline/web run build && pnpm --filter @baseline/infra run deploy:prod",
+    "deploy:spa:staging": "bash ./scripts/deploy-spa.sh staging",
+    "deploy:spa:prod": "bash ./scripts/deploy-spa.sh prod",
     "destroy:staging": "pnpm --filter @baseline/infra run destroy:staging",
     "bootstrap:infra": "pnpm --filter @baseline/infra run bootstrap:toolkit",
     "bootstrap:repair-ssm": "bash ./scripts/cdk-repair-bootstrap-ssm.sh",
