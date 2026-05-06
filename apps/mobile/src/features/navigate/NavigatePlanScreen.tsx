@@ -30,30 +30,49 @@ export default function NavigatePlanScreen() {
     lng: lngParam ? Number.parseFloat(lngParam) : 0,
   };
   const [route, setRoute] = useState<Route | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [userLocation, setUserLocation] = useState<MapPoint | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
   const mapRef = useRef<MapView>(null);
-  const fetchedWithRealOriginRef = useRef(false);
+  // Prevent re-fetching once we have a real-origin route
+  const hasFetchedRef = useRef(false);
 
-  // Fetch route; re-fetch once when real GPS becomes available if first fetch used lat:0
+  // Fetch route once we have real GPS; fall back to destination-only if denied
   useEffect(() => {
-    if (!address) return;
-    const hasRealOrigin =
-      !!userLocation &&
-      (userLocation.latitude !== 0 || userLocation.longitude !== 0);
-    if (fetchedWithRealOriginRef.current && hasRealOrigin) return;
-    setLoading(true);
-    setError(null);
-    const origin = hasRealOrigin
-      ? { lat: userLocation.latitude, lng: userLocation.longitude }
-      : { lat: 0, lng: 0 };
-    getWalkingRoute(origin, destCoords)
-      .then((r) => {
+    if (!address) {
+      setLoading(false);
+      return;
+    }
+
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        setLocationDenied(true);
+        // Fetch with dest as origin so the step list is at least visible
+        try {
+          const r = await getWalkingRoute(destCoords, destCoords);
+          setRoute(r);
+        } catch {
+          setError('Could not find a route. Check your connection.');
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
+      // One-shot high-accuracy fix
+      try {
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const origin = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+        setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+
+        const r = await getWalkingRoute(origin, destCoords);
         setRoute(r);
-        fetchedWithRealOriginRef.current = hasRealOrigin;
+        hasFetchedRef.current = true;
+
         if (r.polylinePoints.length > 0) {
           setTimeout(() => {
             mapRef.current?.fitToCoordinates(r.polylinePoints, {
@@ -62,24 +81,14 @@ export default function NavigatePlanScreen() {
             });
           }, 500);
         }
-      })
-      .catch(() => setError('Could not find a route. Check your connection.'))
-      .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, latParam, lngParam, userLocation]);
-
-  // Watch user GPS position
-  useEffect(() => {
-    let sub: Location.LocationSubscription | null = null;
-
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocationDenied(true);
-        return;
+      } catch {
+        setError('Could not find a route. Check your connection.');
+      } finally {
+        setLoading(false);
       }
 
-      sub = await Location.watchPositionAsync(
+      // Continue watching position for the live user marker (no re-fetch needed)
+      const sub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, distanceInterval: 5 },
         (loc) => {
           setUserLocation({
@@ -88,12 +97,11 @@ export default function NavigatePlanScreen() {
           });
         },
       );
-    })();
 
-    return () => {
-      sub?.remove();
-    };
-  }, []);
+      return () => { sub.remove(); };
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, latParam, lngParam]);
 
   const speakStep = (step: RouteStep) => {
     Speech.speak(step.instruction, { language: 'en-AU', rate: 1.0 });
@@ -104,7 +112,7 @@ export default function NavigatePlanScreen() {
     longitude: destCoords.lng || 151.2117,
   };
 
-  const mapCenter = route?.polylinePoints?.[0] ?? destPoint;
+  const mapCenter = route?.polylinePoints?.[0] ?? userLocation ?? destPoint;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
@@ -121,14 +129,14 @@ export default function NavigatePlanScreen() {
       {loading && (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#2563eb" />
-          <Text className="text-gray-500 mt-3">Finding route...</Text>
+          <Text className="text-gray-500 mt-3">Getting your location…</Text>
         </View>
       )}
 
       {locationDenied ? (
         <View className="px-5 py-2 bg-yellow-50 border-b border-yellow-100">
           <Text className="text-yellow-800 text-sm text-center">
-            Location access denied — route starts from destination area
+            Location access denied — directions shown from destination area
           </Text>
         </View>
       ) : null}

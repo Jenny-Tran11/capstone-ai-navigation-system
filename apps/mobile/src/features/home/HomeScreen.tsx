@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import {
@@ -23,76 +24,54 @@ import {
 
 type PlaceSuggestion = Destination & { placeId?: string };
 
-const STATIC_SUGGESTIONS: PlaceSuggestion[] = [
-  { label: 'Hospital', address: 'Hospital', lat: 0, lng: 0 },
-  { label: 'Pharmacy', address: 'Pharmacy', lat: 0, lng: 0 },
-  { label: 'Supermarket', address: 'Supermarket', lat: 0, lng: 0 },
-  { label: 'Train station', address: 'Train station', lat: 0, lng: 0 },
-  { label: 'Bus stop', address: 'Bus stop', lat: 0, lng: 0 },
-  { label: 'Park', address: 'Park', lat: 0, lng: 0 },
-];
-
 async function fetchPlaceSuggestions(
   input: string,
-  mapsKey: string,
+  userLocation: { latitude: number; longitude: number } | null,
 ): Promise<PlaceSuggestion[]> {
-  if (!mapsKey) {
-    return STATIC_SUGGESTIONS.filter((s) =>
-      s.label.toLowerCase().includes(input.toLowerCase()),
-    );
-  }
+  const { googleMapsApiKey } = await getRuntimeConfig();
+  if (!googleMapsApiKey) return [];
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${mapsKey}&types=establishment|geocode`;
-    const { data } = await apiClient.get<{
-      predictions: { description: string; place_id: string }[];
-    }>(url);
-    return (data.predictions ?? []).map((p) => ({
-      label: p.description,
-      address: p.description,
-      lat: 0,
-      lng: 0,
-      placeId: p.place_id,
-    }));
-  } catch {
-    return STATIC_SUGGESTIONS.filter((s) =>
-      s.label.toLowerCase().includes(input.toLowerCase()),
+    let url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${googleMapsApiKey}&types=establishment|geocode`;
+    if (userLocation) {
+      url += `&location=${userLocation.latitude},${userLocation.longitude}&radius=5000`;
+    }
+    const res = await fetch(url);
+    const data = await res.json();
+    return (data.predictions ?? []).map(
+      (p: { description: string; place_id: string }) => ({
+        label: p.description,
+        address: p.description,
+        lat: 0,
+        lng: 0,
+        placeId: p.place_id,
+      }),
     );
+  } catch {
+    return [];
   }
 }
 
-async function geocodeDestination(
-  dest: PlaceSuggestion,
-  mapsKey: string,
-): Promise<Destination> {
-  if (!mapsKey || !dest.placeId || dest.lat !== 0 || dest.lng !== 0) {
-    return dest;
-  }
+async function geocodeDestination(dest: PlaceSuggestion): Promise<Destination> {
+  if (!dest.placeId || dest.lat !== 0 || dest.lng !== 0) return dest;
+  const { googleMapsApiKey } = await getRuntimeConfig();
+  if (!googleMapsApiKey) return dest;
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${dest.placeId}&fields=geometry&key=${mapsKey}`;
-    const { data } = await apiClient.get<{
-      result?: { geometry?: { location?: { lat: number; lng: number } } };
-    }>(url);
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(dest.placeId)}&fields=geometry&key=${googleMapsApiKey}`;
+    const res = await fetch(url);
+    const data = await res.json();
     const loc = data.result?.geometry?.location;
-    if (loc)
-      return {
-        label: dest.label,
-        address: dest.address,
-        lat: loc.lat,
-        lng: loc.lng,
-      };
+    if (loc) return { label: dest.label, address: dest.address, lat: loc.lat, lng: loc.lng };
   } catch {
-    // fall through — use ungeocoded destination (mock route will apply)
+    // fall through to geocodeByAddress
   }
   return dest;
 }
 
-async function geocodeByAddress(
-  address: string,
-  mapsKey: string,
-): Promise<{ lat: number; lng: number }> {
-  if (!mapsKey) return { lat: 0, lng: 0 };
+async function geocodeByAddress(address: string): Promise<{ lat: number; lng: number }> {
+  const { googleMapsApiKey } = await getRuntimeConfig();
+  if (!googleMapsApiKey) return { lat: 0, lng: 0 };
   try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${mapsKey}`;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`;
     const res = await fetch(url);
     const data = await res.json();
     const loc = data.results?.[0]?.geometry?.location;
@@ -106,13 +85,11 @@ async function geocodeByAddress(
 export default function HomeScreen() {
   const { profile } = useProfile();
   const { prefs } = usePreferences();
-  const [mapsKey, setMapsKey] = useState(
-    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '',
-  );
   const [query, setQuery] = useState('');
   const [recents, setRecents] = useState<Destination[]>([]);
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [savedPlaces, setSavedPlaces] = useState<Destination[]>([]);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -127,9 +104,18 @@ export default function HomeScreen() {
       .catch(() => {});
   }, []);
 
+  // Get user location for autocomplete biasing (best-effort)
   useEffect(() => {
-    getRuntimeConfig()
-      .then((cfg) => setMapsKey(cfg.googleMapsApiKey))
+    Location.requestForegroundPermissionsAsync()
+      .then(({ status }) => {
+        if (status !== 'granted') return;
+        return Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      })
+      .then((loc) => {
+        if (loc) {
+          setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -141,23 +127,23 @@ export default function HomeScreen() {
       return;
     }
     debounceRef.current = setTimeout(async () => {
-      const results = await fetchPlaceSuggestions(query, mapsKey);
+      const results = await fetchPlaceSuggestions(query, userLocation);
       setSuggestions(results);
     }, 400);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, mapsKey]);
+  }, [query, userLocation]);
 
   const handleNavigate = useCallback(
     async (dest: PlaceSuggestion) => {
       setQuery('');
       setSuggestions([]);
-      let geocoded = await geocodeDestination(dest, mapsKey);
+      let geocoded = await geocodeDestination(dest);
 
       // If still no coords (preferred location set via onboarding with lat:0), geocode by address text
       if (geocoded.lat === 0 && geocoded.lng === 0 && geocoded.address) {
-        const resolved = await geocodeByAddress(geocoded.address, mapsKey);
+        const resolved = await geocodeByAddress(geocoded.address);
         if (resolved.lat !== 0 || resolved.lng !== 0) {
           geocoded = { ...geocoded, ...resolved };
           // Write-through: persist resolved coords back to preferences so future taps are instant
@@ -176,10 +162,7 @@ export default function HomeScreen() {
 
       await addRecentDestination(geocoded);
       setRecents((prev) =>
-        [geocoded, ...prev.filter((d) => d.address !== geocoded.address)].slice(
-          0,
-          5,
-        ),
+        [geocoded, ...prev.filter((d) => d.address !== geocoded.address)].slice(0, 5),
       );
       router.push({
         pathname: '/(app)/(tabs)/navigate',
@@ -190,7 +173,7 @@ export default function HomeScreen() {
         },
       });
     },
-    [mapsKey, prefs?.preferredLocations],
+    [prefs?.preferredLocations],
   );
 
   const toggleSaved = useCallback(
@@ -272,9 +255,7 @@ export default function HomeScreen() {
                   onPress={() => void toggleSaved(s)}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel={
-                    isSaved(s) ? 'Remove from saved' : 'Save place'
-                  }
+                  accessibilityLabel={isSaved(s) ? 'Remove from saved' : 'Save place'}
                 >
                   {isSaved(s) ? (
                     <StarSolid size={18} color="#2563eb" />
@@ -295,7 +276,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
         ListHeaderComponent={
           <>
-            {/* Saved places */}
+            {/* Preferred locations */}
             {prefs?.preferredLocations?.length ? (
               <View className="px-5 mb-4">
                 <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
@@ -311,16 +292,10 @@ export default function HomeScreen() {
                     >
                       <BookmarkIcon size={22} color="#1d4ed8" />
                       <View className="flex-1">
-                        <Text
-                          className="text-base text-slate-900"
-                          numberOfLines={1}
-                        >
+                        <Text className="text-base text-slate-900" numberOfLines={1}>
                           {place.label}
                         </Text>
-                        <Text
-                          className="text-sm text-slate-500"
-                          numberOfLines={1}
-                        >
+                        <Text className="text-sm text-slate-500" numberOfLines={1}>
                           {place.address}
                         </Text>
                       </View>
@@ -348,10 +323,7 @@ export default function HomeScreen() {
                       accessibilityRole="button"
                     >
                       <BookmarkIcon size={22} color="#2563eb" />
-                      <Text
-                        className="flex-1 text-base text-slate-900"
-                        numberOfLines={1}
-                      >
+                      <Text className="flex-1 text-base text-slate-900" numberOfLines={1}>
                         {s.label}
                       </Text>
                       <Pressable
@@ -383,16 +355,10 @@ export default function HomeScreen() {
                     >
                       <ClockIcon size={22} color="#64748b" />
                       <View className="flex-1">
-                        <Text
-                          className="text-base text-slate-900"
-                          numberOfLines={1}
-                        >
+                        <Text className="text-base text-slate-900" numberOfLines={1}>
                           {item.label}
                         </Text>
-                        <Text
-                          className="text-sm text-slate-500"
-                          numberOfLines={1}
-                        >
+                        <Text className="text-sm text-slate-500" numberOfLines={1}>
                           {item.address}
                         </Text>
                       </View>
@@ -437,9 +403,7 @@ export default function HomeScreen() {
                 accessibilityRole="button"
               >
                 <EyeIcon size={32} color="#1d4ed8" />
-                <Text className="text-sm font-medium text-slate-700">
-                  Detect
-                </Text>
+                <Text className="text-sm font-medium text-slate-700">Detect</Text>
               </Pressable>
               <Pressable
                 onPress={() => router.push('/(app)/(tabs)/settings')}
@@ -447,9 +411,7 @@ export default function HomeScreen() {
                 accessibilityRole="button"
               >
                 <Cog6ToothIcon size={32} color="#475569" />
-                <Text className="text-sm font-medium text-slate-700">
-                  Settings
-                </Text>
+                <Text className="text-sm font-medium text-slate-700">Settings</Text>
               </Pressable>
             </View>
           </>

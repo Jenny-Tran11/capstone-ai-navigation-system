@@ -51,5 +51,9 @@ export function getTableDefs(): TableDefinition[] {
       entityName: 'user-profile',
       partitionKey: { name: 'userId', type: 'S' },
     },
+    {
+      entityName: 'app-config',
+      partitionKey: { name: 'configId', type: 'S' },
+    },
   ];
 }
