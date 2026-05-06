@@ -5,7 +5,7 @@ import useSWR from 'swr';
 
 export const useAdmins = () => {
   const { data, error, isLoading, mutate } = useSWR<Admin[], unknown>(
-    'admin/list',
+    'permission/admin/list/SUPER',
     () => getAllAdmins(getRequestHandler()),
   );
 

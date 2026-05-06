@@ -133,7 +133,7 @@ const DashboardContent = (): JSX.Element => {
       icon: IconUsers,
       label: 'Admin users',
       value: adminCount !== null ? String(adminCount) : '—',
-      hint: loadError ?? 'From GET /admin/list',
+      hint: loadError ?? 'From SUPER permissions',
       tone: 'default',
     },
     {
@@ -206,9 +206,9 @@ const DashboardContent = (): JSX.Element => {
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <ActionTile
-              to="/admins"
-              title="Manage admins"
-              description="Invite or remove administrators."
+              to="/permissions"
+              title="Manage SUPER access"
+              description="Grant or revoke SUPER permissions."
               icon={IconUsers}
             />
             <ActionTile

@@ -13,10 +13,6 @@ export interface TableDefinition {
 export function getTableDefs(): TableDefinition[] {
   return [
     {
-      entityName: 'admin',
-      partitionKey: { name: 'userSub', type: 'S' },
-    },
-    {
       entityName: 'contact',
       partitionKey: { name: 'id', type: 'S' },
     },

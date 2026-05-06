@@ -1,61 +1,82 @@
 import type { Admin } from '@baseline/types/admin';
+import type { Permission } from '@baseline/types/permission';
 import type { RequestHandler } from './request-handler';
+type AdminUserProfile = { userId: string; displayName?: string };
 
 export const getAllAdmins = async (
   requestHandler: RequestHandler,
 ): Promise<Admin[]> => {
-  const response = await requestHandler.request<Admin[]>({
+  const response = await requestHandler.request<Permission[]>({
     method: 'GET',
-    url: `admin/list`,
+    url: 'permission/admin/list/SUPER',
     hasAuthentication: true,
   });
   if ('data' in response) {
-    return response.data;
+    const ownerIds = Array.from(
+      new Set(
+        (response.data ?? [])
+          .map((permission) => permission.ownerId)
+          .filter(Boolean),
+      ),
+    );
+    if (!ownerIds.length) return [];
+
+    const profileResponse = await requestHandler.request<AdminUserProfile[]>({
+      method: 'GET',
+      url: 'user-profile/admin/list',
+      hasAuthentication: true,
+    });
+
+    if (!('data' in profileResponse)) {
+      return ownerIds.map((ownerId) => ({
+        userSub: ownerId,
+        userEmail: ownerId,
+      }));
+    }
+
+    const profileByUserId = new Map(
+      (profileResponse.data ?? []).map((profile) => [profile.userId, profile]),
+    );
+
+    return ownerIds.map((ownerId) => {
+      const profile = profileByUserId.get(ownerId);
+      return {
+        userSub: ownerId,
+        userEmail: profile?.displayName?.trim() || ownerId,
+      };
+    });
   }
   throw response;
 };
 
 export const deleteAdmin = async (
-  requestHandler: RequestHandler,
-  data: { adminId: string },
+  _requestHandler: RequestHandler,
+  _data: { adminId: string },
 ): Promise<boolean> => {
-  const response = await requestHandler.request<boolean>({
-    method: 'DELETE',
-    url: `admin/${data.adminId}`,
-    hasAuthentication: true,
-  });
-  if ('data' in response) {
-    return response.data;
-  }
-  throw response;
+  throw new Error(
+    'Legacy /admin API is deprecated. Remove SUPER permission instead.',
+  );
 };
 
 export const createAdmin = async (
-  requestHandler: RequestHandler,
-  data: { userEmail: string },
+  _requestHandler: RequestHandler,
+  _data: { userEmail: string },
 ): Promise<Admin> => {
-  const response = await requestHandler.request<Admin>({
-    method: 'POST',
-    url: `admin`,
-    hasAuthentication: true,
-    data,
-  });
-  if ('data' in response) {
-    return response.data;
-  }
-  throw response;
+  throw new Error(
+    'Legacy /admin API is deprecated. Grant SUPER permission instead.',
+  );
 };
 
 export const checkAdmin = async (
   requestHandler: RequestHandler,
 ): Promise<boolean> => {
-  const response = await requestHandler.request<Admin>({
+  const response = await requestHandler.request<Permission[]>({
     method: 'GET',
-    url: `admin`,
+    url: 'permission/admin/list',
     hasAuthentication: true,
   });
   if ('data' in response) {
-    return !!response.data.userSub;
+    return response.data.some((permission) => permission.type === 'SUPER');
   }
   return false;
 };

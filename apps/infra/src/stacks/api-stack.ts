@@ -93,11 +93,6 @@ export class ApiStack extends Stack {
     // ── API entities ─────────────────────────────────
     const apiEntities: ApiEntity[] = [
       {
-        name: 'ApiAdmin',
-        path: 'admin',
-        entry: 'baseblocks/admin/admin-api.ts',
-      },
-      {
         name: 'ApiPermission',
         path: 'permission',
         entry: 'baseblocks/permission/permission-api.ts',

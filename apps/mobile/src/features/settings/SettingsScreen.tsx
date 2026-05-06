@@ -1,12 +1,21 @@
 import '@/lib/amplify';
 import Slider from '@react-native-community/slider';
-import { signOut } from '@aws-amplify/auth';
+import { fetchUserAttributes, signOut } from '@aws-amplify/auth';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '@/lib/api-client';
+import { useProfile } from '@/features/profile/use-profile';
 import { usePreferences } from '@/hooks/use-preferences';
 
 type RowProps = { label: string; value: string };
@@ -38,7 +47,29 @@ const TTS_LANGUAGES = [
 
 export default function SettingsScreen() {
   const { prefs, update, syncState } = usePreferences();
-  const [apiStatus, setApiStatus] = useState<'checking' | 'ok' | 'error'>('checking');
+  const { profile, loading: profileLoading, update: updateProfile } = useProfile();
+  const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [emergencyName, setEmergencyName] = useState('');
+  const [emergencyPhone, setEmergencyPhone] = useState('');
+  const [contactSaved, setContactSaved] = useState(false);
+  const [apiStatus, setApiStatus] = useState<'checking' | 'ok' | 'error'>(
+    'checking',
+  );
+
+  useEffect(() => {
+    fetchUserAttributes()
+      .then((attrs) => setEmail(attrs.email ?? ''))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (profile?.displayName !== undefined) {
+      setDisplayName(profile.displayName ?? '');
+    }
+  }, [profile?.displayName]);
 
   useEffect(() => {
     apiClient
@@ -47,28 +78,171 @@ export default function SettingsScreen() {
       .catch(() => setApiStatus('error'));
   }, []);
 
+  useEffect(() => {
+    setEmergencyName(prefs?.emergencyContact?.name ?? '');
+    setEmergencyPhone(prefs?.emergencyContact?.phone ?? '');
+  }, [prefs?.emergencyContact?.name, prefs?.emergencyContact?.phone]);
+
   if (!prefs) return null;
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    setProfileSaved(false);
+    try {
+      await updateProfile({ displayName });
+      setProfileSaved(true);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleSaveEmergencyContact = async () => {
+    await update({
+      emergencyContact: {
+        name: emergencyName.trim(),
+        phone: emergencyPhone.trim(),
+      },
+    });
+    setContactSaved(true);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="px-5 pt-6 pb-4 border-b border-gray-100 flex-row justify-between items-end">
         <Text className="text-2xl font-bold text-gray-900">Settings</Text>
-        <Text className={`text-xs ${SYNC_COLOR[syncState]}`}>{SYNC_LABEL[syncState]}</Text>
+        <Text className={`text-xs ${SYNC_COLOR[syncState]}`}>
+          {SYNC_LABEL[syncState]}
+        </Text>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, gap: 24 }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, gap: 24 }}
+      >
+        {/* Profile */}
+        <View>
+          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Profile
+          </Text>
+          <View className="bg-gray-50 rounded-2xl px-4 py-4 gap-4">
+            {profileLoading ? (
+              <View className="py-2 items-center">
+                <ActivityIndicator size="small" color="#2563eb" />
+              </View>
+            ) : null}
+
+            <View>
+              <Text className="text-xs text-gray-500 mb-1">Email</Text>
+              <Text className="text-base text-gray-900">{email || '—'}</Text>
+            </View>
+
+            <View>
+              <Text className="text-xs text-gray-500 mb-1">Display name</Text>
+              <TextInput
+                className="bg-white rounded-xl px-3 py-3 text-base text-gray-900 border border-gray-200"
+                placeholder="Your name"
+                placeholderTextColor="#94a3b8"
+                value={displayName}
+                onChangeText={(v) => {
+                  setDisplayName(v);
+                  setProfileSaved(false);
+                }}
+                accessibilityLabel="Display name"
+              />
+            </View>
+
+            {profileSaved ? (
+              <Text className="text-green-600 text-sm">Profile saved!</Text>
+            ) : null}
+
+            <Pressable
+              onPress={() => void handleSaveProfile()}
+              disabled={savingProfile}
+              className={`rounded-xl py-3 items-center ${savingProfile ? 'bg-blue-300' : 'bg-primary'}`}
+              accessibilityRole="button"
+              accessibilityLabel="Save profile"
+            >
+              <Text className="text-white font-semibold">
+                {savingProfile ? 'Saving…' : 'Save profile'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Emergency Contact */}
+        <View>
+          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Emergency Contact
+          </Text>
+          <View className="bg-gray-50 rounded-2xl px-4 py-4 gap-4">
+            <View>
+              <Text className="text-xs text-gray-500 mb-1">Name</Text>
+              <TextInput
+                className="bg-white rounded-xl px-3 py-3 text-base text-gray-900 border border-gray-200"
+                placeholder="Emergency contact name"
+                placeholderTextColor="#94a3b8"
+                value={emergencyName}
+                onChangeText={(v) => {
+                  setEmergencyName(v);
+                  setContactSaved(false);
+                }}
+                accessibilityLabel="Emergency contact name"
+              />
+            </View>
+
+            <View>
+              <Text className="text-xs text-gray-500 mb-1">Phone</Text>
+              <TextInput
+                className="bg-white rounded-xl px-3 py-3 text-base text-gray-900 border border-gray-200"
+                placeholder="+61..."
+                placeholderTextColor="#94a3b8"
+                value={emergencyPhone}
+                onChangeText={(v) => {
+                  setEmergencyPhone(v);
+                  setContactSaved(false);
+                }}
+                keyboardType="phone-pad"
+                accessibilityLabel="Emergency contact phone"
+              />
+            </View>
+
+            {contactSaved ? (
+              <Text className="text-green-600 text-sm">
+                Emergency contact saved!
+              </Text>
+            ) : null}
+
+            <Pressable
+              onPress={() => void handleSaveEmergencyContact()}
+              className="rounded-xl py-3 items-center bg-primary"
+              accessibilityRole="button"
+              accessibilityLabel="Save emergency contact"
+            >
+              <Text className="text-white font-semibold">
+                Save emergency contact
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
         {/* Voice */}
         <View>
-          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Voice</Text>
+          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Voice
+          </Text>
           <View className="bg-gray-50 rounded-2xl px-4">
             <View className="py-3 border-b border-gray-100">
-              <Text className="text-base text-gray-700 mb-2">Speech rate: {prefs.speechRate.toFixed(1)}×</Text>
+              <Text className="text-base text-gray-700 mb-2">
+                Speech rate: {prefs.speechRate.toFixed(1)}×
+              </Text>
               <Slider
                 minimumValue={0.5}
                 maximumValue={2.0}
                 step={0.1}
                 value={prefs.speechRate}
-                onSlidingComplete={(v) => update({ speechRate: Number(v.toFixed(1)) })}
+                onSlidingComplete={(v) =>
+                  update({ speechRate: Number(v.toFixed(1)) })
+                }
                 minimumTrackTintColor="#2563eb"
                 accessibilityLabel="Speech rate"
               />
@@ -82,7 +256,9 @@ export default function SettingsScreen() {
                     onPress={() => update({ verbosity: v })}
                     className={`px-3 py-1 rounded-xl ${prefs.verbosity === v ? 'bg-primary' : 'bg-gray-200'}`}
                   >
-                    <Text className={`text-sm font-medium ${prefs.verbosity === v ? 'text-white' : 'text-gray-700'}`}>
+                    <Text
+                      className={`text-sm font-medium ${prefs.verbosity === v ? 'text-white' : 'text-gray-700'}`}
+                    >
                       {v}
                     </Text>
                   </Pressable>
@@ -98,7 +274,9 @@ export default function SettingsScreen() {
                     onPress={() => update({ speechLanguage: lang.value })}
                     className={`px-3 py-1.5 rounded-xl ${prefs.speechLanguage === lang.value ? 'bg-primary' : 'bg-gray-200'}`}
                   >
-                    <Text className={`text-sm font-medium ${prefs.speechLanguage === lang.value ? 'text-white' : 'text-gray-700'}`}>
+                    <Text
+                      className={`text-sm font-medium ${prefs.speechLanguage === lang.value ? 'text-white' : 'text-gray-700'}`}
+                    >
                       {lang.label}
                     </Text>
                   </Pressable>
@@ -110,10 +288,14 @@ export default function SettingsScreen() {
 
         {/* Detection */}
         <View>
-          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Detection</Text>
+          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Detection
+          </Text>
           <View className="bg-gray-50 rounded-2xl px-4">
             <View className="py-3 border-b border-gray-100">
-              <Text className="text-base text-gray-700 mb-2">Interval: {prefs.detectionIntervalSec}s</Text>
+              <Text className="text-base text-gray-700 mb-2">
+                Interval: {prefs.detectionIntervalSec}s
+              </Text>
               <Slider
                 minimumValue={5}
                 maximumValue={60}
@@ -124,13 +306,18 @@ export default function SettingsScreen() {
                 accessibilityLabel="Detection interval"
               />
             </View>
-            <InfoRow label="Max scans / hour" value={String(prefs.maxScansPerHour)} />
+            <InfoRow
+              label="Max scans / hour"
+              value={String(prefs.maxScansPerHour)}
+            />
           </View>
         </View>
 
         {/* Feedback */}
         <View>
-          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Feedback</Text>
+          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Feedback
+          </Text>
           <View className="bg-gray-50 rounded-2xl px-4">
             <View className="flex-row justify-between items-center py-3">
               <Text className="text-base text-gray-700">Haptic feedback</Text>
@@ -146,19 +333,32 @@ export default function SettingsScreen() {
 
         {/* About */}
         <View>
-          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">About</Text>
+          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            About
+          </Text>
           <View className="bg-gray-50 rounded-2xl px-4">
-            <InfoRow label="App version" value={Constants.expoConfig?.version ?? '—'} />
+            <InfoRow
+              label="App version"
+              value={Constants.expoConfig?.version ?? '—'}
+            />
             <View className="flex-row justify-between items-center py-3">
               <Text className="text-base text-gray-700">API status</Text>
               <View className="flex-row items-center gap-2">
                 <View
                   className={`w-2.5 h-2.5 rounded-full ${
-                    apiStatus === 'ok' ? 'bg-green-500' : apiStatus === 'error' ? 'bg-red-500' : 'bg-gray-300'
+                    apiStatus === 'ok'
+                      ? 'bg-green-500'
+                      : apiStatus === 'error'
+                        ? 'bg-red-500'
+                        : 'bg-gray-300'
                   }`}
                 />
                 <Text className="text-sm text-gray-500">
-                  {apiStatus === 'ok' ? 'Connected' : apiStatus === 'error' ? 'Offline' : 'Checking…'}
+                  {apiStatus === 'ok'
+                    ? 'Connected'
+                    : apiStatus === 'error'
+                      ? 'Offline'
+                      : 'Checking…'}
                 </Text>
               </View>
             </View>
@@ -167,7 +367,9 @@ export default function SettingsScreen() {
 
         {/* Account */}
         <View>
-          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Account</Text>
+          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Account
+          </Text>
           <Pressable
             onPress={async () => {
               await signOut();
@@ -177,7 +379,9 @@ export default function SettingsScreen() {
             accessibilityRole="button"
             accessibilityLabel="Sign out"
           >
-            <Text className="text-red-600 font-semibold text-base">Sign out</Text>
+            <Text className="text-red-600 font-semibold text-base">
+              Sign out
+            </Text>
           </Pressable>
         </View>
       </ScrollView>

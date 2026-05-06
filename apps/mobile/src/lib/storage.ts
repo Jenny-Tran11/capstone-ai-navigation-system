@@ -20,6 +20,10 @@ export type UserPreferences = {
   hapticEnabled: boolean;
   detectionIntervalSec: number;
   maxScansPerHour: number;
+  emergencyContact: {
+    name: string;
+    phone: string;
+  };
   preferredLocations: Array<{
     tag: 'home' | 'work' | 'other';
     label: string;
@@ -36,6 +40,10 @@ const DEFAULT_PREFS: UserPreferences = {
   hapticEnabled: true,
   detectionIntervalSec: 10,
   maxScansPerHour: 30,
+  emergencyContact: {
+    name: '',
+    phone: '',
+  },
   preferredLocations: [],
 };
 
