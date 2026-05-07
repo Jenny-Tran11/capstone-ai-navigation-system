@@ -1,4 +1,4 @@
-# Sidewalk Segmentation Handoff
+# Sidewalk Segmentation 
 
 This document tracks the sidewalk-only YOLO segmentation training flow and results.
 
