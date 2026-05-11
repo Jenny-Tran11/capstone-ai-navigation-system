@@ -2,7 +2,7 @@
 
 **Status:** Draft operational plan  
 **Audience:** Engineering, ops, and 2–3 UAT participants  
-**Includes:** §2 **Scope of work** (deliverables, roles, assumptions, acceptance milestones); §14 **Work tickets** (copy-ready for GitHub/Jira).  
+**Includes:** §2 **Scope of work** (deliverables, roles, assumptions, acceptance milestones); §14 **Work tickets** (copy-ready for GitHub/Jira); §16 **GitHub Actions & AWS deployment roles** (Baseline CI/CD OIDC).  
 **Related docs:** [expo-go-tunnel-and-android-apk.md](./expo-go-tunnel-and-android-apk.md), [vps-e2e-deployment.md](./vps-e2e-deployment.md)
 
 ---
@@ -659,6 +659,67 @@ Expo **does not migrate** Dashboard env vars or EAS Secrets between unrelated ac
 - [ ] `eas whoami` shows the intended user/org.
 - [ ] `eas build:list -p android` works for the **`capstoneuow`** project without “project not found”.
 - [ ] A **`eas build -p android --profile staging`** completes; install APK and smoke-test auth + detection.
+
+---
+
+## 16. GitHub Actions CI/CD and AWS deployment role (Baseline)
+
+This project uses **OIDC federation** so GitHub Actions can call AWS **without long-lived access keys**. Baseline documents the operational model and security expectations here:
+
+- [Main Operations — Deploy](https://docs.baselinejs.com/Main%20Operations/deploy) — CI/CD as part of the Baseline delivery story; align local and pipeline deploys (`pnpm`/CDK) with staged environments.
+- [Main Concepts — Security — Deployment role](https://docs.baselinejs.com/Main%20Concepts/security#deployment-role) — use a **dedicated deployment IAM role** for automation (narrow trust to your repo/workflows; avoid reusing human admin credentials).
+
+Treat those pages as the **intent**; the **concrete wiring in this repo** is below.
+
+### 16.1 How this repository implements CI/CD authentication
+
+| Piece | Location / behavior |
+|--------|---------------------|
+| **OIDC token** | Workflows set `permissions:` `id-token: write` so `aws-actions/configure-aws-credentials` can exchange the GitHub JWT for STS credentials ([GitHub OIDC on AWS](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)). |
+| **Role selection** | Composite action `.github/actions/ci-setup/action.yml`: if `github.ref` is `refs/heads/prod`, assume **`PRODUCTION_AWS_ROLE_ARN`**; otherwise assume **`STAGING_AWS_ROLE_ARN`**. |
+| **When AWS is used** | `configure_aws: 'true'` (default): typecheck/build/lint, admin+web `generate:env:*` + build, and CDK `deploy:*`. `deploy-api` uses `configure_aws: 'false'` (API build only—no CloudFormation at build time). |
+| **Deploy workflow** | `.github/workflows/deploy.yml`: **main** → `deploy:staging`; **prod** → `deploy:prod` (see `deploy-infra` job). |
+| **Secrets (GitHub)** | Repository **Actions secrets**: `STAGING_AWS_ROLE_ARN`, `PRODUCTION_AWS_ROLE_ARN` — must be the ARNs of IAM roles in the **target AWS account(s)** whose trust policy allows this repo to assume them via OIDC. |
+
+### 16.2 AWS account work: OIDC provider + deployment roles
+
+**One-time (per AWS account, if not already present):** add the **IAM OIDC identity provider** for GitHub:
+
+- Provider URL: `https://token.actions.githubusercontent.com`
+- Audience: `sts.amazonaws.com`
+
+**Two IAM roles** (recommended pattern for this monorepo):
+
+1. **Staging deployment role** (e.g. used for `main` and non-`prod` refs, including PRs that run `generate:env:staging` and builds).
+2. **Production deployment role** (e.g. used only when `github.ref == refs/heads/prod`).
+
+For each role, set a **trust policy** that:
+
+- Principal: the GitHub OIDC provider above.
+- Action: `sts:AssumeRoleWithWebIdentity`.
+- **Conditions** (tighten per Baseline security guidance): restrict `token.actions.githubusercontent.com:sub` to your repository, e.g. `repo:ORG/REPO:*` or finer (`ref:refs/heads/main`, `ref:refs/heads/prod`, `pull_request`) so random workflows cannot assume the role.
+
+**Permissions (attachment):** the role must be able to run **CDK deploy** for this app (CloudFormation, Lambda, API Gateway, S3, CloudFront, Cognito, DynamoDB, IAM resources created by stacks, etc.). Baseline’s **deployment role** concept is to grant what **deploy automation** needs—often `AdministratorAccess` in a dedicated account for small teams, or a **scoped policy** derived from least-privilege analysis. Start from Baseline’s recommended posture in [Security — Deployment role](https://docs.baselinejs.com/Main%20Concepts/security#deployment-role) and your org’s policy.
+
+After roles exist, copy each **role ARN** into GitHub **Actions secrets** (`STAGING_AWS_ROLE_ARN`, `PRODUCTION_AWS_ROLE_ARN`).
+
+### 16.3 Verification checklist
+
+- [ ] `aws sts get-caller-identity` succeeds in a workflow step after `ci-setup` (already asserted in `.github/actions/ci-setup/action.yml` when `configure_aws` is true).
+- [ ] A push to **`main`** completes **staging** infra deploy where intended; **`prod`** branch uses the **production** role and **prod** CDK stage.
+- [ ] **Fork PRs:** if you must block untrusted OIDC assumptions, tighten trust conditions ([GitHub: OIDC hardened config](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)) so forked PR workflows cannot assume production roles.
+
+### 16.4 PR / ticket text (optional copy-paste)
+
+**Title:** Provision GitHub Actions OIDC + staging/prod deployment IAM roles  
+
+**Description:** Implement Baseline-aligned GitHub Actions → AWS OIDC per [Deploy](https://docs.baselinejs.com/Main%20Operations/deploy) and [Security — Deployment role](https://docs.baselinejs.com/Main%20Concepts/security#deployment-role). Wire role ARNs to `STAGING_AWS_ROLE_ARN` and `PRODUCTION_AWS_ROLE_ARN`; confirm `.github/workflows/deploy.yml` staging/prod branching.
+
+**Acceptance criteria:**
+
+- [ ] OIDC IdP exists; two roles trusted for this repo/subjects as agreed.
+- [ ] GitHub secrets set; **`Deploy`** workflow green on **`main`** and **`prod`** (or documented dry-run path).
+- [ ] Trust policies documented in internal wiki (no secrets)—link to §16.2.
 
 ---
 
