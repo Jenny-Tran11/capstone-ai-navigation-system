@@ -93,9 +93,9 @@ export class ApiStack extends Stack {
     // ── API entities ─────────────────────────────────
     const apiEntities: ApiEntity[] = [
       {
-        name: 'ApiAdmin',
-        path: 'admin',
-        entry: 'baseblocks/admin/admin-api.ts',
+        name: 'ApiAppConfig',
+        path: 'app-config',
+        entry: 'baseblocks/app-config/app-config-api.ts',
       },
       {
         name: 'ApiPermission',
@@ -119,7 +119,7 @@ export class ApiStack extends Stack {
       },
     ];
 
-    const lambdaFunctions: BaselineFunction[] = [];
+    const lambdaFunctions: Array<{ alarmKey: string; fn: BaselineFunction }> = [];
 
     for (const entity of apiEntities) {
       const fn = new BaselineFunction(this, entity.name, {
@@ -142,7 +142,7 @@ export class ApiStack extends Stack {
         .addProxy({ anyMethod: false, defaultIntegration: integration })
         .addMethod('ANY', integration, authOptions);
 
-      lambdaFunctions.push(fn);
+      lambdaFunctions.push({ alarmKey: entity.name, fn });
     }
 
     // ── Transit API (Gemini-powered bus OCR, authenticated) ───────────────────
@@ -155,6 +155,7 @@ export class ApiStack extends Stack {
         GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY ?? '',
       },
     });
+    transitFn.fn.addToRolePolicy(dynamoPolicy);
     transitFn.fn.addToRolePolicy(cognitoPolicy);
 
     const transitIntegration = new apigateway.LambdaIntegration(transitFn.fn);
@@ -164,7 +165,7 @@ export class ApiStack extends Stack {
       .addProxy({ anyMethod: false, defaultIntegration: transitIntegration })
       .addMethod('ANY', transitIntegration, authOptions);
 
-    lambdaFunctions.push(transitFn);
+    lambdaFunctions.push({ alarmKey: 'ApiTransit', fn: transitFn });
 
     // ── Contact API (mixed auth: POST public, GET admin-only) ─────────────────
     const contactFn = new BaselineFunction(this, 'ApiContact', {
@@ -188,12 +189,15 @@ export class ApiStack extends Stack {
     const contactListResource = contactResource.addResource('list');
     contactListResource.addMethod('GET', contactIntegration, authOptions);
 
-    lambdaFunctions.push(contactFn);
+    lambdaFunctions.push({ alarmKey: 'ApiContact', fn: contactFn });
 
     // ── Alarms ───────────────────────────────────────
     new BaselineAlarms(this, 'Alarms', {
       config,
-      functions: lambdaFunctions.map((w) => w.fn),
+      functions: lambdaFunctions.map(({ alarmKey, fn }) => ({
+        alarmKey,
+        fn: fn.fn,
+      })),
       api,
     });
 

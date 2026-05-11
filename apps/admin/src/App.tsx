@@ -15,10 +15,13 @@ import {
   getRequestHandler,
 } from '@baseline/client-api/request-handler';
 import type { AxiosRequestConfig } from 'axios';
-import Admins, { adminListLoader } from './baseblocks/admin/pages/Admins';
 import Dashboard from './baseblocks/dashboard/pages/Dashboard';
-import DetectionDetail, { detectionDetailLoader } from './baseblocks/detection/pages/DetectionDetail';
-import Detections, { detectionListLoader } from './baseblocks/detection/pages/Detections';
+import DetectionDetail, {
+  detectionDetailLoader,
+} from './baseblocks/detection/pages/DetectionDetail';
+import Detections, {
+  detectionListLoader,
+} from './baseblocks/detection/pages/Detections';
 import ModelStatus from './baseblocks/detection/pages/ModelStatus';
 import AppConfigPage from './baseblocks/app-config/pages/AppConfig';
 import Login from './baseblocks/login/pages/Login';
@@ -27,6 +30,9 @@ import Permissions, {
   permissionListLoader,
 } from './baseblocks/permission/pages/Permissions';
 import User, { userLoader } from './baseblocks/user/pages/User';
+import UserDetailAdminPage from './baseblocks/user/pages/UserDetailAdmin';
+import UserEditAdminPage from './baseblocks/user/pages/UserEditAdmin';
+import UserPreferencesAdminPage from './baseblocks/user/pages/UserPreferencesAdmin';
 import Workspaces, {
   workspaceListLoader,
 } from './baseblocks/workspace/pages/Workspaces';
@@ -52,9 +58,11 @@ Amplify.configure({
   Auth: {
     Cognito: {
       signUpVerificationMethod: 'code',
-      identityPoolId: `${process.env.REACT_APP_COGNITO_IDENTITY_POOL_ID}`,
-      userPoolId: `${process.env.REACT_APP_COGNITO_USER_POOL_ID}`,
-      userPoolClientId: `${process.env.REACT_APP_COGNITO_USER_POOL_WEB_CLIENT_ID}`,
+      identityPoolId: process.env.REACT_APP_COGNITO_IDENTITY_POOL_ID ?? '',
+      userPoolId: process.env.REACT_APP_COGNITO_USER_POOL_ID ?? '',
+      userPoolClientId:
+        process.env.REACT_APP_COGNITO_USER_POOL_WEB_CLIENT_ID ?? '',
+      loginWith: { email: true },
     },
   },
 });
@@ -144,7 +152,6 @@ const router = createBrowserRouter([
     loader: protectedLoader,
     children: [
       { path: '/dashboard', Component: Dashboard },
-      { path: '/admins', Component: Admins, loader: adminListLoader },
       {
         path: '/workspaces',
         Component: Workspaces,
@@ -155,7 +162,11 @@ const router = createBrowserRouter([
         Component: Permissions,
         loader: permissionListLoader,
       },
-      { path: '/detections', Component: Detections, loader: detectionListLoader },
+      {
+        path: '/detections',
+        Component: Detections,
+        loader: detectionListLoader,
+      },
       {
         path: '/detections/:detectionId',
         Component: DetectionDetail,
@@ -163,6 +174,9 @@ const router = createBrowserRouter([
       },
       { path: '/model', Component: ModelStatus },
       { path: '/runtime-config', Component: AppConfigPage },
+      { path: '/users', Component: UserPreferencesAdminPage },
+      { path: '/users/:userId', Component: UserDetailAdminPage },
+      { path: '/users/:userId/edit', Component: UserEditAdminPage },
       { path: '/settings', Component: User, loader: userLoader },
     ],
   },

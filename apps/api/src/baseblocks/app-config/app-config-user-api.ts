@@ -11,4 +11,3 @@ userAppConfigRouter.get('/mobile', [
     res.json(config);
   },
 ]);
-

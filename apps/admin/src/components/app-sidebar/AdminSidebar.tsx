@@ -14,14 +14,39 @@ import {
 import { NavLink, useLocation } from 'react-router-dom';
 
 const navMain: NavItem[] = [
-  { title: 'Dashboard', url: '/dashboard', icon: IconDashboard },
-  { title: 'Admins', url: '/admins', icon: IconUsers },
-  { title: 'Workspaces', url: '/workspaces', icon: IconBuilding },
-  { title: 'Permissions', url: '/permissions', icon: IconKey },
-  { title: 'Detections', url: '/detections', icon: IconEye },
-  { title: 'Model', url: '/model', icon: IconCpu },
-  { title: 'Runtime config', url: '/runtime-config', icon: IconTool },
-  { title: 'Components', url: '/components', icon: IconLayoutGrid },
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: IconDashboard,
+    section: 'Overview',
+  },
+  { title: 'Users', url: '/users', icon: IconUsers, section: 'Access' },
+  {
+    title: 'Permissions',
+    url: '/permissions',
+    icon: IconKey,
+    section: 'Access',
+  },
+  {
+    title: 'Workspaces',
+    url: '/workspaces',
+    icon: IconBuilding,
+    section: 'Resources',
+  },
+  { title: 'Detections', url: '/detections', icon: IconEye, section: 'AI' },
+  { title: 'Model', url: '/model', icon: IconCpu, section: 'AI' },
+  {
+    title: 'Runtime config',
+    url: '/runtime-config',
+    icon: IconTool,
+    section: 'AI',
+  },
+  {
+    title: 'Components',
+    url: '/components',
+    icon: IconLayoutGrid,
+    section: 'Developer',
+  },
 ];
 
 const navSecondary: NavItem[] = [

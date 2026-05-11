@@ -146,30 +146,6 @@ async function seedSuperPermission(
   console.log(`  Seeded SUPER permission for ${ownerSub}`);
 }
 
-async function seedAdminTable(
-  tableName: string,
-  users: Array<{ userSub: string; userEmail: string }>,
-): Promise<void> {
-  if (users.length === 0) {
-    console.warn('  No users to seed — skipping admin table seed');
-    return;
-  }
-  await dynamo.send(
-    new BatchWriteItemCommand({
-      RequestItems: {
-        [tableName]: users.map((item) => ({
-          PutRequest: {
-            Item: {
-              userSub: { S: item.userSub },
-              userEmail: { S: item.userEmail },
-            },
-          },
-        })),
-      },
-    }),
-  );
-  console.log(`  Seeded ${tableName} with ${users.length} admin(s)`);
-}
 
 async function getOrCreateUserPool(poolName: string): Promise<string> {
   const { UserPools } = await cognito.send(
@@ -307,7 +283,6 @@ async function getOrCreateCognitoUser(
 }
 
 async function bootstrap(): Promise<void> {
-  const adminTable = `${APP_NAME}-${STAGE}-admin`;
   const contactTable = `${APP_NAME}-${STAGE}-contact`;
   const detectionTable = `${APP_NAME}-${STAGE}-detection`;
   const permissionTable = `${APP_NAME}-${STAGE}-permission`;
@@ -318,7 +293,6 @@ async function bootstrap(): Promise<void> {
   const clientName = `${APP_NAME}-${STAGE}-client`;
 
   console.log('Dropping existing DynamoDB tables...');
-  await dropTableIfExists(adminTable);
   await dropTableIfExists(contactTable);
   await dropTableIfExists(detectionTable);
   await dropTableIfExists(permissionTable);
@@ -327,7 +301,6 @@ async function bootstrap(): Promise<void> {
   await dropTableIfExists(workspaceTable);
 
   console.log('Creating DynamoDB tables...');
-  await createSimpleTable(adminTable, 'userSub');
   await createSimpleTable(contactTable, 'id');
   await createDetectionTable(detectionTable);
   await createPermissionTable(permissionTable);
@@ -358,15 +331,6 @@ async function bootstrap(): Promise<void> {
     'example+2@devika.com',
     'Password123!',
   );
-
-  const adminUsers = [
-    { userSub: primarySub, userEmail: 'example@devika.com' },
-    { userSub: sub1, userEmail: 'example+1@devika.com' },
-    { userSub: sub2, userEmail: 'example+2@devika.com' },
-  ].filter((u) => !!u.userSub);
-
-  console.log('Seeding admin table...');
-  await seedAdminTable(adminTable, adminUsers);
 
   console.log('Seeding SUPER permission...');
   if (primarySub) await seedSuperPermission(permissionTable, primarySub);

@@ -1,6 +1,6 @@
 import type { ContactSubmission } from '@baseline/types/contact';
 import type { Response } from 'express';
-import { isAdmin } from '../../middleware/is-admin';
+import { checkPermission } from '../../middleware/check-permission';
 import createAuthenticatedHandler from '../../util/create-authenticated-handler';
 import { getErrorMessage } from '../../util/error-message';
 import createApp from '../../util/express-app';
@@ -50,7 +50,7 @@ app.post('/contact', [
 ]);
 
 app.get('/contact/list', [
-  isAdmin,
+  checkPermission([{ type: 'SUPER' }]),
   async (_req: RequestContext, res: Response) => {
     try {
       const submissions = await contactService.getAll();

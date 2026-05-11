@@ -58,20 +58,17 @@ function TurnIcon({ instruction, size = 28 }: { instruction: string; size?: numb
   return <ArrowUpIcon size={size} color={color} />;
 }
 
-
 function remainingStats(
   steps: RouteStep[],
   fromStep: number,
   liveDistToTurn: number | null,
 ) {
-  // Use live GPS distance for current step; fall back to static for future steps
   const currentMeters = liveDistToTurn ?? steps[fromStep]?.distanceMeters ?? 0;
   const futureMeters = steps.slice(fromStep + 1).reduce((s, step) => s + step.distanceMeters, 0);
   const meters = currentMeters + futureMeters;
 
   const currentSecs = steps[fromStep]?.durationSeconds ?? 0;
   const futureSecs = steps.slice(fromStep + 1).reduce((s, step) => s + step.durationSeconds, 0);
-  // Scale current step duration by how far through the step we are
   const currentStepMeters = steps[fromStep]?.distanceMeters ?? 1;
   const ratio = liveDistToTurn != null ? Math.min(liveDistToTurn / currentStepMeters, 1) : 1;
   const seconds = Math.round(currentSecs * ratio) + futureSecs;
@@ -82,8 +79,6 @@ function remainingStats(
   return { km, time: formatDuration(seconds) };
 }
 
-// Distance thresholds (metres) at which to pre-announce the upcoming turn.
-// Each threshold fires exactly once per step, then resets when the step advances.
 const ANNOUNCE_THRESHOLDS_M = [200, 50] as const;
 const ADVANCE_THRESHOLD_M = 15;
 
@@ -113,13 +108,13 @@ export default function NavigateActiveScreen() {
   const [cameraReady, setCameraReady] = useState(false);
   const [viewSize, setViewSize] = useState<{ width: number; height: number } | null>(null);
 
-  // Route state
+  // Route state — starts loading; only fetches once real GPS origin is known
   const [route, setRoute] = useState<Route | null>(null);
   const [routeLoading, setRouteLoading] = useState(true);
+  const [routeError, setRouteError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [arrived, setArrived] = useState(false);
   const [distToNextTurn, setDistToNextTurn] = useState<number | null>(null);
-  // Tracks which distance thresholds have already been announced for the current step
   const announcedThresholdsRef = useRef(new Set<number>());
 
   // GPS
@@ -131,7 +126,6 @@ export default function NavigateActiveScreen() {
   const crossingScansRef = useRef(0);
 
   // ── Announce current step whenever route loads/updates ──────────────────────
-  // Fires on initial load and again when GPS re-fetches a more accurate route.
   useEffect(() => {
     if (!route || arrived) return;
     const step = route.steps[activeStep];
@@ -142,44 +136,52 @@ export default function NavigateActiveScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route]);
 
-  // ── Initial route fetch with placeholder origin (GPS not yet known) ──────────
+  // ── GPS tracking — fetch route once real origin is known ────────────────────
   useEffect(() => {
-    if (!address) return;
-    setRouteLoading(true);
-    getWalkingRoute({ lat: 0, lng: 0 }, destCoords)
-      .then((r) => setRoute(r))
-      .catch(() => {})
-      .finally(() => setRouteLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!address) {
+      setRouteLoading(false);
+      return;
+    }
 
-  // ── GPS tracking + step advancement ─────────────────────────────────────────
-  useEffect(() => {
     let sub: Location.LocationSubscription | null = null;
 
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
 
-      // Re-fetch route from actual origin once we have GPS
-      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
-        .then((loc) => {
-          const origin = { lat: loc.coords.latitude, lng: loc.coords.longitude };
-          setRouteLoading(true);
-          return getWalkingRoute(origin, destCoords);
-        })
-        .then((r) => setRoute(r))
-        .catch(() => {})
-        .finally(() => setRouteLoading(false));
+      if (status !== 'granted') {
+        // No GPS — fetch route using destination as a fallback origin so at
+        // least the step list is visible, but show a warning.
+        try {
+          const r = await getWalkingRoute(destCoords, destCoords);
+          setRoute(r);
+        } catch {
+          setRouteError('Could not load route. Check your connection.');
+        } finally {
+          setRouteLoading(false);
+        }
+        return;
+      }
 
+      // One-shot high-accuracy fix for the initial route
+      try {
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const origin = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+        const r = await getWalkingRoute(origin, destCoords);
+        setRoute(r);
+      } catch {
+        setRouteError('Could not load route. Check your connection.');
+      } finally {
+        setRouteLoading(false);
+      }
+
+      // Continuous position updates for live step advancement
       sub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, distanceInterval: 5 },
         (loc) => {
-          const pos: MapPoint = {
+          setUserLocation({
             latitude: loc.coords.latitude,
             longitude: loc.coords.longitude,
-          };
-          setUserLocation(pos);
+          });
         },
       );
     })();
@@ -213,7 +215,7 @@ export default function NavigateActiveScreen() {
     // Advance step when close enough to turn point
     if (dist < ADVANCE_THRESHOLD_M) {
       const nextIndex = activeStep + 1;
-      announcedThresholdsRef.current = new Set(); // reset thresholds for next step
+      announcedThresholdsRef.current = new Set();
       setDistToNextTurn(null);
 
       if (nextIndex >= route.steps.length) {
@@ -380,7 +382,12 @@ export default function NavigateActiveScreen() {
           }}
         >
           {routeLoading ? (
-            <ActivityIndicator color="#2563eb" size="small" />
+            <>
+              <ActivityIndicator color="#2563eb" size="small" />
+              <Text style={{ color: '#6b7280', fontSize: 14 }}>Getting your location…</Text>
+            </>
+          ) : routeError ? (
+            <Text style={{ color: '#ef4444', fontSize: 14, flex: 1 }}>{routeError}</Text>
           ) : arrived ? (
             <>
               <View
@@ -437,7 +444,7 @@ export default function NavigateActiveScreen() {
         </View>
       </SafeAreaView>
 
-      {/* Crossing signal banner — rendered last so it overlays the turn card */}
+      {/* Crossing signal banner */}
       <CrossingBanner signal={signal} />
 
       {/* ── ETA bar (bottom) ──────────────────────────────────────────────── */}

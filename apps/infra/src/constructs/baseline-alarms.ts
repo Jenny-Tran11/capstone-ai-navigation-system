@@ -10,7 +10,7 @@ import type { StageConfig } from '../config/stage-config';
 
 export interface BaselineAlarmsProps {
   config: StageConfig;
-  functions: lambda.Function[];
+  functions: Array<{ alarmKey: string; fn: lambda.Function }>;
   api?: apigateway.RestApi;
   alarmTopicArn?: string;
   alarmEmail?: string;
@@ -39,13 +39,11 @@ export class BaselineAlarms extends Construct {
     const action = new cloudwatchActions.SnsAction(this.topic as sns.Topic);
     const timeoutSeconds = 29;
 
-    // fn.node.id is often "Fn" for every NodejsFunction child — use index for unique construct ids.
-    for (const [i, fn] of functions.entries()) {
-      const base = fn.functionName;
-      const id = `Lambda${i}`;
+    // Use explicit static keys from stack code so logical IDs stay stable.
+    for (const { alarmKey, fn } of functions) {
+      const id = `Lambda${alarmKey.replace(/[^A-Za-z0-9]/g, '')}`;
 
       const errorAlarm = new cloudwatch.Alarm(this, `${id}Errors`, {
-        alarmName: `${base}-errors`,
         metric: fn.metricErrors({ period: Duration.minutes(5) }),
         threshold: 5,
         evaluationPeriods: 1,
@@ -56,7 +54,6 @@ export class BaselineAlarms extends Construct {
       errorAlarm.addAlarmAction(action);
 
       const throttleAlarm = new cloudwatch.Alarm(this, `${id}Throttles`, {
-        alarmName: `${base}-throttles`,
         metric: fn.metricThrottles({ period: Duration.minutes(5) }),
         threshold: 10,
         evaluationPeriods: 1,
@@ -67,7 +64,6 @@ export class BaselineAlarms extends Construct {
       throttleAlarm.addAlarmAction(action);
 
       const durationAlarm = new cloudwatch.Alarm(this, `${id}Duration`, {
-        alarmName: `${base}-duration-p99`,
         metric: fn.metricDuration({
           period: Duration.minutes(5),
           statistic: 'p99',
@@ -83,7 +79,6 @@ export class BaselineAlarms extends Construct {
 
     if (api) {
       const apiAlarm = new cloudwatch.Alarm(this, 'Api5xx', {
-        alarmName: `${appName}-${stage}-api-5xx`,
         metric: api.metricServerError({ period: Duration.minutes(5) }),
         threshold: 5,
         evaluationPeriods: 1,

@@ -1,6 +1,6 @@
 import type { MobileRuntimeConfig } from '@baseline/types/app-config';
 import { type Response, Router } from 'express';
-import { isAdmin } from '../../middleware/is-admin';
+import { checkPermission } from '../../middleware/check-permission';
 import { getErrorMessage } from '../../util/error-message';
 import type { RequestContext } from '../../util/request-context.type';
 import {
@@ -17,7 +17,7 @@ function isRoboflowWorkflowEndpoint(url: string): boolean {
 
 /** GET /app-config/admin/mobile */
 adminAppConfigRouter.get('/mobile', [
-  isAdmin,
+  checkPermission([{ type: 'SUPER' }]),
   async (_req: RequestContext, res: Response) => {
     const config = await getMobileRuntimeConfig();
     res.json(config);
@@ -26,7 +26,7 @@ adminAppConfigRouter.get('/mobile', [
 
 /** PUT /app-config/admin/mobile */
 adminAppConfigRouter.put('/mobile', [
-  isAdmin,
+  checkPermission([{ type: 'SUPER' }]),
   async (req: RequestContext, res: Response) => {
     try {
       const patch = normalizeMobilePatch(
@@ -46,7 +46,7 @@ adminAppConfigRouter.put('/mobile', [
 
 /** POST /app-config/admin/mobile/health */
 adminAppConfigRouter.post('/mobile/health', [
-  isAdmin,
+  checkPermission([{ type: 'SUPER' }]),
   async (_req: RequestContext, res: Response) => {
     try {
       const config = await getMobileRuntimeConfig();
@@ -70,7 +70,7 @@ adminAppConfigRouter.post('/mobile/health', [
 
 /** POST /app-config/admin/mobile/test */
 adminAppConfigRouter.post('/mobile/test', [
-  isAdmin,
+  checkPermission([{ type: 'SUPER' }]),
   async (req: RequestContext, res: Response) => {
     try {
       const { model, imageBase64, imageUrl } = req.body as {

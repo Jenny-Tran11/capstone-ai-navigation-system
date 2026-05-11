@@ -10,8 +10,9 @@
     "deploy:staging": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk deploy --all --context stage=staging --require-approval never'",
     "deploy:prod": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk deploy --all --context stage=prod --require-approval broadening'",
     "destroy:staging": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk destroy --all --context stage=staging --force'",
-    "bootstrap": "bash -c '. ../../scripts/project-variables.sh && . ../../scripts/aws-context.sh && export BASELINE_AWS_USE_DEFAULT_CHAIN=1 && baseline_apply_default_aws_chain && cdk bootstrap --context stage=staging'",
-    "bootstrap:toolkit": "bash ../../scripts/cdk-bootstrap-toolkit.sh"
+    "bootstrap": "bash ../../scripts/cdk-bootstrap-toolkit.sh",
+    "bootstrap:toolkit": "bash ../../scripts/cdk-bootstrap-toolkit.sh",
+    "bootstrap:repair-ssm": "bash ../../scripts/cdk-repair-bootstrap-ssm.sh"
   },
   "dependencies": {
     "aws-cdk-lib": "2.252.0",
