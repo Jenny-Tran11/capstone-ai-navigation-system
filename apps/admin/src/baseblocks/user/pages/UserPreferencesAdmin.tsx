@@ -1,9 +1,9 @@
-import {
-  inviteAdminUser,
-  getAdminUserProfiles,
-  type AdminUserProfile,
-} from '@baseline/client-api/user-profile-admin';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
+import {
+  type AdminUserProfile,
+  getAdminUserProfiles,
+  inviteAdminUser,
+} from '@baseline/client-api/user-profile-admin';
 import { type ColumnDef, EntityList } from '@baseline/ui';
 import { Badge } from '@baseline/ui/primitives/badge';
 import { Button } from '@baseline/ui/primitives/button';

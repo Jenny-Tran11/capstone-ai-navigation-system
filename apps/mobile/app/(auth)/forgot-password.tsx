@@ -2,7 +2,14 @@ import '@/lib/amplify';
 import { confirmResetPassword, resetPassword } from '@aws-amplify/auth';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ForgotPasswordScreen() {
@@ -38,7 +45,11 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     setError(null);
     try {
-      await confirmResetPassword({ username: email, confirmationCode: code, newPassword });
+      await confirmResetPassword({
+        username: email,
+        confirmationCode: code,
+        newPassword,
+      });
       router.replace('/(auth)/sign-in');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to reset password.');
@@ -54,7 +65,9 @@ export default function ForgotPasswordScreen() {
         className="flex-1 justify-center px-6"
       >
         <View className="mb-10">
-          <Text className="text-4xl font-bold text-gray-900">Reset password</Text>
+          <Text className="text-4xl font-bold text-gray-900">
+            Reset password
+          </Text>
           <Text className="text-gray-500 mt-2 text-base">
             {step === 'request'
               ? 'Enter your email to receive a reset code'
@@ -75,7 +88,9 @@ export default function ForgotPasswordScreen() {
                 keyboardType="email-address"
                 accessibilityLabel="Email address"
               />
-              {error ? <Text className="text-red-500 text-sm">{error}</Text> : null}
+              {error ? (
+                <Text className="text-red-500 text-sm">{error}</Text>
+              ) : null}
               <Pressable
                 onPress={handleRequest}
                 disabled={loading}
@@ -108,7 +123,9 @@ export default function ForgotPasswordScreen() {
                 secureTextEntry
                 accessibilityLabel="New password"
               />
-              {error ? <Text className="text-red-500 text-sm">{error}</Text> : null}
+              {error ? (
+                <Text className="text-red-500 text-sm">{error}</Text>
+              ) : null}
               <Pressable
                 onPress={handleConfirm}
                 disabled={loading}
@@ -122,7 +139,11 @@ export default function ForgotPasswordScreen() {
             </>
           )}
 
-          <Pressable onPress={() => router.back()} accessibilityRole="button" className="items-center mt-2">
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            className="items-center mt-2"
+          >
             <Text className="text-blue-600 text-sm">Back to sign in</Text>
           </Pressable>
         </View>

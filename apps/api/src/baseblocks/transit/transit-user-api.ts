@@ -15,13 +15,15 @@ userTransitRouter.post('/detect', [
       const result = await detectTransitFromImage(image_base64);
       return res.json(result);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Transit detection failed';
+      const message =
+        error instanceof Error ? error.message : 'Transit detection failed';
       console.error('[transit] detect error:', message);
       if (message.includes('not configured')) {
-        return res.status(503).json({ error: 'Transit AI service not configured' });
+        return res
+          .status(503)
+          .json({ error: 'Transit AI service not configured' });
       }
       return res.status(500).json({ error: 'Transit detection failed' });
     }
   },
 ]);
-

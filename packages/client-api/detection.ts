@@ -1,7 +1,9 @@
 import type { Detection, DetectionResult } from '@baseline/types/detection';
 import type { RequestHandler } from './request-handler';
 
-export const getAllDetections = async (requestHandler: RequestHandler): Promise<Detection[]> => {
+export const getAllDetections = async (
+  requestHandler: RequestHandler,
+): Promise<Detection[]> => {
   const response = await requestHandler.request<Detection[]>({
     method: 'GET',
     url: 'detection/admin/list',
@@ -39,7 +41,11 @@ export const deleteDetection = async (
 
 export const saveDetection = async (
   requestHandler: RequestHandler,
-  data: { sceneDescription: string; detections: DetectionResult[]; imageKey?: string },
+  data: {
+    sceneDescription: string;
+    detections: DetectionResult[];
+    imageKey?: string;
+  },
 ): Promise<Detection> => {
   const response = await requestHandler.request<Detection>({
     method: 'POST',
@@ -51,7 +57,9 @@ export const saveDetection = async (
   throw response;
 };
 
-export const getMyDetections = async (requestHandler: RequestHandler): Promise<Detection[]> => {
+export const getMyDetections = async (
+  requestHandler: RequestHandler,
+): Promise<Detection[]> => {
   const response = await requestHandler.request<Detection[]>({
     method: 'GET',
     url: 'detection/user/my',

@@ -44,6 +44,9 @@ const createApp = (): Application => {
   app.use(cors(corsOptions));
   app.options('*', cors(corsOptions));
   app.use(logRoute);
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok' });
+  });
   return app;
 };
 

@@ -1,5 +1,5 @@
-import { getRequestHandler } from '@baseline/client-api/request-handler';
 import { deleteDetection } from '@baseline/client-api/detection';
+import { getRequestHandler } from '@baseline/client-api/request-handler';
 import type { Detection } from '@baseline/types/detection';
 import { type ColumnDef, EntityList } from '@baseline/ui';
 import {
@@ -41,7 +41,9 @@ const DetectionList = ({ detections: initial }: Props): JSX.Element => {
     setIsDeleting(true);
     try {
       await deleteDetection(getRequestHandler(), pendingDelete.detectionId);
-      setAll((prev) => prev.filter((d) => d.detectionId !== pendingDelete.detectionId));
+      setAll((prev) =>
+        prev.filter((d) => d.detectionId !== pendingDelete.detectionId),
+      );
       setPendingDelete(null);
     } finally {
       setIsDeleting(false);
@@ -62,25 +64,37 @@ const DetectionList = ({ detections: initial }: Props): JSX.Element => {
       {
         accessorKey: 'userId',
         header: 'User',
-        meta: { headerClassName: 'hidden md:table-cell', cellClassName: 'hidden md:table-cell' },
+        meta: {
+          headerClassName: 'hidden md:table-cell',
+          cellClassName: 'hidden md:table-cell',
+        },
         cell: ({ row }: { row: RowLike<Detection> }) => (
-          <span className="font-mono text-muted-foreground text-xs">{row.original.userId}</span>
+          <span className="font-mono text-muted-foreground text-xs">
+            {row.original.userId}
+          </span>
         ),
       },
       {
         id: 'objectCount',
         header: 'Objects',
         cell: ({ row }: { row: RowLike<Detection> }) => (
-          <Badge variant="secondary">{row.original.detections?.length ?? 0}</Badge>
+          <Badge variant="secondary">
+            {row.original.detections?.length ?? 0}
+          </Badge>
         ),
       },
       {
         accessorKey: 'createdAt',
         header: 'Time',
-        meta: { headerClassName: 'hidden md:table-cell', cellClassName: 'hidden md:table-cell' },
+        meta: {
+          headerClassName: 'hidden md:table-cell',
+          cellClassName: 'hidden md:table-cell',
+        },
         cell: ({ row }: { row: RowLike<Detection> }) => (
           <span className="text-muted-foreground text-xs">
-            {row.original.createdAt ? new Date(row.original.createdAt).toLocaleString() : '—'}
+            {row.original.createdAt
+              ? new Date(row.original.createdAt).toLocaleString()
+              : '—'}
           </span>
         ),
       },
@@ -88,19 +102,31 @@ const DetectionList = ({ detections: initial }: Props): JSX.Element => {
         id: 'actions',
         header: () => <span className="sr-only">Actions</span>,
         enableHiding: false,
-        meta: { headerClassName: 'w-0 pr-6 text-right', cellClassName: 'w-0 text-right pr-6' },
+        meta: {
+          headerClassName: 'w-0 pr-6 text-right',
+          cellClassName: 'w-0 text-right pr-6',
+        },
         cell: ({ row }: { row: RowLike<Detection> }) => {
           const d = row.original;
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button type="button" variant="ghost" size="icon" className="size-8" aria-label="Actions">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label="Actions"
+                >
                   <IconDotsVertical className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem asChild>
-                  <Link to={`/detections/${d.detectionId}`} className="flex items-center gap-2">
+                  <Link
+                    to={`/detections/${d.detectionId}`}
+                    className="flex items-center gap-2"
+                  >
                     <IconEye className="size-4" />
                     View details
                   </Link>
@@ -126,7 +152,9 @@ const DetectionList = ({ detections: initial }: Props): JSX.Element => {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-semibold text-3xl tracking-tight md:text-4xl">Detections</h1>
+          <h1 className="font-semibold text-3xl tracking-tight md:text-4xl">
+            Detections
+          </h1>
           <p className="mt-2 max-w-xl text-muted-foreground">
             All obstacle detection events recorded by users.
           </p>
@@ -145,13 +173,16 @@ const DetectionList = ({ detections: initial }: Props): JSX.Element => {
 
       <AlertDialog
         open={pendingDelete !== null}
-        onOpenChange={(open) => { if (!open && !isDeleting) setPendingDelete(null); }}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setPendingDelete(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete detection record?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the detection record. This cannot be undone.
+              This permanently removes the detection record. This cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -159,7 +190,10 @@ const DetectionList = ({ detections: initial }: Props): JSX.Element => {
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               disabled={isDeleting}
-              onClick={(e) => { e.preventDefault(); void handleDelete(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
             >
               {isDeleting ? 'Deleting…' : 'Delete'}
             </AlertDialogAction>

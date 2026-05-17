@@ -37,7 +37,13 @@ const Footer = (): JSX.Element => (
             className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: 'var(--warm-primary)' }}
           >
-            <svg width="14" height="14" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 18 18"
+              fill="none"
+              aria-hidden="true"
+            >
               <path
                 d="M1 9C1 9 4 3 9 3s8 6 8 6-3 6-8 6S1 9 1 9z"
                 stroke="white"
@@ -45,7 +51,15 @@ const Footer = (): JSX.Element => (
                 strokeLinejoin="round"
               />
               <circle cx="9" cy="9" r="2.5" stroke="white" strokeWidth="1.5" />
-              <rect x="6.5" y="6.5" width="5" height="5" stroke="white" strokeWidth="1" strokeDasharray="1.5 1" />
+              <rect
+                x="6.5"
+                y="6.5"
+                width="5"
+                height="5"
+                stroke="white"
+                strokeWidth="1"
+                strokeDasharray="1.5 1"
+              />
             </svg>
           </div>
           <span
@@ -59,7 +73,8 @@ const Footer = (): JSX.Element => (
           className="text-sm leading-relaxed max-w-xs"
           style={{ color: 'var(--warm-muted)' }}
         >
-          AI-powered navigation for the visually impaired. University of Wollongong Capstone 2026.
+          AI-powered navigation for the visually impaired. University of
+          Wollongong Capstone 2026.
         </p>
         <a
           href="mailto:contact@ai-detect.app"
@@ -73,7 +88,10 @@ const Footer = (): JSX.Element => (
 
       {/* Platform */}
       <div className="space-y-4">
-        <h4 className="font-semibold text-sm" style={{ color: 'var(--warm-fg)' }}>
+        <h4
+          className="font-semibold text-sm"
+          style={{ color: 'var(--warm-fg)' }}
+        >
           Project
         </h4>
         <div className="flex flex-col gap-3">
@@ -93,7 +111,10 @@ const Footer = (): JSX.Element => (
 
       {/* Company */}
       <div className="space-y-4">
-        <h4 className="font-semibold text-sm" style={{ color: 'var(--warm-fg)' }}>
+        <h4
+          className="font-semibold text-sm"
+          style={{ color: 'var(--warm-fg)' }}
+        >
           Info
         </h4>
         <div className="flex flex-col gap-3">

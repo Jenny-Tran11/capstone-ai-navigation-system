@@ -12,7 +12,7 @@ type PreferredLocation = {
   lng: number;
 };
 
-function toPreferredLocation(value: unknown): PreferredLocation | null {
+export function toPreferredLocation(value: unknown): PreferredLocation | null {
   if (!value || typeof value !== 'object') return null;
   const input = value as Record<string, unknown>;
   const tag = input.tag;
@@ -30,7 +30,7 @@ function toPreferredLocation(value: unknown): PreferredLocation | null {
   return { tag, label: label.trim(), address: address.trim(), lat, lng };
 }
 
-function normalizePreferredLocations(value: unknown): PreferredLocation[] {
+export function normalizePreferredLocations(value: unknown): PreferredLocation[] {
   if (!Array.isArray(value)) return [];
   const parsed = value
     .map(toPreferredLocation)

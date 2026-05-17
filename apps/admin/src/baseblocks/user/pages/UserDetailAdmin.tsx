@@ -1,14 +1,14 @@
 import {
-  deleteAdminUser,
-  getAdminUserDetail,
-  type AdminUserProfile,
-} from '@baseline/client-api/user-profile-admin';
-import {
   createPermission,
   deletePermission,
   getPermissionsForOwnerId,
 } from '@baseline/client-api/permission';
 import { getRequestHandler } from '@baseline/client-api/request-handler';
+import {
+  type AdminUserProfile,
+  deleteAdminUser,
+  getAdminUserDetail,
+} from '@baseline/client-api/user-profile-admin';
 import { Badge } from '@baseline/ui/primitives/badge';
 import { Button } from '@baseline/ui/primitives/button';
 import {

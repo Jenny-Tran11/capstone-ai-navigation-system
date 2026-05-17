@@ -28,7 +28,10 @@ const TechStackSection = (): JSX.Element => (
             backgroundColor: 'rgba(204,89,51,0.06)',
           }}
         >
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--warm-primary)' }} />
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: 'var(--warm-primary)' }}
+          />
           Technology Stack
         </div>
         <h2
@@ -67,8 +70,15 @@ const TechStackSection = (): JSX.Element => (
           { label: 'Mobile', color: '#3b82f6' },
           { label: 'Cloud', color: '#f59e0b' },
         ].map(({ label, color }) => (
-          <div key={label} className="flex items-center gap-2 text-xs" style={{ color: 'var(--warm-muted)' }}>
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+          <div
+            key={label}
+            className="flex items-center gap-2 text-xs"
+            style={{ color: 'var(--warm-muted)' }}
+          >
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: color }}
+            />
             {label}
           </div>
         ))}

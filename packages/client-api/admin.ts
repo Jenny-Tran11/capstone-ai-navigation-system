@@ -1,6 +1,7 @@
 import type { Admin } from '@baseline/types/admin';
 import type { Permission } from '@baseline/types/permission';
 import type { RequestHandler } from './request-handler';
+
 type AdminUserProfile = { userId: string; displayName?: string };
 
 export const getAllAdmins = async (

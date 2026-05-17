@@ -56,10 +56,15 @@
     "prestart:all": "bash -c 'docker info >/dev/null 2>&1 || { echo \"Docker is not running; start Docker Desktop (or the daemon) and retry.\" >&2; exit 1; }'",
     "start:model": "docker compose --project-directory apps/model up --build --remove-orphans",
     "start:all": "concurrently -n api,web,admin,model -c blue,cyan,magenta,yellow \"pnpm --filter @baseline/api run start\" \"pnpm --filter @baseline/web run start\" \"pnpm --filter @baseline/admin run start\" \"docker compose --project-directory apps/model up --build --remove-orphans\"",
+    "smoke": "tsx scripts/smoke-test.ts",
+    "smoke:no-stop": "tsx scripts/smoke-test.ts --skip-model-stop",
+    "perf": "tsx scripts/perf-baseline.ts",
+    "perf:quick": "tsx scripts/perf-baseline.ts --skip-cold-start --detection-samples 10 --health-samples 5",
     "install:requirements": "./scripts/install-requirements.sh"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",
+    "@types/scheduler": "^0.26.0",
     "concurrently": "^9.2.1"
   },
   "resolutions": {

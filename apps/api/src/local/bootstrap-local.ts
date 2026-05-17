@@ -146,7 +146,6 @@ async function seedSuperPermission(
   console.log(`  Seeded SUPER permission for ${ownerSub}`);
 }
 
-
 async function getOrCreateUserPool(poolName: string): Promise<string> {
   const { UserPools } = await cognito.send(
     new ListUserPoolsCommand({ MaxResults: 60 }),
@@ -321,12 +320,12 @@ async function bootstrap(): Promise<void> {
     'example@devika.com',
     'Password123!',
   );
-  const sub1 = await getOrCreateCognitoUser(
+  const _sub1 = await getOrCreateCognitoUser(
     poolId,
     'example+1@devika.com',
     'Password123!',
   );
-  const sub2 = await getOrCreateCognitoUser(
+  const _sub2 = await getOrCreateCognitoUser(
     poolId,
     'example+2@devika.com',
     'Password123!',

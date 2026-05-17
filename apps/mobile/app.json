@@ -41,11 +41,7 @@
       "output": "static",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      "expo-camera",
-      "expo-location"
-    ],
+    "plugins": ["expo-router", "expo-camera", "expo-location"],
     "experiments": {
       "typedRoutes": true
     },

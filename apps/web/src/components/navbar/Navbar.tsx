@@ -6,7 +6,13 @@ const Logo = () => (
     className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
     style={{ backgroundColor: 'var(--warm-primary)' }}
   >
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M1 9C1 9 4 3 9 3s8 6 8 6-3 6-8 6S1 9 1 9z"
         stroke="white"
@@ -14,7 +20,15 @@ const Logo = () => (
         strokeLinejoin="round"
       />
       <circle cx="9" cy="9" r="2.5" stroke="white" strokeWidth="1.5" />
-      <rect x="6.5" y="6.5" width="5" height="5" stroke="white" strokeWidth="1" strokeDasharray="1.5 1" />
+      <rect
+        x="6.5"
+        y="6.5"
+        width="5"
+        height="5"
+        stroke="white"
+        strokeWidth="1"
+        strokeDasharray="1.5 1"
+      />
     </svg>
   </div>
 );
@@ -71,10 +85,12 @@ const Navbar = (): JSX.Element => {
             className="no-underline text-sm font-semibold text-white rounded-full px-6 py-2.5 transition-all duration-200"
             style={{ backgroundColor: 'var(--warm-primary)' }}
             onMouseEnter={(e) =>
-              ((e.target as HTMLElement).style.backgroundColor = 'var(--warm-primary-hover)')
+              ((e.target as HTMLElement).style.backgroundColor =
+                'var(--warm-primary-hover)')
             }
             onMouseLeave={(e) =>
-              ((e.target as HTMLElement).style.backgroundColor = 'var(--warm-primary)')
+              ((e.target as HTMLElement).style.backgroundColor =
+                'var(--warm-primary)')
             }
           >
             Get Started
@@ -88,9 +104,18 @@ const Navbar = (): JSX.Element => {
           onClick={() => setIsMobileOpen((o) => !o)}
           aria-label="Toggle menu"
         >
-          <div className="h-[2px] w-full" style={{ backgroundColor: 'var(--warm-fg)' }} />
-          <div className="h-[2px] w-full" style={{ backgroundColor: 'var(--warm-fg)' }} />
-          <div className="h-[2px] w-full" style={{ backgroundColor: 'var(--warm-fg)' }} />
+          <div
+            className="h-[2px] w-full"
+            style={{ backgroundColor: 'var(--warm-fg)' }}
+          />
+          <div
+            className="h-[2px] w-full"
+            style={{ backgroundColor: 'var(--warm-fg)' }}
+          />
+          <div
+            className="h-[2px] w-full"
+            style={{ backgroundColor: 'var(--warm-fg)' }}
+          />
         </button>
       </div>
 

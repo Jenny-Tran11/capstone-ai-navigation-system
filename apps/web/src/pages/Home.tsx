@@ -9,15 +9,13 @@ import TechStackSection from '../components/tech-stack-section/TechStackSection'
 
 const Home = (): JSX.Element => (
   <PageWrapper title="Home">
-    <>
-      <Hero />
-      <StatsSection />
-      <ProblemSection />
-      <FeaturesSection />
-      <HowItWorksSection />
-      <TechStackSection />
-      <CtaSection />
-    </>
+    <Hero />
+    <StatsSection />
+    <ProblemSection />
+    <FeaturesSection />
+    <HowItWorksSection />
+    <TechStackSection />
+    <CtaSection />
   </PageWrapper>
 );
 

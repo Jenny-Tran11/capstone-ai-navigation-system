@@ -21,14 +21,21 @@ const AboutBanner = (): JSX.Element => (
           backgroundColor: 'rgba(204,89,51,0.06)',
         }}
       >
-        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--warm-primary)' }} />
+        <span
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: 'var(--warm-primary)' }}
+        />
         About the Project
       </div>
 
       {/* Headline */}
       <h1
         className="text-3xl sm:text-5xl md:text-7xl leading-tight"
-        style={{ color: 'var(--warm-fg)', fontWeight: 300, letterSpacing: '-0.02em' }}
+        style={{
+          color: 'var(--warm-fg)',
+          fontWeight: 300,
+          letterSpacing: '-0.02em',
+        }}
       >
         Built to make the world
         <br />
@@ -40,9 +47,10 @@ const AboutBanner = (): JSX.Element => (
         className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-light"
         style={{ color: 'var(--warm-muted)' }}
       >
-        AI-Detect was built as a University of Wollongong capstone project to address a real
-        accessibility gap. We combined mobile computer vision, cloud AI, and multimodal feedback
-        to create a navigation assistant for the visually impaired.
+        AI-Detect was built as a University of Wollongong capstone project to
+        address a real accessibility gap. We combined mobile computer vision,
+        cloud AI, and multimodal feedback to create a navigation assistant for
+        the visually impaired.
       </p>
 
       {/* CTAs */}
@@ -52,10 +60,12 @@ const AboutBanner = (): JSX.Element => (
           className="no-underline inline-flex items-center gap-2 text-white text-base font-semibold rounded-full px-8 py-4 w-full sm:w-auto transition-all duration-200 shadow-lg"
           style={{ backgroundColor: 'var(--warm-primary)' }}
           onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.backgroundColor = 'var(--warm-primary-hover)')
+            ((e.currentTarget as HTMLElement).style.backgroundColor =
+              'var(--warm-primary-hover)')
           }
           onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.backgroundColor = 'var(--warm-primary)')
+            ((e.currentTarget as HTMLElement).style.backgroundColor =
+              'var(--warm-primary)')
           }
         >
           View Features
@@ -108,10 +118,16 @@ const AboutBanner = (): JSX.Element => (
             borderColor: 'var(--warm-border)',
           }}
         >
-          <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--warm-fg)' }}>
+          <h3
+            className="text-lg font-semibold mb-3"
+            style={{ color: 'var(--warm-fg)' }}
+          >
             {value.title}
           </h3>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--warm-muted)' }}>
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: 'var(--warm-muted)' }}
+          >
             {value.body}
           </p>
         </div>

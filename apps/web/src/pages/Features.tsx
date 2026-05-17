@@ -136,140 +136,137 @@ const features = [
 
 const Features = (): JSX.Element => (
   <PageWrapper title="Features">
-    <>
-      {/* Page banner */}
-      <section
-        className="relative flex flex-col items-center justify-center pt-24 pb-16 px-6 overflow-hidden text-center"
-        style={{ backgroundColor: 'var(--warm-bg)' }}
+    {/* Page banner */}
+    <section
+      className="relative flex flex-col items-center justify-center pt-24 pb-16 px-6 overflow-hidden text-center"
+      style={{ backgroundColor: 'var(--warm-bg)' }}
+    >
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl pointer-events-none -z-10 opacity-20"
+        style={{ backgroundColor: '#e8976a' }}
+      />
+      <div
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium mb-6"
+        style={{
+          borderColor: 'rgba(204,89,51,0.25)',
+          color: 'var(--warm-primary)',
+          backgroundColor: 'rgba(204,89,51,0.06)',
+        }}
       >
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl pointer-events-none -z-10 opacity-20"
-          style={{ backgroundColor: '#e8976a' }}
+        <span
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: 'var(--warm-primary)' }}
         />
-        <div
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium mb-6"
-          style={{
-            borderColor: 'rgba(204,89,51,0.25)',
-            color: 'var(--warm-primary)',
-            backgroundColor: 'rgba(204,89,51,0.06)',
-          }}
-        >
-          <span
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: 'var(--warm-primary)' }}
-          />
-          Platform Features
-        </div>
-        <h1
-          className="text-3xl sm:text-5xl md:text-6xl font-light leading-tight max-w-3xl"
-          style={{ color: 'var(--warm-fg)', letterSpacing: '-0.02em' }}
-        >
-          Every feature built for{' '}
-          <strong style={{ fontWeight: 600 }}>screen-free</strong> use.
-        </h1>
-        <p
-          className="mt-6 text-lg font-light max-w-2xl leading-relaxed"
-          style={{ color: 'var(--warm-muted)' }}
-        >
-          AI-Detect's four core detection systems work together to give visually
-          impaired users a complete picture of their environment in real time.
-        </p>
-      </section>
+        Platform Features
+      </div>
+      <h1
+        className="text-3xl sm:text-5xl md:text-6xl font-light leading-tight max-w-3xl"
+        style={{ color: 'var(--warm-fg)', letterSpacing: '-0.02em' }}
+      >
+        Every feature built for{' '}
+        <strong style={{ fontWeight: 600 }}>screen-free</strong> use.
+      </h1>
+      <p
+        className="mt-6 text-lg font-light max-w-2xl leading-relaxed"
+        style={{ color: 'var(--warm-muted)' }}
+      >
+        AI-Detect's four core detection systems work together to give visually
+        impaired users a complete picture of their environment in real time.
+      </p>
+    </section>
 
-      {/* Feature detail sections */}
-      {features.map((feature, idx) => (
-        <section
-          key={feature.id}
-          className="py-20 px-6"
-          style={{
-            backgroundColor:
-              idx % 2 === 0 ? 'var(--warm-surface)' : 'var(--warm-bg)',
-            borderTop: '1px solid var(--warm-border)',
-          }}
-        >
-          <div className="max-w-5xl mx-auto">
-            <div
-              className={`flex flex-col md:flex-row gap-12 items-start ${idx % 2 !== 0 ? 'md:flex-row-reverse' : ''}`}
-            >
-              {/* Text side */}
-              <div className="flex-1 space-y-6">
-                <span
-                  className="inline-block px-3 py-1 rounded-full text-xs font-medium"
-                  style={{
-                    backgroundColor: 'rgba(204,89,51,0.08)',
-                    color: 'var(--warm-primary)',
-                    border: '1px solid rgba(204,89,51,0.2)',
-                  }}
-                >
-                  {feature.badge}
-                </span>
-                <h2
-                  className="text-2xl sm:text-3xl font-light"
-                  style={{ color: 'var(--warm-fg)', letterSpacing: '-0.02em' }}
-                >
-                  {feature.title}
-                </h2>
-                <p
-                  className="text-base leading-relaxed"
-                  style={{ color: 'var(--warm-muted)' }}
-                >
-                  {feature.description}
-                </p>
-                <ul className="space-y-3">
-                  {feature.details.map((detail) => (
-                    <li key={detail} className="flex gap-3 items-start">
-                      <span
-                        className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: 'var(--warm-primary)' }}
-                      />
-                      <span
-                        className="text-sm leading-relaxed"
-                        style={{ color: 'var(--warm-muted)' }}
-                      >
-                        {detail}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                {/* Technical callout */}
-                <div
-                  className="rounded-xl px-4 py-3 text-xs font-mono leading-relaxed"
-                  style={{
-                    backgroundColor: 'rgba(45,37,32,0.04)',
-                    color: 'var(--warm-fg)',
-                    border: '1px solid var(--warm-border)',
-                  }}
-                >
-                  {feature.callout}
-                </div>
-              </div>
-
-              {/* Illustration side */}
-              <div
-                className="w-full md:w-80 flex-shrink-0 rounded-2xl border flex items-center justify-center"
+    {/* Feature detail sections */}
+    {features.map((feature, idx) => (
+      <section
+        key={feature.id}
+        className="py-20 px-6"
+        style={{
+          backgroundColor:
+            idx % 2 === 0 ? 'var(--warm-surface)' : 'var(--warm-bg)',
+          borderTop: '1px solid var(--warm-border)',
+        }}
+      >
+        <div className="max-w-5xl mx-auto">
+          <div
+            className={`flex flex-col md:flex-row gap-12 items-start ${idx % 2 !== 0 ? 'md:flex-row-reverse' : ''}`}
+          >
+            {/* Text side */}
+            <div className="flex-1 space-y-6">
+              <span
+                className="inline-block px-3 py-1 rounded-full text-xs font-medium"
                 style={{
-                  backgroundColor: 'var(--warm-bg)',
-                  borderColor: 'var(--warm-border)',
-                  minHeight: '260px',
-                  background:
-                    'linear-gradient(135deg, #f0ebe2 0%, #e8ddd0 100%)',
+                  backgroundColor: 'rgba(204,89,51,0.08)',
+                  color: 'var(--warm-primary)',
+                  border: '1px solid rgba(204,89,51,0.2)',
                 }}
               >
-                <div
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center"
-                  style={{
-                    backgroundColor: 'rgba(204,89,51,0.1)',
-                    color: 'var(--warm-primary)',
-                  }}
-                >
-                  {feature.icon}
-                </div>
+                {feature.badge}
+              </span>
+              <h2
+                className="text-2xl sm:text-3xl font-light"
+                style={{ color: 'var(--warm-fg)', letterSpacing: '-0.02em' }}
+              >
+                {feature.title}
+              </h2>
+              <p
+                className="text-base leading-relaxed"
+                style={{ color: 'var(--warm-muted)' }}
+              >
+                {feature.description}
+              </p>
+              <ul className="space-y-3">
+                {feature.details.map((detail) => (
+                  <li key={detail} className="flex gap-3 items-start">
+                    <span
+                      className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: 'var(--warm-primary)' }}
+                    />
+                    <span
+                      className="text-sm leading-relaxed"
+                      style={{ color: 'var(--warm-muted)' }}
+                    >
+                      {detail}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {/* Technical callout */}
+              <div
+                className="rounded-xl px-4 py-3 text-xs font-mono leading-relaxed"
+                style={{
+                  backgroundColor: 'rgba(45,37,32,0.04)',
+                  color: 'var(--warm-fg)',
+                  border: '1px solid var(--warm-border)',
+                }}
+              >
+                {feature.callout}
+              </div>
+            </div>
+
+            {/* Illustration side */}
+            <div
+              className="w-full md:w-80 flex-shrink-0 rounded-2xl border flex items-center justify-center"
+              style={{
+                backgroundColor: 'var(--warm-bg)',
+                borderColor: 'var(--warm-border)',
+                minHeight: '260px',
+                background: 'linear-gradient(135deg, #f0ebe2 0%, #e8ddd0 100%)',
+              }}
+            >
+              <div
+                className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                style={{
+                  backgroundColor: 'rgba(204,89,51,0.1)',
+                  color: 'var(--warm-primary)',
+                }}
+              >
+                {feature.icon}
               </div>
             </div>
           </div>
-        </section>
-      ))}
-    </>
+        </div>
+      </section>
+    ))}
   </PageWrapper>
 );
 

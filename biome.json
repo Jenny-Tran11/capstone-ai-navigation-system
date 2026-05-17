@@ -7,13 +7,15 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "experimentalScannerIgnores": [
-      "**/*.d.ts",
-      "**/dist/**",
-      "**/.cognito/**",
-      "apps/mobile/.expo/**",
-      "apps/mobile/node_modules/**",
-      "apps/model/**"
+    "includes": [
+      "**",
+      "!**/*.d.ts",
+      "!**/dist",
+      "!**/.cognito",
+      "!apps/mobile/.expo",
+      "!apps/mobile/node_modules",
+      "!apps/model",
+      "!commands/add-object/template"
     ]
   },
   "formatter": {

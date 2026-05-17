@@ -1,11 +1,22 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { MagnifyingGlassIcon } from 'react-native-heroicons/outline';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '@/lib/api-client';
 import { getRuntimeConfig } from '@/lib/runtime-config';
-import { markOnboardingDone, savePreferences, type UserPreferences } from '@/lib/storage';
+import {
+  markOnboardingDone,
+  savePreferences,
+  type UserPreferences,
+} from '@/lib/storage';
 
 type FieldKey = 'home' | 'work';
 
@@ -24,7 +35,10 @@ type ResolvedLocation = {
 
 type PreferredLocation = UserPreferences['preferredLocations'][number];
 
-async function fetchAutocomplete(query: string, mapsKey: string): Promise<Suggestion[]> {
+async function fetchAutocomplete(
+  query: string,
+  mapsKey: string,
+): Promise<Suggestion[]> {
   if (!query.trim() || !mapsKey) return [];
   try {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${mapsKey}&types=address`;
@@ -43,7 +57,10 @@ async function fetchAutocomplete(query: string, mapsKey: string): Promise<Sugges
   }
 }
 
-async function geocodePlaceId(placeId: string, mapsKey: string): Promise<{ lat: number; lng: number }> {
+async function geocodePlaceId(
+  placeId: string,
+  mapsKey: string,
+): Promise<{ lat: number; lng: number }> {
   try {
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=geometry&key=${mapsKey}`;
     const res = await fetch(url);
@@ -59,11 +76,17 @@ async function geocodePlaceId(placeId: string, mapsKey: string): Promise<{ lat: 
 export default function OnboardingScreen() {
   const [mapsKey, setMapsKey] = useState('');
   const [configReady, setConfigReady] = useState(false);
-  const [values, setValues] = useState<{ home: ResolvedLocation | null; work: ResolvedLocation | null }>({
+  const [values, setValues] = useState<{
+    home: ResolvedLocation | null;
+    work: ResolvedLocation | null;
+  }>({
     home: null,
     work: null,
   });
-  const [inputText, setInputText] = useState<{ home: string; work: string }>({ home: '', work: '' });
+  const [inputText, setInputText] = useState<{ home: string; work: string }>({
+    home: '',
+    work: '',
+  });
   const [activeField, setActiveField] = useState<FieldKey | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -131,7 +154,9 @@ export default function OnboardingScreen() {
       if (values.work) {
         preferredLocations.push({ tag: 'work', label: 'Work', ...values.work });
       }
-      await apiClient.put('/user-profile/user/preferences', { preferredLocations });
+      await apiClient.put('/user-profile/user/preferences', {
+        preferredLocations,
+      });
       await savePreferences({ preferredLocations });
       await markOnboardingDone();
       router.replace('/(app)/(tabs)/home');
@@ -146,11 +171,17 @@ export default function OnboardingScreen() {
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24, gap: 18 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingVertical: 24,
+          gap: 18,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="gap-2">
-          <Text className="text-3xl font-bold text-slate-900">Set your places</Text>
+          <Text className="text-3xl font-bold text-slate-900">
+            Set your places
+          </Text>
           <Text className="text-slate-500">
             Add Home and Work so navigation starts faster.
           </Text>
@@ -207,12 +238,16 @@ export default function OnboardingScreen() {
               inputText[field].trim() &&
               !loadingSuggestions &&
               suggestions.length === 0 ? (
-                <Text className="text-xs text-slate-500">No matches found.</Text>
+                <Text className="text-xs text-slate-500">
+                  No matches found.
+                </Text>
               ) : null}
 
               {/* Show resolved indicator once user selected a suggestion */}
               {values[field] ? (
-                <Text className="text-xs text-green-600">✓ Location confirmed</Text>
+                <Text className="text-xs text-green-600">
+                  ✓ Location confirmed
+                </Text>
               ) : null}
             </View>
           ))

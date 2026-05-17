@@ -1,8 +1,8 @@
+import { getRequestHandler } from '@baseline/client-api/request-handler';
 import {
   getAdminUserDetail,
   updateAdminUserPreferences,
 } from '@baseline/client-api/user-profile-admin';
-import { getRequestHandler } from '@baseline/client-api/request-handler';
 import { Badge } from '@baseline/ui/primitives/badge';
 import { Button } from '@baseline/ui/primitives/button';
 import {
