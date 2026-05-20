@@ -6,8 +6,9 @@ export type MobileRuntimeConfig = {
   crossingApiBaseUrl: string;
   crossingApiKey: string;
   googleMapsApiKey: string;
-  googleAiApiKey: string;
-  googleAiModel: string;
+  bedrockTransitModelId: string;
+  bedrockAssistantModelId: string;
+  transcribeLanguageCode: string;
 };
 
 const ENV_FALLBACK: MobileRuntimeConfig = {
@@ -19,8 +20,14 @@ const ENV_FALLBACK: MobileRuntimeConfig = {
     process.env.EXPO_PUBLIC_DETECT_API_KEY ??
     '',
   googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '',
-  googleAiApiKey: process.env.EXPO_PUBLIC_GOOGLE_AI_API_KEY ?? '',
-  googleAiModel: process.env.EXPO_PUBLIC_GOOGLE_AI_MODEL ?? 'gemini-2.0-flash',
+  bedrockTransitModelId:
+    process.env.EXPO_PUBLIC_BEDROCK_TRANSIT_MODEL_ID ??
+    'apac.amazon.nova-lite-v1:0',
+  bedrockAssistantModelId:
+    process.env.EXPO_PUBLIC_BEDROCK_ASSISTANT_MODEL_ID ??
+    'apac.amazon.nova-lite-v1:0',
+  transcribeLanguageCode:
+    process.env.EXPO_PUBLIC_TRANSCRIBE_LANGUAGE_CODE ?? 'en-AU',
 };
 
 let configPromise: Promise<MobileRuntimeConfig> | null = null;
@@ -53,8 +60,18 @@ async function fetchRuntimeConfig(): Promise<MobileRuntimeConfig> {
         data.googleMapsApiKey,
         ENV_FALLBACK.googleMapsApiKey,
       ),
-      googleAiApiKey: pick(data.googleAiApiKey, ENV_FALLBACK.googleAiApiKey),
-      googleAiModel: pick(data.googleAiModel, ENV_FALLBACK.googleAiModel),
+      bedrockTransitModelId: pick(
+        data.bedrockTransitModelId,
+        ENV_FALLBACK.bedrockTransitModelId,
+      ),
+      bedrockAssistantModelId: pick(
+        data.bedrockAssistantModelId,
+        ENV_FALLBACK.bedrockAssistantModelId,
+      ),
+      transcribeLanguageCode: pick(
+        data.transcribeLanguageCode,
+        ENV_FALLBACK.transcribeLanguageCode,
+      ),
     };
   } catch {
     return ENV_FALLBACK;

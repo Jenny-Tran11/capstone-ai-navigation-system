@@ -5,14 +5,13 @@ import { useEffect, useRef, useState } from 'react';
 
 // ─── Battery warning ──────────────────────────────────────────────────────────
 
-let sessionBatteryWarned = false;
-
 export function useBatteryWarning(
   active: boolean,
   speechRate: number,
   speechLanguage: string,
 ): boolean {
   const [lowBattery, setLowBattery] = useState(false);
+  const warnedRef = useRef(false);
 
   useEffect(() => {
     if (!active) return;
@@ -26,8 +25,8 @@ export function useBatteryWarning(
         state === Battery.BatteryState.FULL;
       if (charging || level >= 0.2) return;
       setLowBattery(true);
-      if (sessionBatteryWarned) return;
-      sessionBatteryWarned = true;
+      if (warnedRef.current) return;
+      warnedRef.current = true;
       Speech.stop();
       Speech.speak(
         'Battery is low. Consider ending navigation to save power.',

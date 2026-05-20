@@ -1,4 +1,5 @@
 import { app as appConfigApp } from '../baseblocks/app-config/app-config-api';
+import { app as assistantApp } from '../baseblocks/assistant/assistant-api';
 import { app as contactApp } from '../baseblocks/contact/contact-api';
 import { app as detectionApp } from '../baseblocks/detection/detection-api';
 import { app as permissionApp } from '../baseblocks/permission/permission-api';
@@ -13,6 +14,7 @@ const PORT = parseInt(process.env.PORT ?? '4000', 10);
 app.use(contactApp);
 app.use(detectionApp);
 app.use(appConfigApp);
+app.use(assistantApp);
 app.use(permissionApp);
 app.use(transitApp);
 app.use(userProfileApp);

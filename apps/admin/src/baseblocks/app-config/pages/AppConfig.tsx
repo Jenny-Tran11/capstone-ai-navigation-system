@@ -16,8 +16,9 @@ const EMPTY: FormState = {
   crossingApiBaseUrl: '',
   crossingApiKey: '',
   googleMapsApiKey: '',
-  googleAiApiKey: '',
-  googleAiModel: 'gemini-2.0-flash',
+  bedrockTransitModelId: 'apac.amazon.nova-lite-v1:0',
+  bedrockAssistantModelId: 'apac.amazon.nova-lite-v1:0',
+  transcribeLanguageCode: 'en-AU',
 };
 
 export default function AppConfigPage(): JSX.Element {
@@ -111,16 +112,22 @@ export default function AppConfigPage(): JSX.Element {
             placeholder="optional"
           />
           <Field
-            label="Google AI API key"
-            value={form.googleAiApiKey}
-            onChange={(v) => setField('googleAiApiKey', v)}
-            placeholder="optional"
+            label="Bedrock transit model id"
+            value={form.bedrockTransitModelId}
+            onChange={(v) => setField('bedrockTransitModelId', v)}
+            placeholder="apac.amazon.nova-lite-v1:0"
           />
           <Field
-            label="Google AI model"
-            value={form.googleAiModel}
-            onChange={(v) => setField('googleAiModel', v)}
-            placeholder="gemini-2.0-flash"
+            label="Bedrock assistant model id"
+            value={form.bedrockAssistantModelId}
+            onChange={(v) => setField('bedrockAssistantModelId', v)}
+            placeholder="apac.amazon.nova-lite-v1:0"
+          />
+          <Field
+            label="Transcribe language code"
+            value={form.transcribeLanguageCode}
+            onChange={(v) => setField('transcribeLanguageCode', v)}
+            placeholder="en-AU"
           />
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}

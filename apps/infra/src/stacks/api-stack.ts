@@ -90,6 +90,20 @@ export class ApiStack extends Stack {
       resources: [userPool.userPoolArn],
     });
 
+    const bedrockInvokePolicy = new iam.PolicyStatement({
+      actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
+      resources: ['*'],
+    });
+
+    const transcribePolicy = new iam.PolicyStatement({
+      actions: [
+        'transcribe:StartTranscriptionJob',
+        'transcribe:GetTranscriptionJob',
+        'transcribe:DeleteTranscriptionJob',
+      ],
+      resources: ['*'],
+    });
+
     // ── API entities ─────────────────────────────────
     const apiEntities: ApiEntity[] = [
       {
@@ -145,18 +159,21 @@ export class ApiStack extends Stack {
       lambdaFunctions.push({ alarmKey: entity.name, fn });
     }
 
-    // ── Transit API (Gemini-powered bus OCR, authenticated) ───────────────────
+    // ── Transit API (Bedrock-powered bus OCR, authenticated) ──────────────────
     const transitFn = new BaselineFunction(this, 'ApiTransit', {
       config,
       functionName: 'ApiTransit',
       entry: 'baseblocks/transit/transit-api.ts',
       environment: {
         COGNITO_USER_POOL_ID: userPool.userPoolId,
-        GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY ?? '',
+        BEDROCK_REGION: process.env.BEDROCK_REGION ?? config.region,
+        BEDROCK_MODEL_ID:
+          process.env.BEDROCK_MODEL_ID ?? 'apac.amazon.nova-lite-v1:0',
       },
     });
     transitFn.fn.addToRolePolicy(dynamoPolicy);
     transitFn.fn.addToRolePolicy(cognitoPolicy);
+    transitFn.fn.addToRolePolicy(bedrockInvokePolicy);
 
     const transitIntegration = new apigateway.LambdaIntegration(transitFn.fn);
     const transitResource = api.root.addResource('transit');
@@ -166,6 +183,40 @@ export class ApiStack extends Stack {
       .addMethod('ANY', transitIntegration, authOptions);
 
     lambdaFunctions.push({ alarmKey: 'ApiTransit', fn: transitFn });
+
+    // ── Assistant API (Transcribe + Bedrock FM, authenticated) ────────────────
+    const assistantFn = new BaselineFunction(this, 'ApiAssistant', {
+      config,
+      functionName: 'ApiAssistant',
+      entry: 'baseblocks/assistant/assistant-api.ts',
+      environment: {
+        COGNITO_USER_POOL_ID: userPool.userPoolId,
+        FILE_BUCKET_NAME: fileBucket.bucketName,
+        BEDROCK_REGION: process.env.BEDROCK_REGION ?? config.region,
+        BEDROCK_ASSISTANT_MODEL_ID:
+          process.env.BEDROCK_ASSISTANT_MODEL_ID ??
+          'apac.amazon.nova-lite-v1:0',
+        TRANSCRIBE_REGION: process.env.TRANSCRIBE_REGION ?? config.region,
+        TRANSCRIBE_LANGUAGE_CODE:
+          process.env.TRANSCRIBE_LANGUAGE_CODE ?? 'en-AU',
+      },
+    });
+    assistantFn.fn.addToRolePolicy(dynamoPolicy);
+    assistantFn.fn.addToRolePolicy(cognitoPolicy);
+    assistantFn.fn.addToRolePolicy(bedrockInvokePolicy);
+    assistantFn.fn.addToRolePolicy(transcribePolicy);
+    fileBucket.grantReadWrite(assistantFn.fn);
+
+    const assistantIntegration = new apigateway.LambdaIntegration(
+      assistantFn.fn,
+    );
+    const assistantResource = api.root.addResource('assistant');
+    assistantResource.addMethod('ANY', assistantIntegration, authOptions);
+    assistantResource
+      .addProxy({ anyMethod: false, defaultIntegration: assistantIntegration })
+      .addMethod('ANY', assistantIntegration, authOptions);
+
+    lambdaFunctions.push({ alarmKey: 'ApiAssistant', fn: assistantFn });
 
     // ── Contact API (mixed auth: POST public, GET admin-only) ─────────────────
     const contactFn = new BaselineFunction(this, 'ApiContact', {

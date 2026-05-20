@@ -24,14 +24,18 @@ export function getMobileRuntimeConfigFromEnv(): MobileRuntimeConfig {
       process.env.MOBILE_GOOGLE_MAPS_API_KEY ??
       process.env.GOOGLE_MAPS_API_KEY ??
       '',
-    googleAiApiKey:
-      process.env.MOBILE_GOOGLE_AI_API_KEY ??
-      process.env.GOOGLE_AI_API_KEY ??
-      '',
-    googleAiModel:
-      process.env.MOBILE_GOOGLE_AI_MODEL ??
-      process.env.GOOGLE_AI_MODEL ??
-      'gemini-2.0-flash',
+    bedrockTransitModelId:
+      process.env.MOBILE_BEDROCK_TRANSIT_MODEL_ID ??
+      process.env.BEDROCK_MODEL_ID ??
+      'apac.amazon.nova-lite-v1:0',
+    bedrockAssistantModelId:
+      process.env.MOBILE_BEDROCK_ASSISTANT_MODEL_ID ??
+      process.env.BEDROCK_ASSISTANT_MODEL_ID ??
+      'apac.amazon.nova-lite-v1:0',
+    transcribeLanguageCode:
+      process.env.MOBILE_TRANSCRIBE_LANGUAGE_CODE ??
+      process.env.TRANSCRIBE_LANGUAGE_CODE ??
+      'en-AU',
   };
 }
 
@@ -49,8 +53,13 @@ export async function getMobileRuntimeConfig(): Promise<MobileRuntimeConfig> {
       crossingApiKey: stored.mobile?.crossingApiKey ?? fallback.crossingApiKey,
       googleMapsApiKey:
         stored.mobile?.googleMapsApiKey ?? fallback.googleMapsApiKey,
-      googleAiApiKey: stored.mobile?.googleAiApiKey ?? fallback.googleAiApiKey,
-      googleAiModel: stored.mobile?.googleAiModel ?? fallback.googleAiModel,
+      bedrockTransitModelId:
+        stored.mobile?.bedrockTransitModelId ?? fallback.bedrockTransitModelId,
+      bedrockAssistantModelId:
+        stored.mobile?.bedrockAssistantModelId ??
+        fallback.bedrockAssistantModelId,
+      transcribeLanguageCode:
+        stored.mobile?.transcribeLanguageCode ?? fallback.transcribeLanguageCode,
     };
   } catch {
     return fallback;
@@ -71,10 +80,12 @@ export function normalizeMobilePatch(
     out.crossingApiKey = input.crossingApiKey.trim();
   if (typeof input.googleMapsApiKey === 'string')
     out.googleMapsApiKey = input.googleMapsApiKey.trim();
-  if (typeof input.googleAiApiKey === 'string')
-    out.googleAiApiKey = input.googleAiApiKey.trim();
-  if (typeof input.googleAiModel === 'string')
-    out.googleAiModel = input.googleAiModel.trim();
+  if (typeof input.bedrockTransitModelId === 'string')
+    out.bedrockTransitModelId = input.bedrockTransitModelId.trim();
+  if (typeof input.bedrockAssistantModelId === 'string')
+    out.bedrockAssistantModelId = input.bedrockAssistantModelId.trim();
+  if (typeof input.transcribeLanguageCode === 'string')
+    out.transcribeLanguageCode = input.transcribeLanguageCode.trim();
   return out;
 }
 

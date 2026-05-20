@@ -3,6 +3,9 @@ import { apiClient } from '@/lib/api-client';
 export type TransitDetectResponse = {
   busNumber: string | null;
   destination: string | null;
+  confidence?: number;
+  latencyMs?: number;
+  modelId?: string;
 };
 
 export async function postTransitDetect(

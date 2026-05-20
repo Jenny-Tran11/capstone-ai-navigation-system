@@ -26,7 +26,7 @@ type RoboflowPrediction = {
   y2?: number;
 };
 
-const HARDCODED_DETECT_BASE_URL = 'https://inference.trananhlanhuu.me';
+const HARDCODED_DETECT_BASE_URL = '';
 const HARDCODED_DETECT_API_KEY = '';
 
 function isRoboflowWorkflowEndpoint(url: string): boolean {

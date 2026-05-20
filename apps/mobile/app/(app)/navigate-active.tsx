@@ -1,6 +1,8 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
+import { Audio } from 'expo-av';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -23,10 +25,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BoundingBoxOverlay } from '@/features/detect/BoundingBoxOverlay';
 import { CrossingBanner } from '@/features/detect/CrossingBanner';
+import { TransitBanner } from '@/features/detect/TransitBanner';
+import {
+  postAssistantInteract,
+  type AssistantInteractResponse,
+} from '@/features/assistant/assistant-api';
 import {
   postCrossingDetect,
   type SignalState,
 } from '@/features/detect/crossing-api';
+import type { DetectionResult } from '@/features/detect/detection-api';
+import { postTransitDetect } from '@/features/detect/transit-api';
 import { useLiveDetection } from '@/features/detect/use-live-detection';
 import {
   useBatteryWarning,
@@ -108,6 +117,10 @@ function formatLiveDistance(m: number): string {
   return `${Math.round(m / 5) * 5} m`;
 }
 
+function hasHighRiskObstacle(detections: DetectionResult[]): boolean {
+  return detections.some((d) => d.proximity === 'very_near');
+}
+
 async function getBestEffortCurrentLocation(): Promise<Location.LocationObject> {
   const lastKnown = await Location.getLastKnownPositionAsync();
   if (lastKnown) return lastKnown;
@@ -150,11 +163,17 @@ export default function NavigateActiveScreen() {
 
   const destCoords = useMemo(
     () => ({
-      lat: latParam ? Number.parseFloat(latParam) : 0,
-      lng: lngParam ? Number.parseFloat(lngParam) : 0,
+      lat: latParam ? Number.parseFloat(latParam) : Number.NaN,
+      lng: lngParam ? Number.parseFloat(lngParam) : Number.NaN,
     }),
     [latParam, lngParam],
   );
+
+  const hasValidDestination =
+    Number.isFinite(destCoords.lat) &&
+    Number.isFinite(destCoords.lng) &&
+    Math.abs(destCoords.lat) <= 90 &&
+    Math.abs(destCoords.lng) <= 180;
 
   const { prefs } = usePreferences();
   const speechRate = prefs?.speechRate ?? 1.0;
@@ -170,6 +189,7 @@ export default function NavigateActiveScreen() {
 
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
+  const capturingRef = useRef(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [viewSize, setViewSize] = useState<{ width: number; height: number } | null>(null);
 
@@ -192,10 +212,20 @@ export default function NavigateActiveScreen() {
   const [signal, setSignal] = useState<SignalState>('none');
   const prevSignalRef = useRef<SignalState>('none');
   const crossingScansRef = useRef(0);
+  const transitScansRef = useRef(0);
+  const [busNumber, setBusNumber] = useState<string | null>(null);
+  const [busDestination, setBusDestination] = useState<string | null>(null);
+  const prevBusRef = useRef<string | null>(null);
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [assistantBusy, setAssistantBusy] = useState(false);
+  const assistantSpeakingRef = useRef(false);
 
-  // Reset crossing scan counter hourly
+  // Reset scan counters hourly
   useEffect(() => {
-    const id = setInterval(() => { crossingScansRef.current = 0; }, 60 * 60 * 1000);
+    const id = setInterval(() => {
+      crossingScansRef.current = 0;
+      transitScansRef.current = 0;
+    }, 60 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -229,17 +259,19 @@ export default function NavigateActiveScreen() {
 
   useEffect(() => {
     if (!address) { setRouteLoading(false); return; }
+    if (!hasValidDestination) {
+      setRouteLoading(false);
+      setRouteError('Destination coordinates are invalid. Please re-select from Home.');
+      return;
+    }
     let sub: Location.LocationSubscription | null = null;
 
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== 'granted') {
-        try {
-          const r = await fetchRoute(destCoords);
-          setRoute(r);
-        } catch { setRouteError('Could not load route. Check your connection.'); }
-        finally { setRouteLoading(false); }
+        setRouteLoading(false);
+        setRouteError('Location access is required for navigation. Please enable it in Settings.');
         return;
       }
 
@@ -250,24 +282,26 @@ export default function NavigateActiveScreen() {
         setGpsAccuracy(loc.coords.accuracy);
         const r = await fetchRoute(origin);
         setRoute(r);
+
+        sub = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.High, distanceInterval: 5 },
+          (loc) => {
+            setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+            setGpsAccuracy(loc.coords.accuracy);
+          },
+        );
       } catch { setRouteError('Could not load route. Check your connection.'); }
       finally { setRouteLoading(false); }
-
-      sub = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.High, distanceInterval: 5 },
-        (loc) => {
-          setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
-          setGpsAccuracy(loc.coords.accuracy);
-        },
-      );
     })();
 
     return () => { sub?.remove(); };
-  }, [address, destCoords, fetchRoute]);
+  }, [address, destCoords, hasValidDestination, fetchRoute]);
 
   // ── Route deviation detection + recalculation ────────────────────────────────
   useEffect(() => {
-    if (!route || !userLocation || arrived || recalcRef.current || isTransitMode) return;
+    // Skip recalculation if currently on a transit leg — GPS deviation is expected on buses/trains
+    const currentStep = route?.steps[activeStep];
+    if (!route || !userLocation || arrived || recalcRef.current || currentStep?.stepType === 'transit') return;
     if (route.polylinePoints.length < 2) return;
 
     const distFromRoute = nearestPointOnRoute(userLocation, route.polylinePoints);
@@ -292,7 +326,7 @@ export default function NavigateActiveScreen() {
         setIsRecalculating(false);
       }
     })();
-  }, [userLocation, route, arrived, isTransitMode, fetchRoute, speak]);
+  }, [userLocation, route, activeStep, arrived, fetchRoute, speak]);
 
   // ── GPS step advancement — walking steps only ────────────────────────────────
   useEffect(() => {
@@ -313,36 +347,34 @@ export default function NavigateActiveScreen() {
     if (dist < ADVANCE_THRESHOLD_M) {
       advanceStep(route, activeStep);
     }
-  }, [userLocation, route, activeStep, arrived]);
+  }, [userLocation, route, activeStep, arrived, speak]);
 
-  const advanceStep = useCallback(
-    (r: Route, fromIndex: number) => {
-      const nextIndex = fromIndex + 1;
-      announcedThresholdsRef.current = new Set();
-      setDistToNextTurn(null);
+  function advanceStep(r: Route, fromIndex: number) {
+    const nextIndex = fromIndex + 1;
+    announcedThresholdsRef.current = new Set();
+    setDistToNextTurn(null);
 
-      if (nextIndex >= r.steps.length) {
-        setArrived(true);
-        speak('You have arrived at your destination.');
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        setActiveStep(nextIndex);
-        speak(stripHtml(r.steps[nextIndex].instruction));
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-    },
-    [speak],
-  );
+    if (nextIndex >= r.steps.length) {
+      setArrived(true);
+      speak('You have arrived at your destination.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      setActiveStep(nextIndex);
+      speak(stripHtml(r.steps[nextIndex].instruction));
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  }
 
   // Manual "Next step" for transit legs
   const handleNextStep = useCallback(() => {
     if (!route || arrived) return;
     advanceStep(route, activeStep);
-  }, [route, activeStep, arrived, advanceStep]);
+  }, [route, activeStep, arrived]);
 
   // ── Obstacle detection ───────────────────────────────────────────────────────
   const captureImage = useCallback(async () => {
-    if (!cameraRef.current || !cameraReady) return null;
+    if (!cameraRef.current || !cameraReady || capturingRef.current) return null;
+    capturingRef.current = true;
     try {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true, quality: 0.3, skipProcessing: true, shutterSound: false, exif: false,
@@ -350,6 +382,7 @@ export default function NavigateActiveScreen() {
       if (!photo?.base64) return null;
       return { base64: photo.base64, uri: photo.uri, width: photo.width ?? 1, height: photo.height ?? 1 };
     } catch { return null; }
+    finally { capturingRef.current = false; }
   }, [cameraReady]);
 
   const { lastDetections, imageSize } = useLiveDetection({
@@ -361,6 +394,17 @@ export default function NavigateActiveScreen() {
     speechLanguage: speechLang,
     captureImage,
   });
+
+  useEffect(() => {
+    if (!assistantSpeakingRef.current) return;
+    if (!hasHighRiskObstacle(lastDetections)) return;
+    Speech.stop();
+    assistantSpeakingRef.current = false;
+    const primary = lastDetections.find((d) => d.proximity === 'very_near');
+    if (primary) {
+      speak(`Warning. Very close ${primary.name}.`);
+    }
+  }, [lastDetections, speak]);
 
   // ── Crossing detection ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -395,6 +439,124 @@ export default function NavigateActiveScreen() {
       prevSignalRef.current = 'none';
     };
   }, [cameraReady, arrived, captureImage, prefs?.hapticEnabled, prefs?.maxScansPerHour, speak]);
+
+  // ── Transit detection (only while navigating in transit mode) ───────────────
+  useEffect(() => {
+    if (!isTransitMode || !cameraReady || arrived) return;
+
+    const runTransit = async () => {
+      if (transitScansRef.current >= (prefs?.maxScansPerHour ?? 30)) return;
+      transitScansRef.current += 1;
+      const capture = await captureImage();
+      if (!capture) return;
+      try {
+        const result = await postTransitDetect(capture.base64);
+        setBusNumber(result.busNumber);
+        setBusDestination(result.destination);
+        if (result.busNumber && result.busNumber !== prevBusRef.current) {
+          const text = result.destination
+            ? `Bus ${result.busNumber}, ${result.destination}`
+            : `Bus ${result.busNumber} detected`;
+          speak(text);
+          if (prefs?.hapticEnabled ?? true) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+        }
+        prevBusRef.current = result.busNumber;
+      } catch {
+        // keep navigation running even if transit detection is unavailable
+      }
+    };
+
+    void runTransit();
+    const id = setInterval(() => void runTransit(), 3000);
+    return () => {
+      clearInterval(id);
+      setBusNumber(null);
+      setBusDestination(null);
+      prevBusRef.current = null;
+    };
+  }, [
+    isTransitMode,
+    cameraReady,
+    arrived,
+    captureImage,
+    prefs?.hapticEnabled,
+    prefs?.maxScansPerHour,
+    speak,
+  ]);
+
+  const startVoiceCapture = useCallback(async () => {
+    if (assistantBusy || recording) return;
+    const perm = await Audio.requestPermissionsAsync();
+    if (!perm.granted) {
+      speak('Microphone permission is required.');
+      return;
+    }
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+    });
+    const rec = new Audio.Recording();
+    await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+    await rec.startAsync();
+    setRecording(rec);
+  }, [assistantBusy, recording, speak]);
+
+  const stopVoiceCapture = useCallback(async () => {
+    if (!recording || assistantBusy) return;
+    setAssistantBusy(true);
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      setRecording(null);
+      if (!uri) throw new Error('Could not read recording file');
+
+      const audioBase64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const result = await postAssistantInteract({
+        audioBase64,
+        mimeType: 'audio/mp4',
+        mode: isTransitMode ? 'transit' : 'walking',
+        lastDetections: lastDetections.slice(0, 5).map((d) => d.name),
+        activeRouteStep: route?.steps[activeStep]?.instruction,
+      });
+      if (!hasHighRiskObstacle(lastDetections) && result.replyText) {
+        assistantSpeakingRef.current = true;
+        Speech.speak(result.replyText, {
+          rate: speechRate,
+          language: speechLang,
+          onDone: () => {
+            assistantSpeakingRef.current = false;
+          },
+          onStopped: () => {
+            assistantSpeakingRef.current = false;
+          },
+          onError: () => {
+            assistantSpeakingRef.current = false;
+          },
+        });
+      }
+    } catch (error) {
+      const msg =
+        error instanceof Error ? error.message : 'Voice interaction failed';
+      speak(`Voice interaction failed. ${msg}`);
+    } finally {
+      setAssistantBusy(false);
+    }
+  }, [
+    recording,
+    assistantBusy,
+    isTransitMode,
+    lastDetections,
+    route,
+    activeStep,
+    speechRate,
+    speechLang,
+    speak,
+  ]);
 
   const handleEnd = () => { Speech.stop(); router.back(); };
 
@@ -442,6 +604,9 @@ export default function NavigateActiveScreen() {
 
       {viewSize && imageSize && lastDetections.length > 0 ? (
         <BoundingBoxOverlay detections={lastDetections} imageSize={imageSize} viewSize={viewSize} />
+      ) : null}
+      {isTransitMode ? (
+        <TransitBanner busNumber={busNumber} destination={busDestination} />
       ) : null}
 
       {/* ── Turn card (top) ───────────────────────────────────────────────── */}
@@ -556,6 +721,30 @@ export default function NavigateActiveScreen() {
             <ChevronRightIcon size={20} color="#ffffff" />
           </Pressable>
         ) : null}
+
+        <Pressable
+          onPressIn={() => void startVoiceCapture()}
+          onPressOut={() => void stopVoiceCapture()}
+          disabled={assistantBusy}
+          style={{
+            backgroundColor: assistantBusy ? '#64748b' : '#0ea5e9',
+            paddingVertical: 12,
+            borderRadius: 16,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Hold to talk with assistant"
+        >
+          <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 15 }}>
+            {assistantBusy
+              ? 'Processing voice…'
+              : recording
+                ? 'Listening… release to send'
+                : 'Hold to Talk'}
+          </Text>
+        </Pressable>
+
       </View>
     </View>
   );

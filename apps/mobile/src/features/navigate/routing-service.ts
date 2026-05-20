@@ -304,10 +304,11 @@ export async function getWalkingRoute(
     );
 
     if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      throw new Error(`Routes API error ${res.status}: ${body || 'no body'}`);
+      const errBody = await res.text().catch(() => '');
+      throw new Error(`Routes API error ${res.status}: ${errBody || 'no body'}`);
     }
     data = await res.json();
+    if (!data.routes?.[0]) throw new Error('No route found');
   } catch {
     const legacy = await getLegacyDirectionsRoute(
       'walking',
@@ -318,8 +319,7 @@ export async function getWalkingRoute(
     return legacy ?? getMockRoute(origin, destination);
   }
 
-  const route = data.routes?.[0];
-  if (!route) throw new Error('No route found');
+  const route = data.routes[0];
 
   const leg = route.legs?.[0];
   const steps: RouteStep[] = (leg?.steps ?? []).map(
@@ -441,10 +441,11 @@ export async function getTransitRoute(
     );
 
     if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      throw new Error(`Routes API error ${res.status}: ${body || 'no body'}`);
+      const errBody = await res.text().catch(() => '');
+      throw new Error(`Routes API error ${res.status}: ${errBody || 'no body'}`);
     }
     data = await res.json();
+    if (!data.routes?.[0]) throw new Error('No transit route found');
   } catch {
     const legacy = await getLegacyDirectionsRoute(
       'transit',
@@ -455,8 +456,7 @@ export async function getTransitRoute(
     return legacy ?? getMockTransitRoute(origin, destination);
   }
 
-  const route = data.routes?.[0];
-  if (!route) throw new Error('No transit route found');
+  const route = data.routes[0];
 
   const leg = route.legs?.[0];
   const steps: RouteStep[] = (leg?.steps ?? []).map((s: TransitApiStep) => {

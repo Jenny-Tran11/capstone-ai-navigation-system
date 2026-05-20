@@ -136,6 +136,9 @@ export function useLiveDetection({
   const scansThisHourRef = useRef(0);
   const consecutiveErrorsRef = useRef(0);
   const isActiveRef = useRef(true);
+  // Tracks whether detection should be running so the AppState listener can restart it
+  const enabledRef = useRef(enabled);
+  const rateLimitSpokenRef = useRef(false);
 
   const stopInterval = useCallback(() => {
     if (intervalRef.current) {
@@ -159,7 +162,15 @@ export function useLiveDetection({
   const runOnce = useCallback(async () => {
     if (!isActiveRef.current) return;
     const safeMaxScans = Math.max(1, maxScansPerHour || 30);
-    if (scansThisHourRef.current >= safeMaxScans) return;
+    if (scansThisHourRef.current >= safeMaxScans) {
+      if (!rateLimitSpokenRef.current) {
+        rateLimitSpokenRef.current = true;
+        Speech.speak('Hourly scan limit reached. Detection will resume next hour.', {
+          language: speechLanguage, rate: speechRate,
+        });
+      }
+      return;
+    }
     if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
       stopInterval();
       setState((s) => ({ ...s, isRunning: false }));
@@ -224,20 +235,43 @@ export function useLiveDetection({
     }
   }, [captureImage, hapticEnabled, maxScansPerHour, speak, stopInterval]);
 
+  // Keep ref in sync so the AppState listener can check current enabled value
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
   useEffect(() => {
     const sub = AppState.addEventListener(
       'change',
       (status: AppStateStatus) => {
+        const wasActive = isActiveRef.current;
         isActiveRef.current = status === 'active';
+        // Restart the detection interval when the app returns to the foreground
+        // while detection is supposed to be running
+        if (
+          status === 'active' &&
+          !wasActive &&
+          enabledRef.current &&
+          consecutiveErrorsRef.current < MAX_CONSECUTIVE_ERRORS &&
+          !intervalRef.current
+        ) {
+          void runOnce();
+          intervalRef.current = setInterval(
+            () => { void runOnce(); },
+            Math.max(2, intervalSec || 10) * 1000,
+          );
+          setState((s) => ({ ...s, isRunning: true }));
+        }
       },
     );
     return () => sub.remove();
-  }, []);
+  }, [runOnce, intervalSec]);
 
   useEffect(() => {
     hourResetRef.current = setInterval(
       () => {
         scansThisHourRef.current = 0;
+        rateLimitSpokenRef.current = false;
       },
       60 * 60 * 1000,
     );

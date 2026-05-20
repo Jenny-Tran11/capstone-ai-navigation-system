@@ -18,6 +18,9 @@ Do not include any explanation outside the JSON.`;
 export type TransitDetectResponse = {
   busNumber: string | null;
   destination: string | null;
+  confidence?: number;
+  latencyMs?: number;
+  modelId?: string;
 };
 
 const bedrockClient = new BedrockRuntimeClient({
@@ -27,6 +30,7 @@ const bedrockClient = new BedrockRuntimeClient({
 export async function detectTransitFromImage(
   imageBase64: string,
 ): Promise<TransitDetectResponse> {
+  const startedAt = Date.now();
   const modelId =
     process.env.BEDROCK_MODEL_ID ??
     'apac.amazon.nova-lite-v1:0';
@@ -64,16 +68,32 @@ export async function detectTransitFromImage(
       .trim() ?? '';
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    return { busNumber: null, destination: null };
+    return {
+      busNumber: null,
+      destination: null,
+      confidence: 0,
+      latencyMs: Date.now() - startedAt,
+      modelId,
+    };
   }
 
   const parsed = JSON.parse(jsonMatch[0]) as {
     busNumber?: string | null;
     destination?: string | null;
+    confidence?: number;
   };
 
+  const normalizedBus = parsed.busNumber?.trim() || null;
+  const normalizedDestination = parsed.destination?.trim() || null;
+
   return {
-    busNumber: parsed.busNumber ?? null,
-    destination: parsed.destination ?? null,
+    busNumber: normalizedBus,
+    destination: normalizedDestination,
+    confidence:
+      typeof parsed.confidence === 'number'
+        ? Math.max(0, Math.min(1, parsed.confidence))
+        : undefined,
+    latencyMs: Date.now() - startedAt,
+    modelId,
   };
 }

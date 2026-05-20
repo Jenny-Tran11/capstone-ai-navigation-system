@@ -12,24 +12,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { SosTrigger } from '@/components/SosTrigger';
 import { usePreferences } from '@/hooks/use-preferences';
 import { BoundingBoxOverlay } from './BoundingBoxOverlay';
 import { CrossingBanner } from './CrossingBanner';
 import { postCrossingDetect, type SignalState } from './crossing-api';
-import { TransitBanner } from './TransitBanner';
-import { postTransitDetect } from './transit-api';
 import { useLiveDetection } from './use-live-detection';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type DetectMode = 'obstacle' | 'transit';
 type ViewSize = { width: number; height: number };
-
-// Crossing signal detection is always ambient — no dedicated mode needed.
-const MODES: { key: DetectMode; label: string }[] = [
-  { key: 'obstacle', label: 'Obstacle' },
-  { key: 'transit', label: 'Transit' },
-];
 
 const MAX_ERRORS_BEFORE_PAUSE = 3;
 const MAX_UPLOAD_DIMENSION = 960;
@@ -41,80 +31,26 @@ const styles = StyleSheet.create({
   },
 });
 
-// ─── Mode tab bar ─────────────────────────────────────────────────────────────
-
-function ModeSelector({
-  mode,
-  onChange,
-}: {
-  mode: DetectMode;
-  onChange: (m: DetectMode) => void;
-}) {
-  return (
-    <View
-      style={{
-        position: 'absolute',
-        bottom: 110,
-        left: 24,
-        right: 24,
-        flexDirection: 'row',
-        backgroundColor: 'rgba(0,0,0,0.65)',
-        borderRadius: 14,
-        padding: 4,
-      }}
-    >
-      {MODES.map((m) => (
-        <Pressable
-          key={m.key}
-          onPress={() => onChange(m.key)}
-          style={{
-            flex: 1,
-            paddingVertical: 8,
-            borderRadius: 10,
-            alignItems: 'center',
-            backgroundColor: mode === m.key ? '#2563eb' : 'transparent',
-          }}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: mode === m.key }}
-          accessibilityLabel={`${m.label} mode`}
-        >
-          <Text
-            style={{
-              color: '#ffffff',
-              fontWeight: mode === m.key ? '700' : '400',
-              fontSize: 13,
-            }}
-          >
-            {m.label}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function DetectScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
+  const capturingRef = useRef(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [active, setActive] = useState(false);
-  const [mode, setMode] = useState<DetectMode>('obstacle');
   const [viewSize, setViewSize] = useState<ViewSize | null>(null);
   const { prefs } = usePreferences();
   const speechRate = prefs?.speechRate ?? 1.0;
   const speechLang = prefs?.speechLanguage ?? 'en-AU';
 
-  // Per-mode scan counters for rate limiting (reset hourly)
+  // Crossing scan counter for rate limiting (reset hourly)
   const crossingScansRef = useRef(0);
-  const transitScansRef = useRef(0);
 
   useEffect(() => {
     const id = setInterval(
       () => {
         crossingScansRef.current = 0;
-        transitScansRef.current = 0;
       },
       60 * 60 * 1000,
     );
@@ -125,13 +61,13 @@ export default function DetectScreen() {
   const [signal, setSignal] = useState<SignalState>('none');
   const prevSignalRef = useRef<SignalState>('none');
 
-  // Transit mode state
-  const [busNumber, setBusNumber] = useState<string | null>(null);
-  const [busDestination, setBusDestination] = useState<string | null>(null);
-  const prevBusRef = useRef<string | null>(null);
+  // Voice feedback when detection starts, stops, or pauses
+  const prevActiveRef = useRef(false);
+  const prevPausedRef = useRef(false);
 
   const captureImage = useCallback(async () => {
-    if (!cameraRef.current || !cameraReady) return null;
+    if (!cameraRef.current || !cameraReady || capturingRef.current) return null;
+    capturingRef.current = true;
     try {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
@@ -173,6 +109,8 @@ export default function DetectScreen() {
       };
     } catch {
       return null;
+    } finally {
+      capturingRef.current = false;
     }
   }, [cameraReady]);
 
@@ -183,20 +121,39 @@ export default function DetectScreen() {
     lastDetections,
     imageSize,
     errorCount,
-    requestCount,
-    lastError,
-    lastSuccessAt,
-    triggerNow,
     reset,
   } = useLiveDetection({
     intervalSec: prefs?.detectionIntervalSec ?? 10,
     maxScansPerHour: prefs?.maxScansPerHour ?? 30,
     hapticEnabled: prefs?.hapticEnabled ?? true,
-    enabled: active && cameraReady && mode === 'obstacle',
+    enabled: active && cameraReady,
     speechRate,
     speechLanguage: speechLang,
     captureImage,
   });
+
+  useEffect(() => {
+    const paused = errorCount >= MAX_ERRORS_BEFORE_PAUSE;
+    if (active && !prevActiveRef.current) {
+      Speech.speak('Detection started.', {
+        language: speechLang,
+        rate: speechRate,
+      });
+    } else if (!active && prevActiveRef.current && !paused) {
+      Speech.speak('Detection stopped.', {
+        language: speechLang,
+        rate: speechRate,
+      });
+    }
+    if (paused && !prevPausedRef.current) {
+      Speech.speak('Detection paused. Check connection, then tap Retry.', {
+        language: speechLang,
+        rate: speechRate,
+      });
+    }
+    prevActiveRef.current = active;
+    prevPausedRef.current = paused;
+  }, [active, errorCount, speechLang, speechRate]);
 
   // ── Crossing detection — always ambient when camera is active ───────────────
   // Runs regardless of mode: blind users can't know where a traffic light is,
@@ -255,65 +212,6 @@ export default function DetectScreen() {
     speechLang,
   ]);
 
-  // ── Transit detection loop ───────────────────────────────────────────────────
-  useEffect(() => {
-    if (!active || !cameraReady || mode !== 'transit') return;
-
-    const run = async () => {
-      if (transitScansRef.current >= (prefs?.maxScansPerHour ?? 30)) return;
-      transitScansRef.current += 1;
-      const capture = await captureImage();
-      if (!capture) return;
-      try {
-        const result = await postTransitDetect(capture.base64);
-        setBusNumber(result.busNumber);
-        setBusDestination(result.destination);
-
-        // Announce only when bus number changes
-        if (result.busNumber && result.busNumber !== prevBusRef.current) {
-          const text = result.destination
-            ? `Bus ${result.busNumber}, ${result.destination}`
-            : `Bus ${result.busNumber} detected`;
-          Speech.speak(text, { language: speechLang, rate: speechRate });
-          if (prefs?.hapticEnabled ?? true) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }
-        }
-        prevBusRef.current = result.busNumber;
-      } catch {
-        // silently ignore transit API errors
-      }
-    };
-
-    void run();
-    const id = setInterval(() => void run(), 3000);
-    return () => {
-      clearInterval(id);
-      setBusNumber(null);
-      setBusDestination(null);
-      prevBusRef.current = null;
-    };
-  }, [
-    active,
-    cameraReady,
-    mode,
-    captureImage,
-    prefs?.hapticEnabled,
-    prefs?.maxScansPerHour,
-    speechRate,
-    speechLang,
-  ]);
-
-  // ── Reset detection state when mode changes ──────────────────────────────────
-  const handleModeChange = useCallback((m: DetectMode) => {
-    setMode(m);
-    setActive(false);
-    // Don't reset signal — crossing banner fades out naturally when detection stops
-    setBusNumber(null);
-    setBusDestination(null);
-    transitScansRef.current = 0;
-  }, []);
-
   const handleCameraLayout = useCallback((e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setViewSize({ width, height });
@@ -349,9 +247,8 @@ export default function DetectScreen() {
     );
   }
 
-  const paused = mode === 'obstacle' && errorCount >= MAX_ERRORS_BEFORE_PAUSE;
-  const running = mode === 'obstacle' ? isRunning : active;
-  const showTransit = mode === 'transit';
+  const paused = errorCount >= MAX_ERRORS_BEFORE_PAUSE;
+  const running = isRunning;
 
   return (
     <View style={styles.screenRoot}>
@@ -364,9 +261,8 @@ export default function DetectScreen() {
         onLayout={handleCameraLayout}
       />
 
-      {/* Obstacle mode: bounding boxes */}
-      {mode === 'obstacle' &&
-      viewSize &&
+      {/* Obstacle detections: bounding boxes */}
+      {viewSize &&
       imageSize &&
       lastDetections.length > 0 ? (
         <BoundingBoxOverlay
@@ -376,8 +272,8 @@ export default function DetectScreen() {
         />
       ) : null}
 
-      {/* Obstacle mode: detection count badge */}
-      {mode === 'obstacle' && lastDetections.length > 0 ? (
+      {/* Detection count badge */}
+      {lastDetections.length > 0 ? (
         <View className="absolute top-12 right-4 bg-primary rounded-full w-10 h-10 items-center justify-center">
           <Text className="text-white font-bold text-sm">
             {lastDetections.length}
@@ -385,50 +281,21 @@ export default function DetectScreen() {
         </View>
       ) : null}
 
-      {/* Transit mode: yellow bus banner */}
-      {showTransit ? (
-        <TransitBanner busNumber={busNumber} destination={busDestination} />
-      ) : null}
+      {/* SOS button — top-left, always accessible */}
+      <View style={{ position: 'absolute', top: 48, left: 16 }} pointerEvents="box-none">
+        <SosTrigger
+          contactPhone={prefs?.emergencyContact?.phone}
+          contactName={prefs?.emergencyContact?.name}
+        />
+      </View>
 
       {/* Crossing signal banner — always shown when active, any mode */}
       <CrossingBanner signal={signal} />
 
-      {/* Mode selector */}
-      <ModeSelector mode={mode} onChange={handleModeChange} />
-
       {/* Bottom controls */}
       <View className="absolute inset-x-0 bottom-0 pb-12 px-6 items-center gap-4">
-        <View className="bg-black/75 rounded-xl px-3 py-2 w-full max-w-sm">
-          <Text className="text-white text-xs font-semibold">
-            Debug: req={requestCount} | ok={lastSuccessAt ? new Date(lastSuccessAt).toLocaleTimeString() : 'none'}
-          </Text>
-          <Text className="text-red-300 text-xs" numberOfLines={2}>
-            {lastError ? `err: ${lastError}` : 'err: none'}
-          </Text>
-          <View className="flex-row gap-2 mt-2">
-            <Pressable
-              onPress={() => void triggerNow()}
-              className="bg-emerald-600 rounded-lg px-3 py-2"
-              accessibilityRole="button"
-              accessibilityLabel="Send detect request now"
-            >
-              <Text className="text-white text-xs font-bold">SEND NOW</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                if (lastDescription) Speech.speak(lastDescription, { language: speechLang, rate: speechRate });
-              }}
-              className="bg-blue-600 rounded-lg px-3 py-2"
-              accessibilityRole="button"
-              accessibilityLabel="Speak last detection now"
-            >
-              <Text className="text-white text-xs font-bold">SPEAK NOW</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Obstacle: description text */}
-        {mode === 'obstacle' && lastDescription ? (
+        {/* Latest description */}
+        {lastDescription ? (
           <View className="bg-black/70 rounded-2xl px-4 py-3 max-w-sm">
             <Text className="text-white text-base text-center">
               {lastDescription}
@@ -436,7 +303,7 @@ export default function DetectScreen() {
           </View>
         ) : null}
 
-        {/* Obstacle: paused error + retry */}
+        {/* Paused error + retry */}
         {paused ? (
           <View className="items-center gap-2">
             <View className="bg-red-500/80 rounded-xl px-4 py-2">
@@ -462,9 +329,7 @@ export default function DetectScreen() {
         {!active && !paused ? (
           <View className="bg-black/70 rounded-2xl px-4 py-3 max-w-sm">
             <Text className="text-white text-base text-center">
-              {mode === 'transit'
-                ? 'Point at a bus and tap Start to read the route number'
-                : 'Tap Start — obstacles and crossing signals are detected automatically'}
+              Tap Start — obstacles and crossing signals are detected automatically
             </Text>
           </View>
         ) : null}
