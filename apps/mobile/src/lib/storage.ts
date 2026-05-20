@@ -31,6 +31,7 @@ export type UserPreferences = {
     lat: number;
     lng: number;
   }>;
+  debugMode: boolean;
 };
 
 const DEFAULT_PREFS: UserPreferences = {
@@ -45,6 +46,7 @@ const DEFAULT_PREFS: UserPreferences = {
     phone: '',
   },
   preferredLocations: [],
+  debugMode: false,
 };
 
 export async function getRecentDestinations(): Promise<Destination[]> {

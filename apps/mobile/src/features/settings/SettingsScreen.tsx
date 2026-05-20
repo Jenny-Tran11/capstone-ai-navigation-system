@@ -1,6 +1,6 @@
 import '@/lib/amplify';
-import Slider from '@react-native-community/slider';
 import { fetchUserAttributes, signOut } from '@aws-amplify/auth';
+import Slider from '@react-native-community/slider';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -14,9 +14,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '@/lib/api-client';
 import { useProfile } from '@/features/profile/use-profile';
 import { usePreferences } from '@/hooks/use-preferences';
+import { apiClient } from '@/lib/api-client';
+import {
+  clearRuntimeConfigCache,
+  getRuntimeConfig,
+  type MobileRuntimeConfig,
+} from '@/lib/runtime-config';
 
 type RowProps = { label: string; value: string };
 const InfoRow = ({ label, value }: RowProps) => (
@@ -47,7 +52,11 @@ const TTS_LANGUAGES = [
 
 export default function SettingsScreen() {
   const { prefs, update, syncState } = usePreferences();
-  const { profile, loading: profileLoading, update: updateProfile } = useProfile();
+  const {
+    profile,
+    loading: profileLoading,
+    update: updateProfile,
+  } = useProfile();
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
@@ -58,6 +67,11 @@ export default function SettingsScreen() {
   const [apiStatus, setApiStatus] = useState<'checking' | 'ok' | 'error'>(
     'checking',
   );
+  const [runtimeConfig, setRuntimeConfig] = useState<MobileRuntimeConfig | null>(
+    null,
+  );
+  const [runtimeLoading, setRuntimeLoading] = useState(false);
+  const [runtimeError, setRuntimeError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUserAttributes()
@@ -82,6 +96,24 @@ export default function SettingsScreen() {
     setEmergencyName(prefs?.emergencyContact?.name ?? '');
     setEmergencyPhone(prefs?.emergencyContact?.phone ?? '');
   }, [prefs?.emergencyContact?.name, prefs?.emergencyContact?.phone]);
+
+  const loadRuntimeDebug = async () => {
+    setRuntimeLoading(true);
+    setRuntimeError(null);
+    try {
+      clearRuntimeConfigCache();
+      const cfg = await getRuntimeConfig();
+      setRuntimeConfig(cfg);
+    } catch (error) {
+      setRuntimeError(error instanceof Error ? error.message : 'Failed to load');
+    } finally {
+      setRuntimeLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadRuntimeDebug();
+  }, []);
 
   if (!prefs) return null;
 
@@ -362,6 +394,76 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </View>
+          </View>
+        </View>
+
+        {/* Runtime Debug */}
+        <View>
+          <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Runtime Debug
+          </Text>
+          <View className="bg-gray-50 rounded-2xl px-4 py-4 gap-2">
+            <View className="flex-row justify-between items-center py-1">
+              <Text className="text-base text-gray-700">Debug mode</Text>
+              <Switch
+                value={Boolean(prefs.debugMode)}
+                onValueChange={(v) => update({ debugMode: v })}
+                trackColor={{ true: '#2563eb' }}
+                accessibilityLabel="Toggle debug mode"
+              />
+            </View>
+            <InfoRow
+              label="API base URL"
+              value={String(apiClient.defaults.baseURL ?? '—')}
+            />
+            <InfoRow
+              label="ENV detect URL"
+              value={process.env.EXPO_PUBLIC_DETECT_API_URL ?? '—'}
+            />
+            <InfoRow
+              label="ENV crossing URL"
+              value={process.env.EXPO_PUBLIC_CROSSING_API_URL ?? '—'}
+            />
+            <InfoRow
+              label="ENV maps key"
+              value={
+                process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
+                  ? `set (${process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY.length} chars)`
+                  : 'empty'
+              }
+            />
+            <InfoRow
+              label="Runtime detect URL"
+              value={runtimeConfig?.detectApiBaseUrl ?? '—'}
+            />
+            <InfoRow
+              label="Runtime crossing URL"
+              value={runtimeConfig?.crossingApiBaseUrl ?? '—'}
+            />
+            <InfoRow
+              label="Runtime maps key"
+              value={
+                runtimeConfig?.googleMapsApiKey
+                  ? `set (${runtimeConfig.googleMapsApiKey.length} chars)`
+                  : 'empty'
+              }
+            />
+
+            {runtimeError ? (
+              <Text className="text-xs text-red-500">Error: {runtimeError}</Text>
+            ) : null}
+
+            <Pressable
+              onPress={() => void loadRuntimeDebug()}
+              disabled={runtimeLoading}
+              className={`rounded-xl py-3 items-center ${runtimeLoading ? 'bg-blue-300' : 'bg-primary'}`}
+              accessibilityRole="button"
+              accessibilityLabel="Refresh runtime debug"
+            >
+              <Text className="text-white font-semibold">
+                {runtimeLoading ? 'Refreshing…' : 'Refresh runtime debug'}
+              </Text>
+            </Pressable>
           </View>
         </View>
 

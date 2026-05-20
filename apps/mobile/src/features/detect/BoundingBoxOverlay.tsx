@@ -1,13 +1,14 @@
+import { Fragment } from 'react';
 import { Rect, Svg, Text as SvgText } from 'react-native-svg';
-import { DANGER_CLASSES, MEDIUM_CLASSES } from './detection-classes';
 import type { DetectionResult } from './detection-api';
-
 type ViewSize = { width: number; height: number };
 
-function boxColor(name: string): string {
-  const n = name.toLowerCase();
-  if (DANGER_CLASSES.has(n)) return '#ef4444';
-  if (MEDIUM_CLASSES.has(n)) return '#f97316';
+function boxColor(det: DetectionResult): string {
+  if (det.proximity === 'very_near') return '#dc2626';
+  if (det.proximity === 'near') return '#f97316';
+  if (det.obstacleType === 'dynamic') return '#f97316';
+  if (det.obstacleType === 'surface') return '#eab308';
+  if (det.obstacleType === 'static') return '#38bdf8';
   return '#22c55e';
 }
 
@@ -31,39 +32,58 @@ export function BoundingBoxOverlay({
       width={viewSize.width}
       height={viewSize.height}
     >
-      {detections.map((det, i) => {
+      {detections.map((det) => {
         const [x1, y1, x2, y2] = det.box;
-        const color = boxColor(det.name);
-        return (
-          // biome-ignore lint/suspicious/noArrayIndexKey: stable within render
-          <Rect
-            key={i}
-            x={x1 * scaleX}
-            y={y1 * scaleY}
-            width={(x2 - x1) * scaleX}
-            height={(y2 - y1) * scaleY}
-            stroke={color}
-            strokeWidth={2}
-            fill="none"
-          />
+        const color = boxColor(det);
+        const key = `${det.name}:${det.box.join(',')}:${det.confidence}`;
+        const left = x1 * scaleX;
+        const top = y1 * scaleY;
+        const width = (x2 - x1) * scaleX;
+        const height = (y2 - y1) * scaleY;
+
+        const warning =
+          det.proximity === 'very_near'
+            ? 'WARNING'
+            : det.proximity === 'near'
+              ? 'CAUTION'
+              : '';
+        const label = `${warning ? `${warning} ` : ''}${det.name} (${det.obstacleType}) ${Math.round(det.confidence * 100)}%`;
+        const labelX = Math.max(4, left + 4);
+        const labelY = Math.max(16, top - 6);
+        const labelWidth = Math.min(
+          viewSize.width - labelX - 4,
+          Math.max(72, label.length * 7 + 8),
         );
-      })}
-      {detections.map((det, i) => {
-        const [x1, y1] = det.box;
-        const color = boxColor(det.name);
-        const label = `${det.name} ${Math.round(det.confidence * 100)}%`;
+
         return (
-          <SvgText
-            // biome-ignore lint/suspicious/noArrayIndexKey: stable within render
-            key={i}
-            x={x1 * scaleX + 4}
-            y={y1 * scaleY - 4}
-            fill={color}
-            fontSize={12}
-            fontWeight="bold"
-          >
-            {label}
-          </SvgText>
+          <Fragment key={key}>
+            <Rect
+              x={left}
+              y={top}
+              width={width}
+              height={height}
+              stroke={color}
+              strokeWidth={2}
+              fill="none"
+            />
+            <Rect
+              x={labelX - 3}
+              y={labelY - 13}
+              width={labelWidth}
+              height={16}
+              rx={4}
+              fill="rgba(0,0,0,0.75)"
+            />
+            <SvgText
+              x={labelX}
+              y={labelY}
+              fill="#ffffff"
+              fontSize={12}
+              fontWeight="bold"
+            >
+              {label}
+            </SvgText>
+          </Fragment>
         );
       })}
     </Svg>

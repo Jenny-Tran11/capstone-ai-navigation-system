@@ -3,6 +3,7 @@ import { type Response, Router } from 'express';
 import { getErrorMessage } from '../../util/error-message';
 import type { RequestContext } from '../../util/request-context.type';
 import { userProfileService } from './user-profile.service';
+import { userPlacesRouter } from './user-profile-user-places-api';
 import { userPreferencesRouter } from './user-profile-user-preferences-api';
 
 export const userProfileUserRouter = Router();
@@ -22,7 +23,9 @@ userProfileUserRouter.get('/me', [
       const userId = req.currentUserSub;
       let profile = await userProfileService.get(userId);
       if (!profile?.userId) {
-        profile = await userProfileService.create({ userId } as Partial<UserProfile>);
+        profile = await userProfileService.create({
+          userId,
+        } as Partial<UserProfile>);
       }
       res.json(profileMapper(profile));
     } catch (error) {
@@ -56,4 +59,4 @@ userProfileUserRouter.put('/me', [
 ]);
 
 userProfileUserRouter.use('/preferences', userPreferencesRouter);
-
+userProfileUserRouter.use('/places', userPlacesRouter);

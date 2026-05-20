@@ -6,7 +6,8 @@ set -euo pipefail
 
 CURRENT_DIR="$(pwd -P)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# Repo root (scripts/get-stack-outputs.sh is at repo scripts/, not under apps/)
+ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 cd "$ROOT" || exit
 
 STAGE=$1

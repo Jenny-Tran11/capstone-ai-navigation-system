@@ -1,5 +1,7 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getMobileRuntimeConfig } from '../app-config/app-config';
+import {
+  BedrockRuntimeClient,
+  ConverseCommand,
+} from '@aws-sdk/client-bedrock-runtime';
 
 const PROMPT = `You are analyzing a photo to identify public transit information for blind or visually impaired users.
 
@@ -18,30 +20,48 @@ export type TransitDetectResponse = {
   destination: string | null;
 };
 
+const bedrockClient = new BedrockRuntimeClient({
+  region: process.env.BEDROCK_REGION ?? process.env.AWS_REGION ?? 'ap-southeast-2',
+});
+
 export async function detectTransitFromImage(
   imageBase64: string,
 ): Promise<TransitDetectResponse> {
-  const config = await getMobileRuntimeConfig();
-  const apiKey = config.googleAiApiKey;
-  const modelName = config.googleAiModel || 'gemini-2.0-flash';
+  const modelId =
+    process.env.BEDROCK_MODEL_ID ??
+    'apac.amazon.nova-lite-v1:0';
 
-  if (!apiKey) {
-    throw new Error('Transit AI service not configured');
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: modelName });
-  const result = await model.generateContent([
-    PROMPT,
-    {
-      inlineData: {
-        mimeType: 'image/jpeg',
-        data: imageBase64,
+  const result = await bedrockClient.send(
+    new ConverseCommand({
+      modelId,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { text: PROMPT },
+            {
+              image: {
+                format: 'jpeg',
+                source: {
+                  bytes: Buffer.from(imageBase64, 'base64'),
+                },
+              },
+            },
+          ],
+        },
+      ],
+      inferenceConfig: {
+        temperature: 0,
+        maxTokens: 200,
       },
-    },
-  ]);
+    }),
+  );
 
-  const text = result.response.text().trim();
+  const text =
+    result.output?.message?.content
+      ?.map((c) => ('text' in c && c.text ? c.text : ''))
+      .join('\n')
+      .trim() ?? '';
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     return { busNumber: null, destination: null };

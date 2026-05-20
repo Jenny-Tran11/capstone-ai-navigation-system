@@ -10,10 +10,14 @@ export interface UserProfile {
   updatedAt?: string;
 }
 
-const fetcher = () => apiClient.get<UserProfile>('/user-profile/user/me').then((r) => r.data);
+const fetcher = () =>
+  apiClient.get<UserProfile>('/user-profile/user/me').then((r) => r.data);
 
 export function useProfile() {
-  const { data, error, mutate } = useSWR<UserProfile>('/user-profile/user/me', fetcher);
+  const { data, error, mutate } = useSWR<UserProfile>(
+    '/user-profile/user/me',
+    fetcher,
+  );
 
   const update = useCallback(
     async (fields: Pick<UserProfile, 'displayName'>) => {

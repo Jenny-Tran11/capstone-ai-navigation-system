@@ -1,7 +1,8 @@
-import { router } from 'expo-router';
 import * as Location from 'expo-location';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import { SosTrigger } from '@/components/SosTrigger';
 import {
   BookmarkIcon,
   ClockIcon,
@@ -12,14 +13,20 @@ import {
 } from 'react-native-heroicons/outline';
 import { StarIcon as StarSolid } from 'react-native-heroicons/solid';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { usePreferences } from '@/hooks/use-preferences';
 import { useProfile } from '@/features/profile/use-profile';
+import { usePreferences } from '@/hooks/use-preferences';
 import { apiClient } from '@/lib/api-client';
-import { getRuntimeConfig } from '@/lib/runtime-config';
+import {
+  type NearbyPlace,
+  placesAutocomplete,
+  placesDetailsGeometry,
+  placesGeocodeAddress,
+  placesNearbyTransitPoi,
+} from '@/lib/places-api';
 import {
   addRecentDestination,
-  getRecentDestinations,
   type Destination,
+  getRecentDestinations,
 } from '@/lib/storage';
 
 type PlaceSuggestion = Destination & { placeId?: string };
@@ -28,57 +35,34 @@ async function fetchPlaceSuggestions(
   input: string,
   userLocation: { latitude: number; longitude: number } | null,
 ): Promise<PlaceSuggestion[]> {
-  const { googleMapsApiKey } = await getRuntimeConfig();
-  if (!googleMapsApiKey) return [];
-  try {
-    let url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${googleMapsApiKey}&types=establishment|geocode`;
-    if (userLocation) {
-      url += `&location=${userLocation.latitude},${userLocation.longitude}&radius=5000`;
-    }
-    const res = await fetch(url);
-    const data = await res.json();
-    return (data.predictions ?? []).map(
-      (p: { description: string; place_id: string }) => ({
-        label: p.description,
-        address: p.description,
-        lat: 0,
-        lng: 0,
-        placeId: p.place_id,
-      }),
-    );
-  } catch {
-    return [];
-  }
+  const predictions = await placesAutocomplete(input, userLocation);
+  return predictions.map((p) => ({
+    label: p.description,
+    address: p.description,
+    lat: 0,
+    lng: 0,
+    placeId: p.place_id,
+  }));
 }
 
 async function geocodeDestination(dest: PlaceSuggestion): Promise<Destination> {
   if (!dest.placeId || dest.lat !== 0 || dest.lng !== 0) return dest;
-  const { googleMapsApiKey } = await getRuntimeConfig();
-  if (!googleMapsApiKey) return dest;
-  try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(dest.placeId)}&fields=geometry&key=${googleMapsApiKey}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const loc = data.result?.geometry?.location;
-    if (loc) return { label: dest.label, address: dest.address, lat: loc.lat, lng: loc.lng };
-  } catch {
-    // fall through to geocodeByAddress
-  }
+  const loc = await placesDetailsGeometry(dest.placeId);
+  if (loc)
+    return {
+      label: dest.label,
+      address: dest.address,
+      lat: loc.lat,
+      lng: loc.lng,
+    };
   return dest;
 }
 
-async function geocodeByAddress(address: string): Promise<{ lat: number; lng: number }> {
-  const { googleMapsApiKey } = await getRuntimeConfig();
-  if (!googleMapsApiKey) return { lat: 0, lng: 0 };
-  try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const loc = data.results?.[0]?.geometry?.location;
-    if (loc) return { lat: loc.lat, lng: loc.lng };
-  } catch {
-    // fall through
-  }
+async function geocodeByAddress(
+  address: string,
+): Promise<{ lat: number; lng: number }> {
+  const loc = await placesGeocodeAddress(address);
+  if (loc) return loc;
   return { lat: 0, lng: 0 };
 }
 
@@ -89,7 +73,11 @@ export default function HomeScreen() {
   const [recents, setRecents] = useState<Destination[]>([]);
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [savedPlaces, setSavedPlaces] = useState<Destination[]>([]);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -109,15 +97,32 @@ export default function HomeScreen() {
     Location.requestForegroundPermissionsAsync()
       .then(({ status }) => {
         if (status !== 'granted') return;
-        return Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        return Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
       })
       .then((loc) => {
         if (loc) {
-          setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+          setUserLocation({
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          });
         }
       })
       .catch(() => {});
   }, []);
+
+  // Nearby transit/station/POI quick picks (best-effort).
+  useEffect(() => {
+    if (!userLocation) return;
+    let cancelled = false;
+    void placesNearbyTransitPoi(userLocation).then((places) => {
+      if (!cancelled) setNearbyPlaces(places);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userLocation]);
 
   // Debounced autocomplete
   useEffect(() => {
@@ -162,7 +167,10 @@ export default function HomeScreen() {
 
       await addRecentDestination(geocoded);
       setRecents((prev) =>
-        [geocoded, ...prev.filter((d) => d.address !== geocoded.address)].slice(0, 5),
+        [geocoded, ...prev.filter((d) => d.address !== geocoded.address)].slice(
+          0,
+          5,
+        ),
       );
       router.push({
         pathname: '/(app)/(tabs)/navigate',
@@ -205,7 +213,8 @@ export default function HomeScreen() {
         ) : null}
         <Text className="text-3xl font-bold text-slate-900">Where to?</Text>
         <Text className="text-slate-500 mt-1">
-          Search a place or choose from your saved and recent destinations.
+          Search an Australian street address or choose from saved and recent
+          destinations.
         </Text>
       </View>
 
@@ -214,7 +223,7 @@ export default function HomeScreen() {
           <MagnifyingGlassIcon size={20} color="#64748b" />
           <TextInput
             className="flex-1 text-base text-slate-900"
-            placeholder="Search destination..."
+            placeholder="Search Australian street address…"
             placeholderTextColor="#94a3b8"
             value={query}
             onChangeText={setQuery}
@@ -255,7 +264,9 @@ export default function HomeScreen() {
                   onPress={() => void toggleSaved(s)}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel={isSaved(s) ? 'Remove from saved' : 'Save place'}
+                  accessibilityLabel={
+                    isSaved(s) ? 'Remove from saved' : 'Save place'
+                  }
                 >
                   {isSaved(s) ? (
                     <StarSolid size={18} color="#2563eb" />
@@ -292,10 +303,16 @@ export default function HomeScreen() {
                     >
                       <BookmarkIcon size={22} color="#1d4ed8" />
                       <View className="flex-1">
-                        <Text className="text-base text-slate-900" numberOfLines={1}>
+                        <Text
+                          className="text-base text-slate-900"
+                          numberOfLines={1}
+                        >
                           {place.label}
                         </Text>
-                        <Text className="text-sm text-slate-500" numberOfLines={1}>
+                        <Text
+                          className="text-sm text-slate-500"
+                          numberOfLines={1}
+                        >
                           {place.address}
                         </Text>
                       </View>
@@ -323,7 +340,10 @@ export default function HomeScreen() {
                       accessibilityRole="button"
                     >
                       <BookmarkIcon size={22} color="#2563eb" />
-                      <Text className="flex-1 text-base text-slate-900" numberOfLines={1}>
+                      <Text
+                        className="flex-1 text-base text-slate-900"
+                        numberOfLines={1}
+                      >
                         {s.label}
                       </Text>
                       <Pressable
@@ -355,10 +375,16 @@ export default function HomeScreen() {
                     >
                       <ClockIcon size={22} color="#64748b" />
                       <View className="flex-1">
-                        <Text className="text-base text-slate-900" numberOfLines={1}>
+                        <Text
+                          className="text-base text-slate-900"
+                          numberOfLines={1}
+                        >
                           {item.label}
                         </Text>
-                        <Text className="text-sm text-slate-500" numberOfLines={1}>
+                        <Text
+                          className="text-sm text-slate-500"
+                          numberOfLines={1}
+                        >
                           {item.address}
                         </Text>
                       </View>
@@ -390,6 +416,41 @@ export default function HomeScreen() {
               </View>
             )}
 
+            {/* Nearby transit + POI */}
+            {nearbyPlaces.length > 0 ? (
+              <View className="px-5 mb-4">
+                <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                  Nearby Transit & POI
+                </Text>
+                <View className="rounded-2xl bg-white border border-slate-200 px-4">
+                  {nearbyPlaces.map((place) => (
+                    <Pressable
+                      key={`${place.label}:${place.lat},${place.lng}`}
+                      onPress={() => void handleNavigate(place)}
+                      className="flex-row items-center py-3 gap-3 border-b border-slate-100"
+                      accessibilityRole="button"
+                    >
+                      <MagnifyingGlassIcon size={20} color="#0f766e" />
+                      <View className="flex-1">
+                        <Text
+                          className="text-base text-slate-900"
+                          numberOfLines={1}
+                        >
+                          {place.label}
+                        </Text>
+                        <Text
+                          className="text-sm text-slate-500"
+                          numberOfLines={1}
+                        >
+                          {place.address}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+
             {/* Quick actions */}
             <View className="px-5 mt-1 mb-2">
               <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
@@ -403,7 +464,9 @@ export default function HomeScreen() {
                 accessibilityRole="button"
               >
                 <EyeIcon size={32} color="#1d4ed8" />
-                <Text className="text-sm font-medium text-slate-700">Detect</Text>
+                <Text className="text-sm font-medium text-slate-700">
+                  Detect
+                </Text>
               </Pressable>
               <Pressable
                 onPress={() => router.push('/(app)/(tabs)/settings')}
@@ -411,12 +474,25 @@ export default function HomeScreen() {
                 accessibilityRole="button"
               >
                 <Cog6ToothIcon size={32} color="#475569" />
-                <Text className="text-sm font-medium text-slate-700">Settings</Text>
+                <Text className="text-sm font-medium text-slate-700">
+                  Settings
+                </Text>
               </Pressable>
             </View>
           </>
         }
       />
+
+      {/* SOS FAB — bottom-right */}
+      <View
+        style={{ position: 'absolute', bottom: 24, right: 20 }}
+        pointerEvents="box-none"
+      >
+        <SosTrigger
+          contactPhone={prefs?.emergencyContact?.phone}
+          contactName={prefs?.emergencyContact?.name}
+        />
+      </View>
     </SafeAreaView>
   );
 }

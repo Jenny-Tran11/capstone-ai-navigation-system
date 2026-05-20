@@ -44,7 +44,8 @@
     "plugins": [
       "expo-router",
       "expo-camera",
-      "expo-location"
+      "expo-location",
+      "react-native-fast-tflite"
     ],
     "experiments": {
       "typedRoutes": true

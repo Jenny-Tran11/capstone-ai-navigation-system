@@ -15,6 +15,20 @@ function isRoboflowWorkflowEndpoint(url: string): boolean {
   return url.includes('serverless.roboflow.com') && url.includes('/workflows/');
 }
 
+function getRoboflowModelIdFromEndpoint(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    if (parts.length < 2) return null;
+    const version = parts[parts.length - 1];
+    const model = parts[parts.length - 2];
+    if (!/^\d+$/.test(version) || !model) return null;
+    return `${model}/${version}`;
+  } catch {
+    return null;
+  }
+}
+
 /** GET /app-config/admin/mobile */
 adminAppConfigRouter.get('/mobile', [
   checkPermission([{ type: 'SUPER' }]),
@@ -89,6 +103,7 @@ adminAppConfigRouter.post('/mobile/test', [
         isCrossing ? config.crossingApiBaseUrl : config.detectApiBaseUrl
       ).replace(/\/$/, '');
       const apiKey = isCrossing ? config.crossingApiKey : config.detectApiKey;
+      const roboflowModelId = getRoboflowModelIdFromEndpoint(baseUrl);
 
       if (!baseUrl) {
         res.status(400).json({
@@ -100,6 +115,28 @@ adminAppConfigRouter.post('/mobile/test', [
       }
 
       if (isCrossing) {
+        if (roboflowModelId) {
+          const inferenceEndpoint = `${new URL(baseUrl).origin}/infer/object_detection`;
+          const crossing = await fetch(inferenceEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: `admin-crossing-${Date.now()}`,
+              api_key: apiKey,
+              model_id: roboflowModelId,
+              image: imageUrl?.trim()
+                ? { type: 'url', value: imageUrl.trim() }
+                : { type: 'base64', value: imageBase64 },
+            }),
+          });
+          if (!crossing.ok) {
+            const body = await crossing.text();
+            throw new Error(`Crossing test failed: ${crossing.status} ${body}`);
+          }
+          res.json(await crossing.json());
+          return;
+        }
+
         const crossingImage =
           imageUrl?.trim()
             ? { type: 'url', value: imageUrl.trim() }
@@ -121,6 +158,28 @@ adminAppConfigRouter.post('/mobile/test', [
       }
 
       const isWorkflow = isRoboflowWorkflowEndpoint(baseUrl);
+      if (roboflowModelId) {
+        const inferenceEndpoint = `${new URL(baseUrl).origin}/infer/object_detection`;
+        const detect = await fetch(inferenceEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: `admin-detect-${Date.now()}`,
+            api_key: apiKey,
+            model_id: roboflowModelId,
+            image: imageUrl?.trim()
+              ? { type: 'url', value: imageUrl.trim() }
+              : { type: 'base64', value: imageBase64 },
+          }),
+        });
+        if (!detect.ok) {
+          const body = await detect.text();
+          throw new Error(`Detect test failed: ${detect.status} ${body}`);
+        }
+        res.json(await detect.json());
+        return;
+      }
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };

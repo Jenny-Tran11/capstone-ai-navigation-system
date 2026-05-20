@@ -1,37 +1,50 @@
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
-import * as Speech from 'expo-speech';
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import * as Speech from 'expo-speech';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  type LayoutChangeEvent,
   Pressable,
+  StyleSheet,
   Text,
   View,
-  type LayoutChangeEvent,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
   ArrowUpIcon,
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
+  ChevronRightIcon,
 } from 'react-native-heroicons/outline';
-import { usePreferences } from '@/hooks/use-preferences';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { BoundingBoxOverlay } from '@/features/detect/BoundingBoxOverlay';
 import { CrossingBanner } from '@/features/detect/CrossingBanner';
-import { postCrossingDetect, type SignalState } from '@/features/detect/crossing-api';
+import {
+  postCrossingDetect,
+  type SignalState,
+} from '@/features/detect/crossing-api';
 import { useLiveDetection } from '@/features/detect/use-live-detection';
 import {
+  useBatteryWarning,
+  useGpsQuality,
+  useHeading,
+} from '@/features/navigate/nav-hooks';
+import {
+  DEVIATION_METERS,
+  formatDuration,
+  getTransitRoute,
   getWalkingRoute,
   haversineDistance,
-  formatDuration,
+  nearestPointOnRoute,
   type MapPoint,
   type Route,
   type RouteStep,
 } from '@/features/navigate/routing-service';
+import { usePreferences } from '@/hooks/use-preferences';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,15 +56,22 @@ function stripHtml(s: string): string {
     .trim();
 }
 
-function TurnIcon({ instruction, size = 28 }: { instruction: string; size?: number }) {
-  const text = instruction.toLowerCase();
+function TurnIcon({
+  instruction,
+  stepType,
+  size = 28,
+}: {
+  instruction: string;
+  stepType?: string;
+  size?: number;
+}) {
   const color = '#1e3a5f';
+  if (stepType === 'transit') return <Text style={{ fontSize: size * 0.9 }}>🚌</Text>;
+  const text = instruction.toLowerCase();
   if (text.includes('u-turn') || text.includes('uturn')) {
-    return text.includes('left') ? (
-      <ArrowUturnLeftIcon size={size} color={color} />
-    ) : (
-      <ArrowUturnRightIcon size={size} color={color} />
-    );
+    return text.includes('left')
+      ? <ArrowUturnLeftIcon size={size} color={color} />
+      : <ArrowUturnRightIcon size={size} color={color} />;
   }
   if (text.includes('right')) return <ArrowRightIcon size={size} color={color} />;
   if (text.includes('left')) return <ArrowLeftIcon size={size} color={color} />;
@@ -64,23 +84,23 @@ function remainingStats(
   liveDistToTurn: number | null,
 ) {
   const currentMeters = liveDistToTurn ?? steps[fromStep]?.distanceMeters ?? 0;
-  const futureMeters = steps.slice(fromStep + 1).reduce((s, step) => s + step.distanceMeters, 0);
+  const futureMeters = steps.slice(fromStep + 1).reduce((s, st) => s + st.distanceMeters, 0);
   const meters = currentMeters + futureMeters;
 
   const currentSecs = steps[fromStep]?.durationSeconds ?? 0;
-  const futureSecs = steps.slice(fromStep + 1).reduce((s, step) => s + step.durationSeconds, 0);
+  const futureSecs = steps.slice(fromStep + 1).reduce((s, st) => s + st.durationSeconds, 0);
   const currentStepMeters = steps[fromStep]?.distanceMeters ?? 1;
   const ratio = liveDistToTurn != null ? Math.min(liveDistToTurn / currentStepMeters, 1) : 1;
   const seconds = Math.round(currentSecs * ratio) + futureSecs;
 
-  const km = meters >= 1000
-    ? `${(meters / 1000).toFixed(1)} km`
-    : `${Math.round(meters)} m`;
+  const km = meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
   return { km, time: formatDuration(seconds) };
 }
 
 const ANNOUNCE_THRESHOLDS_M = [200, 50] as const;
 const ADVANCE_THRESHOLD_M = 15;
+
+const styles = StyleSheet.create({ screenRoot: { flex: 1, backgroundColor: '#000000' } });
 
 function formatLiveDistance(m: number): string {
   if (m >= 1000) return `${(m / 1000).toFixed(1)} km`;
@@ -88,168 +108,248 @@ function formatLiveDistance(m: number): string {
   return `${Math.round(m / 5) * 5} m`;
 }
 
+async function getBestEffortCurrentLocation(): Promise<Location.LocationObject> {
+  const lastKnown = await Location.getLastKnownPositionAsync();
+  if (lastKnown) return lastKnown;
+
+  const highAccuracy = Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.High,
+  });
+  const timed = Promise.race<Location.LocationObject>([
+    highAccuracy,
+    new Promise<Location.LocationObject>((_, reject) =>
+      setTimeout(() => reject(new Error('Location timeout')), 8000),
+    ),
+  ]);
+
+  try {
+    return await timed;
+  } catch {
+    return await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+  }
+}
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function NavigateActiveScreen() {
-  const { address, lat: latParam, lng: lngParam } = useLocalSearchParams<{
+  const {
+    address,
+    lat: latParam,
+    lng: lngParam,
+    mode: modeParam,
+  } = useLocalSearchParams<{
     address?: string;
     lat?: string;
     lng?: string;
+    mode?: string;
   }>();
 
-  const destCoords = {
-    lat: latParam ? Number.parseFloat(latParam) : 0,
-    lng: lngParam ? Number.parseFloat(lngParam) : 0,
-  };
+  const isTransitMode = modeParam === 'transit';
+
+  const destCoords = useMemo(
+    () => ({
+      lat: latParam ? Number.parseFloat(latParam) : 0,
+      lng: lngParam ? Number.parseFloat(lngParam) : 0,
+    }),
+    [latParam, lngParam],
+  );
 
   const { prefs } = usePreferences();
+  const speechRate = prefs?.speechRate ?? 1.0;
+  const speechLang = prefs?.speechLanguage ?? 'en-AU';
+
+  const speak = useCallback(
+    (text: string) => {
+      Speech.stop();
+      Speech.speak(text, { rate: speechRate, language: speechLang });
+    },
+    [speechRate, speechLang],
+  );
+
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [viewSize, setViewSize] = useState<{ width: number; height: number } | null>(null);
 
-  // Route state — starts loading; only fetches once real GPS origin is known
+  // Route state
   const [route, setRoute] = useState<Route | null>(null);
   const [routeLoading, setRouteLoading] = useState(true);
   const [routeError, setRouteError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [arrived, setArrived] = useState(false);
   const [distToNextTurn, setDistToNextTurn] = useState<number | null>(null);
+  const [isRecalculating, setIsRecalculating] = useState(false);
   const announcedThresholdsRef = useRef(new Set<number>());
+  const recalcRef = useRef(false);
 
   // GPS
   const [userLocation, setUserLocation] = useState<MapPoint | null>(null);
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
 
   // Crossing detection
   const [signal, setSignal] = useState<SignalState>('none');
   const prevSignalRef = useRef<SignalState>('none');
   const crossingScansRef = useRef(0);
 
-  // ── Announce current step whenever route loads/updates ──────────────────────
+  // Reset crossing scan counter hourly
+  useEffect(() => {
+    const id = setInterval(() => { crossingScansRef.current = 0; }, 60 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Accessibility hooks from old app
+  const lowBattery = useBatteryWarning(!arrived && !routeLoading, speechRate, speechLang);
+  const lowGps = useGpsQuality(gpsAccuracy, !routeLoading && !arrived, speechRate);
+  const headingLabel = useHeading(!routeLoading && !arrived);
+
+  // ── Announce step whenever activeStep changes ────────────────────────────────
   useEffect(() => {
     if (!route || arrived) return;
     const step = route.steps[activeStep];
-    if (step) {
-      Speech.stop();
-      Speech.speak(stripHtml(step.instruction), { language: 'en-AU', rate: 1.0 });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [route]);
+    if (!step) return;
+    const text = stripHtml(step.instruction);
+    const td = step.transitDetails;
+    const extra =
+      step.stepType === 'transit' && td?.departureStop
+        ? `. Board at ${td.departureStop}`
+        : '';
+    speak(`${text}${extra}`);
+  }, [route, activeStep, arrived, speak]);
 
-  // ── GPS tracking — fetch route once real origin is known ────────────────────
+  // ── Route fetch ──────────────────────────────────────────────────────────────
+  const fetchRoute = useCallback(
+    async (origin: { lat: number; lng: number }) => {
+      const fn = isTransitMode ? getTransitRoute : getWalkingRoute;
+      return fn(origin, destCoords);
+    },
+    [isTransitMode, destCoords],
+  );
+
   useEffect(() => {
-    if (!address) {
-      setRouteLoading(false);
-      return;
-    }
-
+    if (!address) { setRouteLoading(false); return; }
     let sub: Location.LocationSubscription | null = null;
 
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== 'granted') {
-        // No GPS — fetch route using destination as a fallback origin so at
-        // least the step list is visible, but show a warning.
         try {
-          const r = await getWalkingRoute(destCoords, destCoords);
+          const r = await fetchRoute(destCoords);
           setRoute(r);
-        } catch {
-          setRouteError('Could not load route. Check your connection.');
-        } finally {
-          setRouteLoading(false);
-        }
+        } catch { setRouteError('Could not load route. Check your connection.'); }
+        finally { setRouteLoading(false); }
         return;
       }
 
-      // One-shot high-accuracy fix for the initial route
       try {
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const loc = await getBestEffortCurrentLocation();
         const origin = { lat: loc.coords.latitude, lng: loc.coords.longitude };
-        const r = await getWalkingRoute(origin, destCoords);
+        setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+        setGpsAccuracy(loc.coords.accuracy);
+        const r = await fetchRoute(origin);
         setRoute(r);
-      } catch {
-        setRouteError('Could not load route. Check your connection.');
-      } finally {
-        setRouteLoading(false);
-      }
+      } catch { setRouteError('Could not load route. Check your connection.'); }
+      finally { setRouteLoading(false); }
 
-      // Continuous position updates for live step advancement
       sub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, distanceInterval: 5 },
         (loc) => {
-          setUserLocation({
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude,
-          });
+          setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+          setGpsAccuracy(loc.coords.accuracy);
         },
       );
     })();
 
     return () => { sub?.remove(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [address, destCoords, fetchRoute]);
 
-  // Live GPS tracking: update distance to next turn, fire threshold announcements, advance step
+  // ── Route deviation detection + recalculation ────────────────────────────────
   useEffect(() => {
-    if (!route || !userLocation || arrived) return;
+    if (!route || !userLocation || arrived || recalcRef.current || isTransitMode) return;
+    if (route.polylinePoints.length < 2) return;
+
+    const distFromRoute = nearestPointOnRoute(userLocation, route.polylinePoints);
+    if (distFromRoute <= DEVIATION_METERS) return;
+
+    recalcRef.current = true;
+    setIsRecalculating(true);
+    speak('Recalculating route.');
+
+    void (async () => {
+      try {
+        const origin = { lat: userLocation.latitude, lng: userLocation.longitude };
+        const r = await fetchRoute(origin);
+        setRoute(r);
+        setActiveStep(0);
+        announcedThresholdsRef.current = new Set();
+        setDistToNextTurn(null);
+      } catch {
+        speak('Unable to recalculate. Continuing on current route.');
+      } finally {
+        recalcRef.current = false;
+        setIsRecalculating(false);
+      }
+    })();
+  }, [userLocation, route, arrived, isTransitMode, fetchRoute, speak]);
+
+  // ── GPS step advancement — walking steps only ────────────────────────────────
+  useEffect(() => {
+    if (!route || !userLocation || arrived || recalcRef.current) return;
     const step = route.steps[activeStep];
-    if (!step?.endCoord) return;
+    if (!step?.endCoord || step.stepType === 'transit') return;
 
     const dist = haversineDistance(userLocation, step.endCoord);
     setDistToNextTurn(dist);
 
-    // Waze-style: announce at each distance threshold exactly once per step
     for (const threshold of ANNOUNCE_THRESHOLDS_M) {
       if (dist <= threshold && !announcedThresholdsRef.current.has(threshold)) {
         announcedThresholdsRef.current.add(threshold);
-        const distText = `${threshold} metres`;
-        Speech.stop();
-        Speech.speak(
-          `In ${distText}, ${stripHtml(step.instruction).toLowerCase()}`,
-          { language: 'en-AU', rate: 1.0 },
-        );
+        speak(`In ${threshold} metres, ${stripHtml(step.instruction).toLowerCase()}`);
       }
     }
 
-    // Advance step when close enough to turn point
     if (dist < ADVANCE_THRESHOLD_M) {
-      const nextIndex = activeStep + 1;
+      advanceStep(route, activeStep);
+    }
+  }, [userLocation, route, activeStep, arrived]);
+
+  const advanceStep = useCallback(
+    (r: Route, fromIndex: number) => {
+      const nextIndex = fromIndex + 1;
       announcedThresholdsRef.current = new Set();
       setDistToNextTurn(null);
 
-      if (nextIndex >= route.steps.length) {
+      if (nextIndex >= r.steps.length) {
         setArrived(true);
-        Speech.stop();
-        Speech.speak('You have arrived at your destination.', { language: 'en-AU', rate: 1.0 });
+        speak('You have arrived at your destination.');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
         setActiveStep(nextIndex);
-        Speech.stop();
-        Speech.speak(stripHtml(route.steps[nextIndex].instruction), {
-          language: 'en-AU',
-          rate: 1.0,
-        });
+        speak(stripHtml(r.steps[nextIndex].instruction));
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
-    }
-  }, [userLocation, route, activeStep, arrived]);
+    },
+    [speak],
+  );
+
+  // Manual "Next step" for transit legs
+  const handleNextStep = useCallback(() => {
+    if (!route || arrived) return;
+    advanceStep(route, activeStep);
+  }, [route, activeStep, arrived, advanceStep]);
 
   // ── Obstacle detection ───────────────────────────────────────────────────────
   const captureImage = useCallback(async () => {
     if (!cameraRef.current || !cameraReady) return null;
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        base64: true,
-        quality: 0.3,
-        skipProcessing: true,
-        exif: false,
+        base64: true, quality: 0.3, skipProcessing: true, shutterSound: false, exif: false,
       });
       if (!photo?.base64) return null;
-      return { base64: photo.base64, width: photo.width ?? 1, height: photo.height ?? 1 };
-    } catch {
-      return null;
-    }
+      return { base64: photo.base64, uri: photo.uri, width: photo.width ?? 1, height: photo.height ?? 1 };
+    } catch { return null; }
   }, [cameraReady]);
 
   const { lastDetections, imageSize } = useLiveDetection({
@@ -257,6 +357,8 @@ export default function NavigateActiveScreen() {
     maxScansPerHour: prefs?.maxScansPerHour ?? 30,
     hapticEnabled: prefs?.hapticEnabled ?? true,
     enabled: cameraReady && !arrived,
+    speechRate,
+    speechLanguage: speechLang,
     captureImage,
   });
 
@@ -274,8 +376,7 @@ export default function NavigateActiveScreen() {
         setSignal(result.signal);
         if (result.signal !== 'none' && result.signal !== prevSignalRef.current) {
           const text = result.signal === 'walk' ? 'Walk signal' : "Don't walk signal, wait";
-          Speech.stop();
-          Speech.speak(text, { language: 'en-AU', rate: 1.1 });
+          speak(text);
           if (prefs?.hapticEnabled ?? true) {
             result.signal === 'walk'
               ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
@@ -283,9 +384,7 @@ export default function NavigateActiveScreen() {
           }
         }
         prevSignalRef.current = result.signal;
-      } catch {
-        // ignore
-      }
+      } catch { /* ignore */ }
     };
 
     void run();
@@ -295,12 +394,9 @@ export default function NavigateActiveScreen() {
       setSignal('none');
       prevSignalRef.current = 'none';
     };
-  }, [cameraReady, arrived, captureImage, prefs?.hapticEnabled, prefs?.maxScansPerHour]);
+  }, [cameraReady, arrived, captureImage, prefs?.hapticEnabled, prefs?.maxScansPerHour, speak]);
 
-  const handleEnd = () => {
-    Speech.stop();
-    router.back();
-  };
+  const handleEnd = () => { Speech.stop(); router.back(); };
 
   const handleCameraLayout = useCallback((e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -309,24 +405,14 @@ export default function NavigateActiveScreen() {
 
   // ── Permission gate ──────────────────────────────────────────────────────────
   if (!permission) {
-    return (
-      <View className="flex-1 items-center justify-center bg-black">
-        <ActivityIndicator color="white" />
-      </View>
-    );
+    return <View className="flex-1 items-center justify-center bg-black"><ActivityIndicator color="white" /></View>;
   }
 
   if (!permission.granted) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-gray-900 p-6">
-        <Text className="text-white text-xl font-semibold mb-4 text-center">
-          Camera access required
-        </Text>
-        <Pressable
-          onPress={requestPermission}
-          className="bg-primary px-8 py-4 rounded-2xl"
-          accessibilityRole="button"
-        >
+        <Text className="text-white text-xl font-semibold mb-4 text-center">Camera access required</Text>
+        <Pressable onPress={requestPermission} className="bg-primary px-8 py-4 rounded-2xl" accessibilityRole="button">
           <Text className="text-white font-semibold text-lg">Grant access</Text>
         </Pressable>
       </SafeAreaView>
@@ -334,29 +420,28 @@ export default function NavigateActiveScreen() {
   }
 
   const currentStep: RouteStep | undefined = route?.steps[activeStep];
+  const isCurrentStepTransit = currentStep?.stepType === 'transit';
   const stats = route ? remainingStats(route.steps, activeStep, distToNextTurn) : null;
-  const liveDistLabel = distToNextTurn != null
-    ? formatLiveDistance(distToNextTurn)
-    : currentStep?.distance ?? '';
+  const liveDistLabel =
+    distToNextTurn != null && !isCurrentStepTransit
+      ? formatLiveDistance(distToNextTurn)
+      : (currentStep?.duration ?? '');
+
+  const accentColor = isTransitMode ? '#16a34a' : '#2563eb';
+  const accentBg = isTransitMode ? '#f0fdf4' : '#eff6ff';
 
   return (
-    <View className="flex-1 bg-black">
-      {/* Full-screen camera */}
+    <View style={styles.screenRoot}>
       <CameraView
         ref={cameraRef}
-        className="flex-1"
+        style={StyleSheet.absoluteFillObject}
         facing="back"
         onCameraReady={() => setCameraReady(true)}
         onLayout={handleCameraLayout}
       />
 
-      {/* Obstacle bounding boxes */}
       {viewSize && imageSize && lastDetections.length > 0 ? (
-        <BoundingBoxOverlay
-          detections={lastDetections}
-          imageSize={imageSize}
-          viewSize={viewSize}
-        />
+        <BoundingBoxOverlay detections={lastDetections} imageSize={imageSize} viewSize={viewSize} />
       ) : null}
 
       {/* ── Turn card (top) ───────────────────────────────────────────────── */}
@@ -366,123 +451,111 @@ export default function NavigateActiveScreen() {
       >
         <View
           style={{
-            marginHorizontal: 16,
-            marginTop: 12,
-            backgroundColor: '#ffffff',
-            borderRadius: 20,
-            padding: 16,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 14,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.18,
-            shadowRadius: 8,
-            elevation: 6,
+            marginHorizontal: 16, marginTop: 12,
+            backgroundColor: '#ffffff', borderRadius: 20, padding: 16,
+            flexDirection: 'row', alignItems: 'center', gap: 14,
+            shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.18, shadowRadius: 8, elevation: 6,
           }}
         >
-          {routeLoading ? (
+          {routeLoading || isRecalculating ? (
             <>
-              <ActivityIndicator color="#2563eb" size="small" />
-              <Text style={{ color: '#6b7280', fontSize: 14 }}>Getting your location…</Text>
+              <ActivityIndicator color={accentColor} size="small" />
+              <Text style={{ color: '#6b7280', fontSize: 14 }}>
+                {isRecalculating ? 'Recalculating…' : 'Getting your location…'}
+              </Text>
             </>
           ) : routeError ? (
             <Text style={{ color: '#ef4444', fontSize: 14, flex: 1 }}>{routeError}</Text>
           ) : arrived ? (
             <>
-              <View
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 12,
-                  backgroundColor: '#22c55e',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+              <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: '#22c55e', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontSize: 24 }}>✓</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: '#166534' }}>
-                  Arrived
-                </Text>
-                <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}>
-                  {address ?? 'Destination'}
-                </Text>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: '#166534' }}>Arrived</Text>
+                <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}>{address ?? 'Destination'}</Text>
               </View>
             </>
           ) : currentStep ? (
             <>
-              <View
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 14,
-                  backgroundColor: '#eff6ff',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <TurnIcon instruction={currentStep.instruction} size={28} />
+              <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: accentBg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <TurnIcon instruction={currentStep.instruction} stepType={currentStep.stepType} size={28} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 26, fontWeight: '800', color: '#111827' }}>
-                  {liveDistLabel}
-                </Text>
-                <Text
-                  style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}
-                  numberOfLines={2}
-                >
+                <Text style={{ fontSize: 26, fontWeight: '800', color: '#111827' }}>{liveDistLabel}</Text>
+                <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }} numberOfLines={2}>
                   {stripHtml(currentStep.instruction)}
                 </Text>
+                {isCurrentStepTransit && currentStep.transitDetails?.departureStop ? (
+                  <Text style={{ fontSize: 12, color: '#16a34a', marginTop: 2, fontWeight: '600' }}>
+                    Board at {currentStep.transitDetails.departureStop}
+                    {currentStep.transitDetails.departureTime ? ` · ${currentStep.transitDetails.departureTime}` : ''}
+                  </Text>
+                ) : null}
+                {headingLabel ? (
+                  <Text style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{headingLabel}</Text>
+                ) : null}
               </View>
             </>
           ) : (
             <Text style={{ color: '#6b7280' }}>Calculating route…</Text>
           )}
         </View>
+
+        {/* Status banners */}
+        {lowBattery ? (
+          <View style={{ marginHorizontal: 16, marginTop: 6, backgroundColor: '#fef3c7', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 }}>
+            <Text style={{ color: '#92400e', fontSize: 13, textAlign: 'center' }}>⚠ Battery low — camera scans may be limited</Text>
+          </View>
+        ) : null}
+        {lowGps ? (
+          <View style={{ marginHorizontal: 16, marginTop: 6, backgroundColor: '#fef3c7', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 }}>
+            <Text style={{ color: '#92400e', fontSize: 13, textAlign: 'center' }}>⚠ GPS accuracy low</Text>
+          </View>
+        ) : null}
       </SafeAreaView>
 
       {/* Crossing signal banner */}
       <CrossingBanner signal={signal} />
 
-      {/* ── ETA bar (bottom) ──────────────────────────────────────────────── */}
+      {/* ── ETA bar + controls (bottom) ───────────────────────────────────── */}
       <View
         style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
+          position: 'absolute', bottom: 0, left: 0, right: 0,
           backgroundColor: 'rgba(17,24,39,0.92)',
-          paddingHorizontal: 24,
-          paddingTop: 16,
-          paddingBottom: 36,
-          flexDirection: 'row',
-          alignItems: 'center',
+          paddingHorizontal: 24, paddingTop: 16, paddingBottom: 36, gap: 12,
         }}
       >
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 28, fontWeight: '700', color: '#ffffff' }}>
-            {stats?.time ?? '—'}
-          </Text>
-          <Text style={{ fontSize: 14, color: '#9ca3af', marginTop: 2 }}>
-            {stats?.km ?? '—'} to arrive
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 28, fontWeight: '700', color: '#ffffff' }}>{stats?.time ?? '—'}</Text>
+            <Text style={{ fontSize: 14, color: '#9ca3af', marginTop: 2 }}>{stats?.km ?? '—'} to arrive</Text>
+          </View>
+          <Pressable
+            onPress={handleEnd}
+            style={{ backgroundColor: '#ef4444', paddingHorizontal: 28, paddingVertical: 14, borderRadius: 50 }}
+            accessibilityRole="button"
+            accessibilityLabel="End navigation"
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 16 }}>End</Text>
+          </Pressable>
         </View>
-        <Pressable
-          onPress={handleEnd}
-          style={{
-            backgroundColor: '#ef4444',
-            paddingHorizontal: 28,
-            paddingVertical: 14,
-            borderRadius: 50,
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="End navigation"
-        >
-          <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 16 }}>End</Text>
-        </Pressable>
+
+        {/* Next Step button — shown for transit legs only */}
+        {isCurrentStepTransit && !arrived && route ? (
+          <Pressable
+            onPress={handleNextStep}
+            style={{ backgroundColor: accentColor, paddingVertical: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Mark this step done and advance to next step"
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 16 }}>
+              {activeStep + 1 >= (route?.steps.length ?? 0) ? 'Arrived' : 'Next Step'}
+            </Text>
+            <ChevronRightIcon size={20} color="#ffffff" />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );

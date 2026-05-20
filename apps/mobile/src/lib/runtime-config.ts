@@ -24,21 +24,37 @@ const ENV_FALLBACK: MobileRuntimeConfig = {
 };
 
 let configPromise: Promise<MobileRuntimeConfig> | null = null;
+let cacheExpiresAt = 0;
+const CONFIG_CACHE_TTL_MS = 60_000;
 
 async function fetchRuntimeConfig(): Promise<MobileRuntimeConfig> {
+  const pick = (value: string | undefined | null, fallback: string): string => {
+    if (typeof value !== 'string') return fallback;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : fallback;
+  };
+
   try {
     const { data } = await apiClient.get<Partial<MobileRuntimeConfig>>(
       '/app-config/user/mobile',
     );
     return {
-      detectApiBaseUrl: data.detectApiBaseUrl ?? ENV_FALLBACK.detectApiBaseUrl,
-      detectApiKey: data.detectApiKey ?? ENV_FALLBACK.detectApiKey,
-      crossingApiBaseUrl:
-        data.crossingApiBaseUrl ?? ENV_FALLBACK.crossingApiBaseUrl,
-      crossingApiKey: data.crossingApiKey ?? ENV_FALLBACK.crossingApiKey,
-      googleMapsApiKey: data.googleMapsApiKey ?? ENV_FALLBACK.googleMapsApiKey,
-      googleAiApiKey: data.googleAiApiKey ?? ENV_FALLBACK.googleAiApiKey,
-      googleAiModel: data.googleAiModel ?? ENV_FALLBACK.googleAiModel,
+      detectApiBaseUrl: pick(
+        data.detectApiBaseUrl,
+        ENV_FALLBACK.detectApiBaseUrl,
+      ),
+      detectApiKey: pick(data.detectApiKey, ENV_FALLBACK.detectApiKey),
+      crossingApiBaseUrl: pick(
+        data.crossingApiBaseUrl,
+        ENV_FALLBACK.crossingApiBaseUrl,
+      ),
+      crossingApiKey: pick(data.crossingApiKey, ENV_FALLBACK.crossingApiKey),
+      googleMapsApiKey: pick(
+        data.googleMapsApiKey,
+        ENV_FALLBACK.googleMapsApiKey,
+      ),
+      googleAiApiKey: pick(data.googleAiApiKey, ENV_FALLBACK.googleAiApiKey),
+      googleAiModel: pick(data.googleAiModel, ENV_FALLBACK.googleAiModel),
     };
   } catch {
     return ENV_FALLBACK;
@@ -46,10 +62,15 @@ async function fetchRuntimeConfig(): Promise<MobileRuntimeConfig> {
 }
 
 export async function getRuntimeConfig(): Promise<MobileRuntimeConfig> {
-  if (!configPromise) configPromise = fetchRuntimeConfig();
+  const now = Date.now();
+  if (!configPromise || now >= cacheExpiresAt) {
+    configPromise = fetchRuntimeConfig();
+    cacheExpiresAt = now + CONFIG_CACHE_TTL_MS;
+  }
   return configPromise;
 }
 
 export function clearRuntimeConfigCache(): void {
   configPromise = null;
+  cacheExpiresAt = 0;
 }

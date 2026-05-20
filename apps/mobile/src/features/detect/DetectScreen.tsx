@@ -1,22 +1,24 @@
-import * as Haptics from 'expo-haptics';
-import * as Speech from 'expo-speech';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  type LayoutChangeEvent,
   Pressable,
+  StyleSheet,
   Text,
   View,
-  type LayoutChangeEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreferences } from '@/hooks/use-preferences';
-import { useLiveDetection } from './use-live-detection';
-import { postCrossingDetect, type SignalState } from './crossing-api';
-import { postTransitDetect } from './transit-api';
-import { CrossingBanner } from './CrossingBanner';
-import { TransitBanner } from './TransitBanner';
 import { BoundingBoxOverlay } from './BoundingBoxOverlay';
+import { CrossingBanner } from './CrossingBanner';
+import { postCrossingDetect, type SignalState } from './crossing-api';
+import { TransitBanner } from './TransitBanner';
+import { postTransitDetect } from './transit-api';
+import { useLiveDetection } from './use-live-detection';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +32,14 @@ const MODES: { key: DetectMode; label: string }[] = [
 ];
 
 const MAX_ERRORS_BEFORE_PAUSE = 3;
+const MAX_UPLOAD_DIMENSION = 960;
+
+const styles = StyleSheet.create({
+  screenRoot: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+});
 
 // ─── Mode tab bar ─────────────────────────────────────────────────────────────
 
@@ -93,16 +103,21 @@ export default function DetectScreen() {
   const [mode, setMode] = useState<DetectMode>('obstacle');
   const [viewSize, setViewSize] = useState<ViewSize | null>(null);
   const { prefs } = usePreferences();
+  const speechRate = prefs?.speechRate ?? 1.0;
+  const speechLang = prefs?.speechLanguage ?? 'en-AU';
 
   // Per-mode scan counters for rate limiting (reset hourly)
   const crossingScansRef = useRef(0);
   const transitScansRef = useRef(0);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      crossingScansRef.current = 0;
-      transitScansRef.current = 0;
-    }, 60 * 60 * 1000);
+    const id = setInterval(
+      () => {
+        crossingScansRef.current = 0;
+        transitScansRef.current = 0;
+      },
+      60 * 60 * 1000,
+    );
     return () => clearInterval(id);
   }, []);
 
@@ -120,23 +135,66 @@ export default function DetectScreen() {
     try {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
-        quality: 0.3,
+        quality: 0.35,
         skipProcessing: true,
+        shutterSound: false,
         exif: false,
       });
-      if (!photo?.base64) return null;
-      return { base64: photo.base64, width: photo.width ?? 1, height: photo.height ?? 1 };
+      if (!photo?.base64 || !photo?.uri) return null;
+
+      let outBase64 = photo.base64;
+      let outWidth = photo.width ?? 1;
+      let outHeight = photo.height ?? 1;
+
+      const longestSide = Math.max(outWidth, outHeight);
+      if (longestSide > MAX_UPLOAD_DIMENSION) {
+        const scale = MAX_UPLOAD_DIMENSION / longestSide;
+        const targetWidth = Math.max(1, Math.round(outWidth * scale));
+        const targetHeight = Math.max(1, Math.round(outHeight * scale));
+        const resized = await ImageManipulator.manipulateAsync(
+          photo.uri,
+          [{ resize: { width: targetWidth, height: targetHeight } }],
+          {
+            compress: 0.65,
+            format: ImageManipulator.SaveFormat.JPEG,
+            base64: true,
+          },
+        );
+        if (resized.base64) outBase64 = resized.base64;
+        outWidth = resized.width;
+        outHeight = resized.height;
+      }
+
+      return {
+        base64: outBase64,
+        uri: photo.uri,
+        width: outWidth,
+        height: outHeight,
+      };
     } catch {
       return null;
     }
   }, [cameraReady]);
 
   // ── Obstacle detection (existing hook) ──────────────────────────────────────
-  const { isRunning, lastDescription, lastDetections, imageSize, errorCount, reset } = useLiveDetection({
+  const {
+    isRunning,
+    lastDescription,
+    lastDetections,
+    imageSize,
+    errorCount,
+    requestCount,
+    lastError,
+    lastSuccessAt,
+    triggerNow,
+    reset,
+  } = useLiveDetection({
     intervalSec: prefs?.detectionIntervalSec ?? 10,
     maxScansPerHour: prefs?.maxScansPerHour ?? 30,
     hapticEnabled: prefs?.hapticEnabled ?? true,
     enabled: active && cameraReady && mode === 'obstacle',
+    speechRate,
+    speechLanguage: speechLang,
     captureImage,
   });
 
@@ -155,13 +213,23 @@ export default function DetectScreen() {
         const result = await postCrossingDetect(capture.base64);
         setSignal(result.signal);
 
-        if (result.signal !== 'none' && result.signal !== prevSignalRef.current) {
-          const text = result.signal === 'walk' ? 'Walk signal' : "Don't walk signal, wait";
-          Speech.speak(text, { language: 'en-AU', rate: 1.1 });
+        if (
+          result.signal !== 'none' &&
+          result.signal !== prevSignalRef.current
+        ) {
+          const text =
+            result.signal === 'walk'
+              ? 'Walk signal'
+              : "Don't walk signal, wait";
+          Speech.speak(text, { language: speechLang, rate: speechRate });
           if (prefs?.hapticEnabled ?? true) {
             result.signal === 'walk'
-              ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-              : Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              ? Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success,
+                )
+              : Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Warning,
+                );
           }
         }
         prevSignalRef.current = result.signal;
@@ -177,7 +245,15 @@ export default function DetectScreen() {
       setSignal('none');
       prevSignalRef.current = 'none';
     };
-  }, [active, cameraReady, captureImage, prefs?.hapticEnabled]);
+  }, [
+    active,
+    cameraReady,
+    captureImage,
+    prefs?.hapticEnabled,
+    prefs?.maxScansPerHour,
+    speechRate,
+    speechLang,
+  ]);
 
   // ── Transit detection loop ───────────────────────────────────────────────────
   useEffect(() => {
@@ -198,7 +274,7 @@ export default function DetectScreen() {
           const text = result.destination
             ? `Bus ${result.busNumber}, ${result.destination}`
             : `Bus ${result.busNumber} detected`;
-          Speech.speak(text, { language: 'en-AU', rate: 1.0 });
+          Speech.speak(text, { language: speechLang, rate: speechRate });
           if (prefs?.hapticEnabled ?? true) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
@@ -217,7 +293,16 @@ export default function DetectScreen() {
       setBusDestination(null);
       prevBusRef.current = null;
     };
-  }, [active, cameraReady, mode, captureImage, prefs?.hapticEnabled]);
+  }, [
+    active,
+    cameraReady,
+    mode,
+    captureImage,
+    prefs?.hapticEnabled,
+    prefs?.maxScansPerHour,
+    speechRate,
+    speechLang,
+  ]);
 
   // ── Reset detection state when mode changes ──────────────────────────────────
   const handleModeChange = useCallback((m: DetectMode) => {
@@ -269,18 +354,21 @@ export default function DetectScreen() {
   const showTransit = mode === 'transit';
 
   return (
-    <View className="flex-1 bg-black">
-      {/* Camera */}
+    <View style={styles.screenRoot}>
+      {/* Native layout only: CameraView does not apply NativeWind className reliably. */}
       <CameraView
         ref={cameraRef}
-        className="flex-1"
+        style={StyleSheet.absoluteFillObject}
         facing="back"
         onCameraReady={() => setCameraReady(true)}
         onLayout={handleCameraLayout}
       />
 
       {/* Obstacle mode: bounding boxes */}
-      {mode === 'obstacle' && viewSize && imageSize && lastDetections.length > 0 ? (
+      {mode === 'obstacle' &&
+      viewSize &&
+      imageSize &&
+      lastDetections.length > 0 ? (
         <BoundingBoxOverlay
           detections={lastDetections}
           imageSize={imageSize}
@@ -291,7 +379,9 @@ export default function DetectScreen() {
       {/* Obstacle mode: detection count badge */}
       {mode === 'obstacle' && lastDetections.length > 0 ? (
         <View className="absolute top-12 right-4 bg-primary rounded-full w-10 h-10 items-center justify-center">
-          <Text className="text-white font-bold text-sm">{lastDetections.length}</Text>
+          <Text className="text-white font-bold text-sm">
+            {lastDetections.length}
+          </Text>
         </View>
       ) : null}
 
@@ -308,10 +398,41 @@ export default function DetectScreen() {
 
       {/* Bottom controls */}
       <View className="absolute inset-x-0 bottom-0 pb-12 px-6 items-center gap-4">
+        <View className="bg-black/75 rounded-xl px-3 py-2 w-full max-w-sm">
+          <Text className="text-white text-xs font-semibold">
+            Debug: req={requestCount} | ok={lastSuccessAt ? new Date(lastSuccessAt).toLocaleTimeString() : 'none'}
+          </Text>
+          <Text className="text-red-300 text-xs" numberOfLines={2}>
+            {lastError ? `err: ${lastError}` : 'err: none'}
+          </Text>
+          <View className="flex-row gap-2 mt-2">
+            <Pressable
+              onPress={() => void triggerNow()}
+              className="bg-emerald-600 rounded-lg px-3 py-2"
+              accessibilityRole="button"
+              accessibilityLabel="Send detect request now"
+            >
+              <Text className="text-white text-xs font-bold">SEND NOW</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                if (lastDescription) Speech.speak(lastDescription, { language: speechLang, rate: speechRate });
+              }}
+              className="bg-blue-600 rounded-lg px-3 py-2"
+              accessibilityRole="button"
+              accessibilityLabel="Speak last detection now"
+            >
+              <Text className="text-white text-xs font-bold">SPEAK NOW</Text>
+            </Pressable>
+          </View>
+        </View>
+
         {/* Obstacle: description text */}
         {mode === 'obstacle' && lastDescription ? (
           <View className="bg-black/70 rounded-2xl px-4 py-3 max-w-sm">
-            <Text className="text-white text-base text-center">{lastDescription}</Text>
+            <Text className="text-white text-base text-center">
+              {lastDescription}
+            </Text>
           </View>
         ) : null}
 
