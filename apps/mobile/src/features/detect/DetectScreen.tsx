@@ -1,22 +1,22 @@
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  type LayoutChangeEvent,
   Pressable,
   Text,
   View,
-  type LayoutChangeEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreferences } from '@/hooks/use-preferences';
-import { useLiveDetection } from './use-live-detection';
-import { postCrossingDetect, type SignalState } from './crossing-api';
-import { postTransitDetect } from './transit-api';
-import { CrossingBanner } from './CrossingBanner';
-import { TransitBanner } from './TransitBanner';
 import { BoundingBoxOverlay } from './BoundingBoxOverlay';
+import { CrossingBanner } from './CrossingBanner';
+import { postCrossingDetect, type SignalState } from './crossing-api';
+import { TransitBanner } from './TransitBanner';
+import { postTransitDetect } from './transit-api';
+import { useLiveDetection } from './use-live-detection';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -99,10 +99,13 @@ export default function DetectScreen() {
   const transitScansRef = useRef(0);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      crossingScansRef.current = 0;
-      transitScansRef.current = 0;
-    }, 60 * 60 * 1000);
+    const id = setInterval(
+      () => {
+        crossingScansRef.current = 0;
+        transitScansRef.current = 0;
+      },
+      60 * 60 * 1000,
+    );
     return () => clearInterval(id);
   }, []);
 
@@ -125,14 +128,25 @@ export default function DetectScreen() {
         exif: false,
       });
       if (!photo?.base64) return null;
-      return { base64: photo.base64, width: photo.width ?? 1, height: photo.height ?? 1 };
+      return {
+        base64: photo.base64,
+        width: photo.width ?? 1,
+        height: photo.height ?? 1,
+      };
     } catch {
       return null;
     }
   }, [cameraReady]);
 
   // ── Obstacle detection (existing hook) ──────────────────────────────────────
-  const { isRunning, lastDescription, lastDetections, imageSize, errorCount, reset } = useLiveDetection({
+  const {
+    isRunning,
+    lastDescription,
+    lastDetections,
+    imageSize,
+    errorCount,
+    reset,
+  } = useLiveDetection({
     intervalSec: prefs?.detectionIntervalSec ?? 10,
     maxScansPerHour: prefs?.maxScansPerHour ?? 30,
     hapticEnabled: prefs?.hapticEnabled ?? true,
@@ -155,13 +169,23 @@ export default function DetectScreen() {
         const result = await postCrossingDetect(capture.base64);
         setSignal(result.signal);
 
-        if (result.signal !== 'none' && result.signal !== prevSignalRef.current) {
-          const text = result.signal === 'walk' ? 'Walk signal' : "Don't walk signal, wait";
+        if (
+          result.signal !== 'none' &&
+          result.signal !== prevSignalRef.current
+        ) {
+          const text =
+            result.signal === 'walk'
+              ? 'Walk signal'
+              : "Don't walk signal, wait";
           Speech.speak(text, { language: 'en-AU', rate: 1.1 });
           if (prefs?.hapticEnabled ?? true) {
             result.signal === 'walk'
-              ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-              : Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              ? Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success,
+                )
+              : Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Warning,
+                );
           }
         }
         prevSignalRef.current = result.signal;
@@ -177,7 +201,13 @@ export default function DetectScreen() {
       setSignal('none');
       prevSignalRef.current = 'none';
     };
-  }, [active, cameraReady, captureImage, prefs?.hapticEnabled]);
+  }, [
+    active,
+    cameraReady,
+    captureImage,
+    prefs?.hapticEnabled,
+    prefs?.maxScansPerHour,
+  ]);
 
   // ── Transit detection loop ───────────────────────────────────────────────────
   useEffect(() => {
@@ -217,7 +247,14 @@ export default function DetectScreen() {
       setBusDestination(null);
       prevBusRef.current = null;
     };
-  }, [active, cameraReady, mode, captureImage, prefs?.hapticEnabled]);
+  }, [
+    active,
+    cameraReady,
+    mode,
+    captureImage,
+    prefs?.hapticEnabled,
+    prefs?.maxScansPerHour,
+  ]);
 
   // ── Reset detection state when mode changes ──────────────────────────────────
   const handleModeChange = useCallback((m: DetectMode) => {
@@ -280,7 +317,10 @@ export default function DetectScreen() {
       />
 
       {/* Obstacle mode: bounding boxes */}
-      {mode === 'obstacle' && viewSize && imageSize && lastDetections.length > 0 ? (
+      {mode === 'obstacle' &&
+      viewSize &&
+      imageSize &&
+      lastDetections.length > 0 ? (
         <BoundingBoxOverlay
           detections={lastDetections}
           imageSize={imageSize}
@@ -291,7 +331,9 @@ export default function DetectScreen() {
       {/* Obstacle mode: detection count badge */}
       {mode === 'obstacle' && lastDetections.length > 0 ? (
         <View className="absolute top-12 right-4 bg-primary rounded-full w-10 h-10 items-center justify-center">
-          <Text className="text-white font-bold text-sm">{lastDetections.length}</Text>
+          <Text className="text-white font-bold text-sm">
+            {lastDetections.length}
+          </Text>
         </View>
       ) : null}
 
@@ -311,7 +353,9 @@ export default function DetectScreen() {
         {/* Obstacle: description text */}
         {mode === 'obstacle' && lastDescription ? (
           <View className="bg-black/70 rounded-2xl px-4 py-3 max-w-sm">
-            <Text className="text-white text-base text-center">{lastDescription}</Text>
+            <Text className="text-white text-base text-center">
+              {lastDescription}
+            </Text>
           </View>
         ) : null}
 

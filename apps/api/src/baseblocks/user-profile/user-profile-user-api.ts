@@ -22,7 +22,9 @@ userProfileUserRouter.get('/me', [
       const userId = req.currentUserSub;
       let profile = await userProfileService.get(userId);
       if (!profile?.userId) {
-        profile = await userProfileService.create({ userId } as Partial<UserProfile>);
+        profile = await userProfileService.create({
+          userId,
+        } as Partial<UserProfile>);
       }
       res.json(profileMapper(profile));
     } catch (error) {
@@ -56,4 +58,3 @@ userProfileUserRouter.put('/me', [
 ]);
 
 userProfileUserRouter.use('/preferences', userPreferencesRouter);
-

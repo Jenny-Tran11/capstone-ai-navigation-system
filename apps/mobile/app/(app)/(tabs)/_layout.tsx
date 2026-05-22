@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { View } from 'react-native';
 import {
   ClockIcon,
   Cog6ToothIcon,
@@ -6,7 +7,6 @@ import {
   HomeIcon,
   MapIcon,
 } from 'react-native-heroicons/outline';
-import { View } from 'react-native';
 
 export default function TabsLayout() {
   return (

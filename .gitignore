@@ -83,3 +83,7 @@ apps/model/src/__pycache__/
 
 # Run train items
 runs/
+
+# Performance baselines — keep the directory but ignore generated JSON files
+# Commit a specific baseline intentionally with: git add -f baselines/perf-*.json
+baselines/*.json

@@ -119,7 +119,8 @@ export class ApiStack extends Stack {
       },
     ];
 
-    const lambdaFunctions: Array<{ alarmKey: string; fn: BaselineFunction }> = [];
+    const lambdaFunctions: Array<{ alarmKey: string; fn: BaselineFunction }> =
+      [];
 
     for (const entity of apiEntities) {
       const fn = new BaselineFunction(this, entity.name, {

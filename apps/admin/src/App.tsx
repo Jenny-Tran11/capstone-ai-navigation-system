@@ -15,6 +15,7 @@ import {
   getRequestHandler,
 } from '@baseline/client-api/request-handler';
 import type { AxiosRequestConfig } from 'axios';
+import AppConfigPage from './baseblocks/app-config/pages/AppConfig';
 import Dashboard from './baseblocks/dashboard/pages/Dashboard';
 import DetectionDetail, {
   detectionDetailLoader,
@@ -23,7 +24,6 @@ import Detections, {
   detectionListLoader,
 } from './baseblocks/detection/pages/Detections';
 import ModelStatus from './baseblocks/detection/pages/ModelStatus';
-import AppConfigPage from './baseblocks/app-config/pages/AppConfig';
 import Login from './baseblocks/login/pages/Login';
 import NotAdmin from './baseblocks/not-admin/pages/NotAdmin';
 import Permissions, {

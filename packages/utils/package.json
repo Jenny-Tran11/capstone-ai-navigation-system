@@ -3,11 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
     "type-check": "pnpm --filter @baseline/admin exec tsc --noEmit -p ../../packages/utils/tsconfig.json"
   },
   "dependencies": {
     "@baseline/types": "workspace:1.0.0",
     "nanoid": "5.1.5",
     "zod": "4.0.16"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
   }
 }

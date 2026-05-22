@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react';
 import { Helmet } from 'react-helmet-async';
 import Footer from '../footer/Footer';
 import Navbar from '../navbar/Navbar';
 
 interface Props {
-  children: JSX.Element;
+  children: ReactNode;
   title?: string;
 }
 
@@ -16,7 +17,9 @@ const PageWrapper = (props: Props): JSX.Element => {
       style={{ backgroundColor: 'var(--warm-bg)' }}
     >
       <Helmet>
-        <title>{title ? `${title} | AI-Detect` : 'AI-Detect — Accessible Navigation'}</title>
+        <title>
+          {title ? `${title} | AI-Detect` : 'AI-Detect — Accessible Navigation'}
+        </title>
       </Helmet>
       <Navbar />
       <div className="flex-1">{children}</div>

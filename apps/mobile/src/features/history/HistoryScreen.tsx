@@ -1,5 +1,12 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useSWR from 'swr';
 import { apiClient } from '@/lib/api-client';
@@ -46,31 +53,45 @@ function DetectionRow({ item }: { item: DetectionRecord }) {
       accessibilityLabel="Detection record"
     >
       <View className="flex-row justify-between items-start">
-        <Text className="text-base font-semibold text-gray-900 flex-1 mr-2" numberOfLines={expanded ? undefined : 1}>
+        <Text
+          className="text-base font-semibold text-gray-900 flex-1 mr-2"
+          numberOfLines={expanded ? undefined : 1}
+        >
           {item.sceneDescription}
         </Text>
-        <Text className="text-xs text-gray-400 shrink-0">{formatRelativeTime(item.createdAt)}</Text>
+        <Text className="text-xs text-gray-400 shrink-0">
+          {formatRelativeTime(item.createdAt)}
+        </Text>
       </View>
 
       {expanded ? (
         <View className="mt-1 gap-1">
-          {item.detections.sort((a, b) => b.confidence - a.confidence).map((d, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: stable list
-            <View key={i} className="flex-row justify-between">
-              <Text className="text-sm text-gray-700">{d.name}</Text>
-              <Text className="text-sm text-gray-500">{Math.round(d.confidence * 100)}%</Text>
-            </View>
-          ))}
+          {item.detections
+            .sort((a, b) => b.confidence - a.confidence)
+            .map((d, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: stable list
+              <View key={i} className="flex-row justify-between">
+                <Text className="text-sm text-gray-700">{d.name}</Text>
+                <Text className="text-sm text-gray-500">
+                  {Math.round(d.confidence * 100)}%
+                </Text>
+              </View>
+            ))}
         </View>
       ) : (
-        <Text className="text-sm text-gray-500" numberOfLines={1}>{names || 'No objects detected'}</Text>
+        <Text className="text-sm text-gray-500" numberOfLines={1}>
+          {names || 'No objects detected'}
+        </Text>
       )}
     </Pressable>
   );
 }
 
 export default function HistoryScreen() {
-  const { data, error, isLoading, mutate } = useSWR<DetectionRecord[]>('/detection/user/my', fetcher);
+  const { data, error, isLoading, mutate } = useSWR<DetectionRecord[]>(
+    '/detection/user/my',
+    fetcher,
+  );
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -79,11 +100,13 @@ export default function HistoryScreen() {
     setRefreshing(false);
   }, [mutate]);
 
-  const sorted = data ? [...data].sort((a, b) => {
-    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return tb - ta;
-  }) : [];
+  const sorted = data
+    ? [...data].sort((a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tb - ta;
+      })
+    : [];
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -98,19 +121,24 @@ export default function HistoryScreen() {
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
           <Text className="text-gray-500 text-center">
-            Could not load history. Make sure you are signed in and the API is running.
+            Could not load history. Make sure you are signed in and the API is
+            running.
           </Text>
         </View>
       ) : sorted.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-gray-400 text-center">No detections yet. Start a scan to see history here.</Text>
+          <Text className="text-gray-400 text-center">
+            No detections yet. Start a scan to see history here.
+          </Text>
         </View>
       ) : (
         <FlatList
           data={sorted}
           keyExtractor={(item) => item.detectionId}
           contentContainerStyle={{ padding: 16, gap: 10 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
           renderItem={({ item }) => <DetectionRow item={item} />}
         />
       )}

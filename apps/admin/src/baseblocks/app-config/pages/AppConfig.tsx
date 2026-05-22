@@ -2,10 +2,10 @@ import {
   getAdminMobileConfig,
   updateAdminMobileConfig,
 } from '@baseline/client-api/app-config';
+import { getRequestHandler } from '@baseline/client-api/request-handler';
 import type { MobileRuntimeConfig } from '@baseline/types/app-config';
 import { Button } from '@baseline/ui/primitives/button';
 import { useCallback, useEffect, useState } from 'react';
-import { getRequestHandler } from '@baseline/client-api/request-handler';
 import PageContent from '../../../components/page-content/PageContent';
 
 type FormState = MobileRuntimeConfig;

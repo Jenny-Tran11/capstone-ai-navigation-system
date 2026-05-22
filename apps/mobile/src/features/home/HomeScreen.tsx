@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
 import * as Location from 'expo-location';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import {
@@ -12,14 +12,14 @@ import {
 } from 'react-native-heroicons/outline';
 import { StarIcon as StarSolid } from 'react-native-heroicons/solid';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { usePreferences } from '@/hooks/use-preferences';
 import { useProfile } from '@/features/profile/use-profile';
+import { usePreferences } from '@/hooks/use-preferences';
 import { apiClient } from '@/lib/api-client';
 import { getRuntimeConfig } from '@/lib/runtime-config';
 import {
   addRecentDestination,
-  getRecentDestinations,
   type Destination,
+  getRecentDestinations,
 } from '@/lib/storage';
 
 type PlaceSuggestion = Destination & { placeId?: string };
@@ -60,14 +60,22 @@ async function geocodeDestination(dest: PlaceSuggestion): Promise<Destination> {
     const res = await fetch(url);
     const data = await res.json();
     const loc = data.result?.geometry?.location;
-    if (loc) return { label: dest.label, address: dest.address, lat: loc.lat, lng: loc.lng };
+    if (loc)
+      return {
+        label: dest.label,
+        address: dest.address,
+        lat: loc.lat,
+        lng: loc.lng,
+      };
   } catch {
     // fall through to geocodeByAddress
   }
   return dest;
 }
 
-async function geocodeByAddress(address: string): Promise<{ lat: number; lng: number }> {
+async function geocodeByAddress(
+  address: string,
+): Promise<{ lat: number; lng: number }> {
   const { googleMapsApiKey } = await getRuntimeConfig();
   if (!googleMapsApiKey) return { lat: 0, lng: 0 };
   try {
@@ -89,7 +97,10 @@ export default function HomeScreen() {
   const [recents, setRecents] = useState<Destination[]>([]);
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [savedPlaces, setSavedPlaces] = useState<Destination[]>([]);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -109,11 +120,16 @@ export default function HomeScreen() {
     Location.requestForegroundPermissionsAsync()
       .then(({ status }) => {
         if (status !== 'granted') return;
-        return Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        return Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
       })
       .then((loc) => {
         if (loc) {
-          setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+          setUserLocation({
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          });
         }
       })
       .catch(() => {});
@@ -162,7 +178,10 @@ export default function HomeScreen() {
 
       await addRecentDestination(geocoded);
       setRecents((prev) =>
-        [geocoded, ...prev.filter((d) => d.address !== geocoded.address)].slice(0, 5),
+        [geocoded, ...prev.filter((d) => d.address !== geocoded.address)].slice(
+          0,
+          5,
+        ),
       );
       router.push({
         pathname: '/(app)/(tabs)/navigate',
@@ -255,7 +274,9 @@ export default function HomeScreen() {
                   onPress={() => void toggleSaved(s)}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel={isSaved(s) ? 'Remove from saved' : 'Save place'}
+                  accessibilityLabel={
+                    isSaved(s) ? 'Remove from saved' : 'Save place'
+                  }
                 >
                   {isSaved(s) ? (
                     <StarSolid size={18} color="#2563eb" />
@@ -292,10 +313,16 @@ export default function HomeScreen() {
                     >
                       <BookmarkIcon size={22} color="#1d4ed8" />
                       <View className="flex-1">
-                        <Text className="text-base text-slate-900" numberOfLines={1}>
+                        <Text
+                          className="text-base text-slate-900"
+                          numberOfLines={1}
+                        >
                           {place.label}
                         </Text>
-                        <Text className="text-sm text-slate-500" numberOfLines={1}>
+                        <Text
+                          className="text-sm text-slate-500"
+                          numberOfLines={1}
+                        >
                           {place.address}
                         </Text>
                       </View>
@@ -323,7 +350,10 @@ export default function HomeScreen() {
                       accessibilityRole="button"
                     >
                       <BookmarkIcon size={22} color="#2563eb" />
-                      <Text className="flex-1 text-base text-slate-900" numberOfLines={1}>
+                      <Text
+                        className="flex-1 text-base text-slate-900"
+                        numberOfLines={1}
+                      >
                         {s.label}
                       </Text>
                       <Pressable
@@ -355,10 +385,16 @@ export default function HomeScreen() {
                     >
                       <ClockIcon size={22} color="#64748b" />
                       <View className="flex-1">
-                        <Text className="text-base text-slate-900" numberOfLines={1}>
+                        <Text
+                          className="text-base text-slate-900"
+                          numberOfLines={1}
+                        >
                           {item.label}
                         </Text>
-                        <Text className="text-sm text-slate-500" numberOfLines={1}>
+                        <Text
+                          className="text-sm text-slate-500"
+                          numberOfLines={1}
+                        >
                           {item.address}
                         </Text>
                       </View>
@@ -403,7 +439,9 @@ export default function HomeScreen() {
                 accessibilityRole="button"
               >
                 <EyeIcon size={32} color="#1d4ed8" />
-                <Text className="text-sm font-medium text-slate-700">Detect</Text>
+                <Text className="text-sm font-medium text-slate-700">
+                  Detect
+                </Text>
               </Pressable>
               <Pressable
                 onPress={() => router.push('/(app)/(tabs)/settings')}
@@ -411,7 +449,9 @@ export default function HomeScreen() {
                 accessibilityRole="button"
               >
                 <Cog6ToothIcon size={32} color="#475569" />
-                <Text className="text-sm font-medium text-slate-700">Settings</Text>
+                <Text className="text-sm font-medium text-slate-700">
+                  Settings
+                </Text>
               </Pressable>
             </View>
           </>

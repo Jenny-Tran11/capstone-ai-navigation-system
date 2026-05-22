@@ -15,15 +15,15 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      EnvironmentPlugin([
-        'REACT_APP_APP_NAME',
-        'REACT_APP_AWS_PROFILE',
-        'REACT_APP_API_URL',
-        'REACT_APP_COGNITO_IDENTITY_POOL_ID',
-        'REACT_APP_COGNITO_USER_POOL_ID',
-        'REACT_APP_COGNITO_USER_POOL_WEB_CLIENT_ID',
-        'REACT_APP_COGNITO_ENDPOINT',
-      ]),
+      EnvironmentPlugin({
+        REACT_APP_APP_NAME: '',
+        REACT_APP_AWS_PROFILE: '',
+        REACT_APP_API_URL: '',
+        REACT_APP_COGNITO_IDENTITY_POOL_ID: '',
+        REACT_APP_COGNITO_USER_POOL_ID: '',
+        REACT_APP_COGNITO_USER_POOL_WEB_CLIENT_ID: '',
+        REACT_APP_COGNITO_ENDPOINT: '',
+      }),
     ],
     envPrefix: 'REACT_APP_',
     resolve: {

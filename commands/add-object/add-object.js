@@ -14,7 +14,7 @@
 // - mapperFields blankId: data?.blankId, field1: data?.field1
 // - typeFields blankId: string; field1: string;
 
-const fs = require('fs');
+const fs = require('node:fs');
 const readlineSync = require('readline-sync');
 const YAML = require('js-yaml');
 
@@ -50,27 +50,19 @@ function yamlType(name, kind) {
   return new YAML.Type(`${functionName}`, {
     kind,
     multi: true,
-    representName: function (object) {
-      return object.type;
-    },
-    represent: function (object) {
-      return object.data;
-    },
+    representName: (object) => object.type,
+    represent: (object) => object.data,
     instanceOf: CustomTag,
-    construct: function (data, type) {
-      return new CustomTag(type, data);
-    },
+    construct: (data, type) => new CustomTag(type, data),
   });
 }
 
 function generateTypes() {
-  const types = functionNames
-    .map((functionName) =>
-      ['mapping', 'scalar', 'sequence'].map((kind) =>
-        yamlType(functionName, kind),
-      ),
-    )
-    .flat();
+  const types = functionNames.flatMap((functionName) =>
+    ['mapping', 'scalar', 'sequence'].map((kind) =>
+      yamlType(functionName, kind),
+    ),
+  );
   return types;
 }
 
@@ -115,16 +107,17 @@ const writeServerlessApiYaml = () => {
 
 const toCamelCase = (str) => {
   return str
-    .replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
-      return index === 0 ? word.toLowerCase() : word.toUpperCase();
-    })
+    .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) =>
+      index === 0 ? word.toLowerCase() : word.toUpperCase(),
+    )
     .replace(/\s+/g, '');
 };
 
 const toKebabCase = (str) =>
-  str &&
   str
-    .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)
+    ?.match(
+      /[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g,
+    )
     .map((x) => x.toLowerCase())
     .join('-');
 

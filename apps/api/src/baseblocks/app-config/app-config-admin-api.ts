@@ -100,10 +100,9 @@ adminAppConfigRouter.post('/mobile/test', [
       }
 
       if (isCrossing) {
-        const crossingImage =
-          imageUrl?.trim()
-            ? { type: 'url', value: imageUrl.trim() }
-            : { type: 'base64', value: imageBase64 };
+        const crossingImage = imageUrl?.trim()
+          ? { type: 'url', value: imageUrl.trim() }
+          : { type: 'base64', value: imageBase64 };
         const crossing = await fetch(baseUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -130,10 +129,9 @@ adminAppConfigRouter.post('/mobile/test', [
         ? {
             api_key: apiKey,
             inputs: {
-              image:
-                imageUrl?.trim()
-                  ? { type: 'url', value: imageUrl.trim() }
-                  : { type: 'base64', value: imageBase64 },
+              image: imageUrl?.trim()
+                ? { type: 'url', value: imageUrl.trim() }
+                : { type: 'base64', value: imageBase64 },
             },
           }
         : { image_base64: imageBase64 };

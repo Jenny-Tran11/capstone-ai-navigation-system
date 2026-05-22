@@ -6,9 +6,24 @@ const features = [
     description:
       'YOLOv12n via Roboflow identifies obstacles in real time — people, vehicles, furniture — with colour-coded bounding boxes, TTS narration, and haptic pulses calibrated to danger level.',
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        aria-hidden="true"
+      >
         <rect x="3" y="3" width="18" height="18" rx="2" />
-        <rect x="7" y="7" width="10" height="10" rx="1" strokeDasharray="2.5 1.5" />
+        <rect
+          x="7"
+          y="7"
+          width="10"
+          height="10"
+          rx="1"
+          strokeDasharray="2.5 1.5"
+        />
         <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
       </svg>
     ),
@@ -16,9 +31,17 @@ const features = [
   {
     title: 'Crossing Signal Detection',
     description:
-      'Detects pedestrian walk/don\'t-walk signals so users know exactly when it is safe to cross, without relying on audible signals that may not be present at every intersection.',
+      "Detects pedestrian walk/don't-walk signals so users know exactly when it is safe to cross, without relying on audible signals that may not be present at every intersection.",
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        aria-hidden="true"
+      >
         <rect x="8" y="2" width="8" height="20" rx="3" />
         <circle cx="12" cy="7" r="1.5" />
         <circle cx="12" cy="12" r="1.5" />
@@ -31,7 +54,15 @@ const features = [
     description:
       'Google Gemini 2.0 Flash reads bus numbers, route information, and arrival indicators from camera frames, then speaks the result aloud instantly.',
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        aria-hidden="true"
+      >
         <rect x="3" y="6" width="18" height="13" rx="2" />
         <line x1="3" y1="11" x2="21" y2="11" />
         <circle cx="7.5" cy="22" r="1.5" />
@@ -48,7 +79,15 @@ const features = [
     description:
       'Google Routes API v2 provides turn-by-turn walking directions with voice prompts, integrated with live detection so obstacle warnings layer seamlessly over navigation guidance.',
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        aria-hidden="true"
+      >
         <path d="M12 2L19 21L12 16L5 21L12 2Z" />
       </svg>
     ),
@@ -68,7 +107,10 @@ const FeaturesSection = (): JSX.Element => (
             backgroundColor: 'rgba(204,89,51,0.06)',
           }}
         >
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--warm-primary)' }} />
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: 'var(--warm-primary)' }}
+          />
           Core Features
         </div>
         <h2
@@ -100,10 +142,16 @@ const FeaturesSection = (): JSX.Element => (
             >
               {feature.icon}
             </div>
-            <h3 className="text-lg font-semibold" style={{ color: 'var(--warm-fg)' }}>
+            <h3
+              className="text-lg font-semibold"
+              style={{ color: 'var(--warm-fg)' }}
+            >
               {feature.title}
             </h3>
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--warm-muted)' }}>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: 'var(--warm-muted)' }}
+            >
               {feature.description}
             </p>
             <Link

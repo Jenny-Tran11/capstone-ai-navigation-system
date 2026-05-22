@@ -2,7 +2,14 @@ import '@/lib/amplify';
 import { signUp } from '@aws-amplify/auth';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SignUpScreen() {
@@ -44,8 +51,12 @@ export default function SignUpScreen() {
         className="flex-1 justify-center px-6"
       >
         <View className="mb-10">
-          <Text className="text-4xl font-bold text-gray-900">Create account</Text>
-          <Text className="text-gray-500 mt-2 text-base">Sign up to get started</Text>
+          <Text className="text-4xl font-bold text-gray-900">
+            Create account
+          </Text>
+          <Text className="text-gray-500 mt-2 text-base">
+            Sign up to get started
+          </Text>
         </View>
 
         <View className="gap-4">
@@ -92,8 +103,14 @@ export default function SignUpScreen() {
             </Text>
           </Pressable>
 
-          <Pressable onPress={() => router.back()} accessibilityRole="button" className="items-center mt-2">
-            <Text className="text-blue-600 text-sm">Already have an account? Sign in</Text>
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            className="items-center mt-2"
+          >
+            <Text className="text-blue-600 text-sm">
+              Already have an account? Sign in
+            </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

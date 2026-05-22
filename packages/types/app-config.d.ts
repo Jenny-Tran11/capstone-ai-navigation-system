@@ -14,4 +14,3 @@ export interface AppConfig extends BaseObject {
   configId: string;
   mobile: MobileRuntimeConfig;
 }
-

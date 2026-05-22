@@ -1,7 +1,7 @@
 import * as Location from 'expo-location';
-import * as Speech from 'expo-speech';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import * as Speech from 'expo-speech';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,26 +9,38 @@ import {
   Text,
   View,
 } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
 import {
   ArrowsRightLeftIcon,
   ClockIcon,
   MapPinIcon,
   SpeakerWaveIcon,
 } from 'react-native-heroicons/outline';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getWalkingRoute, type Route, type RouteStep, type MapPoint } from './routing-service';
+import {
+  getWalkingRoute,
+  type MapPoint,
+  type Route,
+  type RouteStep,
+} from './routing-service';
 
 export default function NavigatePlanScreen() {
-  const { address, lat: latParam, lng: lngParam } = useLocalSearchParams<{
+  const {
+    address,
+    lat: latParam,
+    lng: lngParam,
+  } = useLocalSearchParams<{
     address?: string;
     lat?: string;
     lng?: string;
   }>();
-  const destCoords = {
-    lat: latParam ? Number.parseFloat(latParam) : 0,
-    lng: lngParam ? Number.parseFloat(lngParam) : 0,
-  };
+  const destCoords = useMemo(
+    () => ({
+      lat: latParam ? Number.parseFloat(latParam) : 0,
+      lng: lngParam ? Number.parseFloat(lngParam) : 0,
+    }),
+    [latParam, lngParam],
+  );
   const [route, setRoute] = useState<Route | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,9 +77,14 @@ export default function NavigatePlanScreen() {
 
       // One-shot high-accuracy fix
       try {
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
         const origin = { lat: loc.coords.latitude, lng: loc.coords.longitude };
-        setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+        setUserLocation({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
 
         const r = await getWalkingRoute(origin, destCoords);
         setRoute(r);
@@ -98,10 +115,11 @@ export default function NavigatePlanScreen() {
         },
       );
 
-      return () => { sub.remove(); };
+      return () => {
+        sub.remove();
+      };
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, latParam, lngParam]);
+  }, [address, destCoords]);
 
   const speakStep = (step: RouteStep) => {
     Speech.speak(step.instruction, { language: 'en-AU', rate: 1.0 });
@@ -191,11 +209,15 @@ export default function NavigatePlanScreen() {
           <View className="px-5 py-3 bg-blue-50 flex-row gap-4 items-center border-b border-blue-100">
             <View className="flex-row items-center gap-1.5">
               <ArrowsRightLeftIcon size={16} color="#475569" />
-              <Text className="text-sm text-gray-600">{route.totalDistance}</Text>
+              <Text className="text-sm text-gray-600">
+                {route.totalDistance}
+              </Text>
             </View>
             <View className="flex-row items-center gap-1.5">
               <ClockIcon size={16} color="#475569" />
-              <Text className="text-sm text-gray-600">{route.totalDuration}</Text>
+              <Text className="text-sm text-gray-600">
+                {route.totalDuration}
+              </Text>
             </View>
           </View>
 
@@ -219,10 +241,14 @@ export default function NavigatePlanScreen() {
                 accessibilityLabel={`Step ${index + 1}: ${item.instruction}`}
               >
                 <View className="w-7 h-7 rounded-full bg-primary items-center justify-center shrink-0 mt-0.5">
-                  <Text className="text-white text-xs font-bold">{index + 1}</Text>
+                  <Text className="text-white text-xs font-bold">
+                    {index + 1}
+                  </Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-base text-gray-900">{item.instruction}</Text>
+                  <Text className="text-base text-gray-900">
+                    {item.instruction}
+                  </Text>
                   <Text className="text-sm text-gray-500 mt-1">
                     {item.distance} · {item.duration}
                   </Text>
@@ -234,13 +260,17 @@ export default function NavigatePlanScreen() {
           {/* Action buttons */}
           <View className="px-5 pb-6 pt-2 gap-3">
             <Pressable
-              onPress={() => route.steps[activeStep] && speakStep(route.steps[activeStep])}
+              onPress={() =>
+                route.steps[activeStep] && speakStep(route.steps[activeStep])
+              }
               className="bg-slate-100 rounded-2xl py-4 flex-row items-center justify-center gap-2"
               accessibilityRole="button"
               accessibilityLabel="Read current step aloud"
             >
               <SpeakerWaveIcon size={22} color="#475569" />
-              <Text className="text-slate-700 font-semibold text-lg">Read step</Text>
+              <Text className="text-slate-700 font-semibold text-lg">
+                Read step
+              </Text>
             </Pressable>
             <Pressable
               onPress={() =>
@@ -254,7 +284,9 @@ export default function NavigatePlanScreen() {
               accessibilityLabel="Start navigation with detection"
             >
               <MapPinIcon size={22} color="#ffffff" />
-              <Text className="text-white font-semibold text-lg">Start Navigation</Text>
+              <Text className="text-white font-semibold text-lg">
+                Start Navigation
+              </Text>
             </Pressable>
           </View>
         </View>

@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom';
 
 const CtaSection = (): JSX.Element => (
-  <section className="py-24 px-6" style={{ backgroundColor: 'var(--warm-surface)', borderTop: '1px solid var(--warm-border)' }}>
+  <section
+    className="py-24 px-6"
+    style={{
+      backgroundColor: 'var(--warm-surface)',
+      borderTop: '1px solid var(--warm-border)',
+    }}
+  >
     <div className="max-w-3xl mx-auto">
       <div
         className="relative rounded-3xl border p-12 sm:p-16 text-center overflow-hidden"
@@ -25,7 +31,10 @@ const CtaSection = (): JSX.Element => (
             backgroundColor: 'rgba(204,89,51,0.06)',
           }}
         >
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--warm-primary)' }} />
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: 'var(--warm-primary)' }}
+          />
           University of Wollongong · Capstone 2026
         </div>
 
@@ -42,8 +51,9 @@ const CtaSection = (): JSX.Element => (
           className="text-base font-light leading-relaxed max-w-lg mx-auto mb-10"
           style={{ color: 'var(--warm-muted)' }}
         >
-          AI-Detect is a capstone project exploring how mobile AI can close the accessibility gap
-          in outdoor navigation. Explore the features, read how it works, or get in touch.
+          AI-Detect is a capstone project exploring how mobile AI can close the
+          accessibility gap in outdoor navigation. Explore the features, read
+          how it works, or get in touch.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -52,10 +62,12 @@ const CtaSection = (): JSX.Element => (
             className="no-underline inline-flex items-center gap-2 text-white text-base font-semibold rounded-full px-8 py-4 w-full sm:w-auto transition-all duration-200 shadow-lg"
             style={{ backgroundColor: 'var(--warm-primary)' }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLElement).style.backgroundColor = 'var(--warm-primary-hover)')
+              ((e.currentTarget as HTMLElement).style.backgroundColor =
+                'var(--warm-primary-hover)')
             }
             onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.backgroundColor = 'var(--warm-primary)')
+              ((e.currentTarget as HTMLElement).style.backgroundColor =
+                'var(--warm-primary)')
             }
           >
             Learn More About the Project

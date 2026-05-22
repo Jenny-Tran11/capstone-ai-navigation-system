@@ -1,5 +1,5 @@
-import { getRequestHandler } from '@baseline/client-api/request-handler';
 import { getAllDetections } from '@baseline/client-api/detection';
+import { getRequestHandler } from '@baseline/client-api/request-handler';
 import type { Detection } from '@baseline/types/detection';
 import { useLoaderData } from 'react-router-dom';
 import PageContent from '../../../components/page-content/PageContent';
@@ -15,7 +15,10 @@ const Detections = (): JSX.Element => {
 
   return (
     <PageContent
-      breadcrumbs={[{ label: 'Home', href: '/dashboard' }, { label: 'Detections' }]}
+      breadcrumbs={[
+        { label: 'Home', href: '/dashboard' },
+        { label: 'Detections' },
+      ]}
     >
       <DetectionList detections={detections} />
     </PageContent>

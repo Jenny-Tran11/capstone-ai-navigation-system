@@ -11,12 +11,12 @@ const CONFIG: Record<
   { bg: string; icon: string; label: string }
 > = {
   walk: {
-    bg: '#16a34a',    // green-600
+    bg: '#16a34a', // green-600
     icon: '🚶',
     label: 'Walk Signal',
   },
   dont_walk: {
-    bg: '#dc2626',    // red-600
+    bg: '#dc2626', // red-600
     icon: '✋',
     label: "Don't Walk Signal",
   },
@@ -35,7 +35,9 @@ export function CrossingBanner({ signal }: Props) {
 
   if (signal === 'none') {
     return (
-      <Animated.View style={{ opacity, position: 'absolute', top: 0, left: 0, right: 0 }}>
+      <Animated.View
+        style={{ opacity, position: 'absolute', top: 0, left: 0, right: 0 }}
+      >
         <View />
       </Animated.View>
     );

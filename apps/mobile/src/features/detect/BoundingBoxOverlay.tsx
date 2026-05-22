@@ -1,6 +1,6 @@
 import { Rect, Svg, Text as SvgText } from 'react-native-svg';
-import { DANGER_CLASSES, MEDIUM_CLASSES } from './detection-classes';
 import type { DetectionResult } from './detection-api';
+import { DANGER_CLASSES, MEDIUM_CLASSES } from './detection-classes';
 
 type ViewSize = { width: number; height: number };
 
@@ -35,8 +35,8 @@ export function BoundingBoxOverlay({
         const [x1, y1, x2, y2] = det.box;
         const color = boxColor(det.name);
         return (
-          // biome-ignore lint/suspicious/noArrayIndexKey: stable within render
           <Rect
+            // biome-ignore lint/suspicious/noArrayIndexKey: detections array is rebuilt each frame; index is stable within a single render
             key={i}
             x={x1 * scaleX}
             y={y1 * scaleY}

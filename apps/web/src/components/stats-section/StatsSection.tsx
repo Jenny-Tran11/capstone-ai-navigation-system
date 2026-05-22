@@ -21,7 +21,8 @@ const StatsSection = (): JSX.Element => (
     className="py-12 px-6 border-b"
     style={{ borderColor: 'var(--warm-border)' }}
   >
-    <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x"
+    <div
+      className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x"
       style={{ ['--tw-divide-color' as string]: 'var(--warm-border)' }}
     >
       {stats.map((stat, i) => (
@@ -29,9 +30,7 @@ const StatsSection = (): JSX.Element => (
           key={stat.label}
           className="flex flex-col items-center text-center py-8 sm:py-6 px-8"
           style={
-            i < stats.length - 1
-              ? { borderColor: 'var(--warm-border)' }
-              : {}
+            i < stats.length - 1 ? { borderColor: 'var(--warm-border)' } : {}
           }
         >
           <span
@@ -40,7 +39,10 @@ const StatsSection = (): JSX.Element => (
           >
             {stat.value}
           </span>
-          <span className="text-base font-semibold mb-1" style={{ color: 'var(--warm-fg)' }}>
+          <span
+            className="text-base font-semibold mb-1"
+            style={{ color: 'var(--warm-fg)' }}
+          >
             {stat.label}
           </span>
           <span className="text-sm" style={{ color: 'var(--warm-muted)' }}>

@@ -3,10 +3,14 @@ import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { apiClient } from '@/lib/api-client';
-import { postDetect, type DetectionResult, type DetectResponse } from './detection-api';
+import {
+  type DetectionResult,
+  type DetectResponse,
+  postDetect,
+} from './detection-api';
 import { DANGER_CLASSES, MEDIUM_CLASSES } from './detection-classes';
 
-function dangerLevel(detections: DetectionResult[]): 'high' | 'medium' | 'low' {
+export function dangerLevel(detections: DetectionResult[]): 'high' | 'medium' | 'low' {
   for (const d of detections) {
     if (DANGER_CLASSES.has(d.name.toLowerCase())) return 'high';
   }
@@ -34,7 +38,11 @@ type Options = {
   maxScansPerHour: number;
   hapticEnabled: boolean;
   enabled: boolean;
-  captureImage: () => Promise<{ base64: string; width: number; height: number } | null>;
+  captureImage: () => Promise<{
+    base64: string;
+    width: number;
+    height: number;
+  } | null>;
 };
 
 type LiveDetectionState = {
@@ -50,7 +58,7 @@ const MIN_TTS_INTERVAL_MS = 2500;
 const MAX_CONSECUTIVE_ERRORS = 3;
 const SIMILARITY_THRESHOLD = 0.85;
 
-function wordOverlap(a: string, b: string): number {
+export function wordOverlap(a: string, b: string): number {
   const setA = new Set(a.toLowerCase().split(/\s+/));
   const setB = new Set(b.toLowerCase().split(/\s+/));
   let intersection = 0;
@@ -154,16 +162,22 @@ export function useLiveDetection({
   }, [captureImage, hapticEnabled, maxScansPerHour, speak, stopInterval]);
 
   useEffect(() => {
-    const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
-      isActiveRef.current = status === 'active';
-    });
+    const sub = AppState.addEventListener(
+      'change',
+      (status: AppStateStatus) => {
+        isActiveRef.current = status === 'active';
+      },
+    );
     return () => sub.remove();
   }, []);
 
   useEffect(() => {
-    hourResetRef.current = setInterval(() => {
-      scansThisHourRef.current = 0;
-    }, 60 * 60 * 1000);
+    hourResetRef.current = setInterval(
+      () => {
+        scansThisHourRef.current = 0;
+      },
+      60 * 60 * 1000,
+    );
     return () => {
       if (hourResetRef.current) clearInterval(hourResetRef.current);
     };
