@@ -1,13 +1,13 @@
 import type { UserProfile } from '@baseline/types/user-profile';
 import { type Response, Router } from 'express';
+import { checkPermission } from '../../middleware/check-permission';
+import { getErrorMessage } from '../../util/error-message';
+import type { RequestContext } from '../../util/request-context.type';
 import {
   createUser,
   getUserAttributesByEmail,
 } from '../cognito/cognito.service';
 import { permissionService } from '../permission/permission.service';
-import { checkPermission } from '../../middleware/check-permission';
-import { getErrorMessage } from '../../util/error-message';
-import type { RequestContext } from '../../util/request-context.type';
 import { userProfileService } from './user-profile.service';
 
 export const adminUserProfileRouter = Router();

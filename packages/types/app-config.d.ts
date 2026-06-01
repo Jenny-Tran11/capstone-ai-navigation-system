@@ -6,12 +6,12 @@ export interface MobileRuntimeConfig {
   crossingApiBaseUrl: string;
   crossingApiKey: string;
   googleMapsApiKey: string;
-  googleAiApiKey: string;
-  googleAiModel: string;
+  bedrockTransitModelId: string;
+  bedrockAssistantModelId: string;
+  transcribeLanguageCode: string;
 }
 
 export interface AppConfig extends BaseObject {
   configId: string;
   mobile: MobileRuntimeConfig;
 }
-

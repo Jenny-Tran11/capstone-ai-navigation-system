@@ -137,4 +137,6 @@ pnpm run add:object
 
 ## License
 
+Original Frameworks belong to Devika Pty Ltd
+This framework is opensourced, this version is the newest customised update
 MIT

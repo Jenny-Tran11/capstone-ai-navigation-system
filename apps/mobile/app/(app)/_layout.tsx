@@ -18,7 +18,7 @@ export default function AppLayout() {
     isOnboardingDone()
       .then(setOnboardingDone)
       .catch(() => setOnboardingDone(false));
-  }, [isAuthenticated]);
+  }, [isAuthenticated, segments]);
 
   useEffect(() => {
     if (isAuthenticated !== true || onboardingDone === null) return;

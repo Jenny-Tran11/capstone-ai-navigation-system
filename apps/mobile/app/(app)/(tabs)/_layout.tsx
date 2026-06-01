@@ -1,4 +1,6 @@
 import { Tabs } from 'expo-router';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ClockIcon,
   Cog6ToothIcon,
@@ -6,16 +8,24 @@ import {
   HomeIcon,
   MapIcon,
 } from 'react-native-heroicons/outline';
-import { View } from 'react-native';
+
+const TAB_BAR_BASE_HEIGHT = 64;
+const TAB_BAR_PADDING_BOTTOM = 8;
 
 export default function TabsLayout() {
+  const { bottom } = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#2563eb',
         tabBarInactiveTintColor: '#94a3b8',
-        tabBarStyle: { paddingBottom: 8, height: 72 },
+        tabBarStyle: {
+          height: TAB_BAR_BASE_HEIGHT + bottom,
+          paddingBottom: TAB_BAR_PADDING_BOTTOM + bottom,
+          paddingTop: 8,
+        },
       }}
     >
       <Tabs.Screen

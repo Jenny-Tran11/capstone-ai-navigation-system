@@ -69,6 +69,9 @@ tsconfig.tsbuildinfo
 # Local MiniStack config
 .cognito/
 
+# Expo prebuild — Android SDK path (machine-specific)
+apps/mobile/android/local.properties
+
 # PyTorch / YOLO weights — large binaries; keep out of normal Git history.
 # Use a local copy (see apps/model/.env), CI artifacts, or Git LFS if you must version them.
 *.pt
@@ -80,6 +83,7 @@ apps/model/runs/
 apps/model/revised-pedestrian-obstacle-1/
 apps/model/src/__pycache__/
 .claude/
+.cursor/
 
 # Run train items
 runs/

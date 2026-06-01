@@ -10,7 +10,9 @@ const createAuthenticatedHandler = (app: Application) => {
       event: APIGatewayProxyEventBase<Authorizer>,
     ) {
       request.context = event.requestContext;
-      request.currentUserSub = `${request.context?.authorizer?.claims?.sub}`;
+      const sub = request.context?.authorizer?.claims?.sub;
+      request.currentUserSub =
+        typeof sub === 'string' && sub.length > 0 ? sub : '';
     },
   });
   return handler;

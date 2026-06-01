@@ -34,9 +34,10 @@ const createApp = (): Application => {
   app.use(express.json({ limit: bodySizeLimit }));
   app.use((req, _res, next) => {
     const request = req as RequestContext;
-    if (!request.currentUserSub) {
-      request.currentUserSub =
-        extractSubFromAuthHeader(req.headers.authorization) ?? '';
+    const fromHeader = extractSubFromAuthHeader(req.headers.authorization);
+    const sub = request.currentUserSub?.trim();
+    if (!sub || sub === 'undefined') {
+      request.currentUserSub = fromHeader ?? '';
     }
     next();
   });

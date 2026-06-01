@@ -1,6 +1,6 @@
 import '@/lib/amplify';
-import Slider from '@react-native-community/slider';
 import { fetchUserAttributes, signOut } from '@aws-amplify/auth';
+import Slider from '@react-native-community/slider';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -14,9 +14,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiClient } from '@/lib/api-client';
 import { useProfile } from '@/features/profile/use-profile';
 import { usePreferences } from '@/hooks/use-preferences';
+import { apiClient } from '@/lib/api-client';
 
 type RowProps = { label: string; value: string };
 const InfoRow = ({ label, value }: RowProps) => (
@@ -47,7 +47,11 @@ const TTS_LANGUAGES = [
 
 export default function SettingsScreen() {
   const { prefs, update, syncState } = usePreferences();
-  const { profile, loading: profileLoading, update: updateProfile } = useProfile();
+  const {
+    profile,
+    loading: profileLoading,
+    update: updateProfile,
+  } = useProfile();
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
@@ -82,6 +86,7 @@ export default function SettingsScreen() {
     setEmergencyName(prefs?.emergencyContact?.name ?? '');
     setEmergencyPhone(prefs?.emergencyContact?.phone ?? '');
   }, [prefs?.emergencyContact?.name, prefs?.emergencyContact?.phone]);
+
 
   if (!prefs) return null;
 

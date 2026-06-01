@@ -1,11 +1,16 @@
+import axios from 'axios';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { MagnifyingGlassIcon } from 'react-native-heroicons/outline';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '@/lib/api-client';
-import { getRuntimeConfig } from '@/lib/runtime-config';
-import { markOnboardingDone, savePreferences, type UserPreferences } from '@/lib/storage';
+import { placesAutocomplete, placesDetailsGeometry } from '@/lib/places-api';
+import {
+  markOnboardingDone,
+  savePreferences,
+  type UserPreferences,
+} from '@/lib/storage';
 
 type FieldKey = 'home' | 'work';
 
@@ -24,65 +29,48 @@ type ResolvedLocation = {
 
 type PreferredLocation = UserPreferences['preferredLocations'][number];
 
-async function fetchAutocomplete(query: string, mapsKey: string): Promise<Suggestion[]> {
-  if (!query.trim() || !mapsKey) return [];
-  try {
-    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${mapsKey}&types=address`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return (data.predictions ?? []).map(
-      (p: { place_id: string; description: string }) => ({
-        placeId: p.place_id,
-        description: p.description,
-        lat: 0,
-        lng: 0,
-      }),
-    );
-  } catch {
-    return [];
-  }
+async function fetchAutocomplete(query: string): Promise<Suggestion[]> {
+  if (!query.trim()) return [];
+  const predictions = await placesAutocomplete(query, null);
+  return predictions.map((p) => ({
+    placeId: p.place_id,
+    description: p.description,
+    lat: 0,
+    lng: 0,
+  }));
 }
 
-async function geocodePlaceId(placeId: string, mapsKey: string): Promise<{ lat: number; lng: number }> {
-  try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=geometry&key=${mapsKey}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const loc = data.result?.geometry?.location;
-    if (loc) return { lat: loc.lat, lng: loc.lng };
-  } catch {
-    // fall through
-  }
+async function geocodePlaceId(
+  placeId: string,
+): Promise<{ lat: number; lng: number }> {
+  const loc = await placesDetailsGeometry(placeId);
+  if (loc) return loc;
   return { lat: 0, lng: 0 };
 }
 
 export default function OnboardingScreen() {
-  const [mapsKey, setMapsKey] = useState('');
-  const [configReady, setConfigReady] = useState(false);
-  const [values, setValues] = useState<{ home: ResolvedLocation | null; work: ResolvedLocation | null }>({
+  const [values, setValues] = useState<{
+    home: ResolvedLocation | null;
+    work: ResolvedLocation | null;
+  }>({
     home: null,
     work: null,
   });
-  const [inputText, setInputText] = useState<{ home: string; work: string }>({ home: '', work: '' });
+  const [inputText, setInputText] = useState<{ home: string; work: string }>({
+    home: '',
+    work: '',
+  });
   const [activeField, setActiveField] = useState<FieldKey | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [searchedOnce, setSearchedOnce] = useState<{ home: boolean; work: boolean }>({ home: false, work: false });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    getRuntimeConfig()
-      .then((cfg) => {
-        setMapsKey(cfg.googleMapsApiKey);
-        setConfigReady(true);
-      })
-      .catch(() => setConfigReady(true));
-  }, []);
-
   // Debounced autocomplete
   useEffect(() => {
-    if (!activeField || !configReady) {
+    if (!activeField) {
       setSuggestions([]);
       return;
     }
@@ -94,20 +82,19 @@ export default function OnboardingScreen() {
     }
     debounceRef.current = setTimeout(async () => {
       setLoadingSuggestions(true);
-      const next = await fetchAutocomplete(query, mapsKey);
+      const next = await fetchAutocomplete(query);
       setSuggestions(next);
       setLoadingSuggestions(false);
+      setSearchedOnce((prev) => ({ ...prev, [activeField as string]: true }));
     }, 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [activeField, configReady, mapsKey, inputText]);
+  }, [activeField, inputText]);
 
   const handleSelect = async (field: FieldKey, suggestion: Suggestion) => {
     // Immediately geocode via Place Details so we have real coords at save time
-    const coords = mapsKey
-      ? await geocodePlaceId(suggestion.placeId, mapsKey)
-      : { lat: 0, lng: 0 };
+    const coords = await geocodePlaceId(suggestion.placeId);
     setValues((prev) => ({
       ...prev,
       [field]: { address: suggestion.description, ...coords },
@@ -131,12 +118,25 @@ export default function OnboardingScreen() {
       if (values.work) {
         preferredLocations.push({ tag: 'work', label: 'Work', ...values.work });
       }
-      await apiClient.put('/user-profile/user/preferences', { preferredLocations });
+      await apiClient.put('/user-profile/user/preferences', {
+        preferredLocations,
+      });
       await savePreferences({ preferredLocations });
       await markOnboardingDone();
       router.replace('/(app)/(tabs)/home');
-    } catch {
-      setError('Could not save locations. Please try again.');
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const body = err.response?.data as { error?: string } | undefined;
+        const msg =
+          typeof body?.error === 'string'
+            ? body.error
+            : err.response?.status === 401
+              ? 'Sign in expired. Please sign in again and retry.'
+              : err.message;
+        setError(msg || 'Could not save locations. Please try again.');
+      } else {
+        setError('Could not save locations. Please try again.');
+      }
     } finally {
       setSaving(false);
     }
@@ -146,77 +146,80 @@ export default function OnboardingScreen() {
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24, gap: 18 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingVertical: 24,
+          gap: 18,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="gap-2">
-          <Text className="text-3xl font-bold text-slate-900">Set your places</Text>
+          <Text className="text-3xl font-bold text-slate-900">
+            Set your places
+          </Text>
           <Text className="text-slate-500">
-            Add Home and Work so navigation starts faster.
+            Add Australian home and work street addresses so navigation starts
+            faster.
           </Text>
         </View>
 
-        {!configReady ? (
-          <View className="items-center py-6">
-            <ActivityIndicator color="#2563eb" />
-            <Text className="text-slate-500 mt-2 text-sm">Loading…</Text>
-          </View>
-        ) : (
-          (['home', 'work'] as const).map((field) => (
-            <View key={field} className="gap-2">
-              <Text className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                {field}
-              </Text>
-              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 gap-3">
-                <MagnifyingGlassIcon size={18} color="#64748b" />
-                <TextInput
-                  value={inputText[field]}
-                  onFocus={() => setActiveField(field)}
-                  onChangeText={(text) => {
-                    setInputText((prev) => ({ ...prev, [field]: text }));
-                    // Clear resolved location if user edits the text manually
-                    setValues((prev) => ({ ...prev, [field]: null }));
-                    setActiveField(field);
-                  }}
-                  className="flex-1 text-base text-slate-900"
-                  placeholder={`Search ${field} address`}
-                  placeholderTextColor="#94a3b8"
-                  accessibilityLabel={`${field} address`}
-                />
-              </View>
-
-              {activeField === field && suggestions.length > 0 ? (
-                <View className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                  {suggestions.slice(0, 5).map((s) => (
-                    <Pressable
-                      key={`${field}:${s.placeId}`}
-                      className="px-4 py-3 border-b border-slate-100"
-                      onPress={() => void handleSelect(field, s)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Select ${s.description}`}
-                    >
-                      <Text className="text-slate-800" numberOfLines={1}>
-                        {s.description}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              ) : null}
-
-              {activeField === field &&
-              inputText[field].trim() &&
-              !loadingSuggestions &&
-              suggestions.length === 0 ? (
-                <Text className="text-xs text-slate-500">No matches found.</Text>
-              ) : null}
-
-              {/* Show resolved indicator once user selected a suggestion */}
-              {values[field] ? (
-                <Text className="text-xs text-green-600">✓ Location confirmed</Text>
-              ) : null}
+        {(['home', 'work'] as const).map((field) => (
+          <View key={field} className="gap-2">
+            <Text className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+              {field}
+            </Text>
+            <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 gap-3">
+              <MagnifyingGlassIcon size={18} color="#64748b" />
+              <TextInput
+                value={inputText[field]}
+                onFocus={() => setActiveField(field)}
+                onChangeText={(text) => {
+                  setInputText((prev) => ({ ...prev, [field]: text }));
+                  setValues((prev) => ({ ...prev, [field]: null }));
+                  setSearchedOnce((prev) => ({ ...prev, [field]: false }));
+                  setActiveField(field);
+                }}
+                className="flex-1 text-base text-slate-900"
+                placeholder={`Search ${field} address`}
+                placeholderTextColor="#94a3b8"
+                accessibilityLabel={`${field} address`}
+              />
             </View>
-          ))
-        )}
+
+            {activeField === field && suggestions.length > 0 ? (
+              <View className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                {suggestions.slice(0, 5).map((s) => (
+                  <Pressable
+                    key={`${field}:${s.placeId}`}
+                    className="px-4 py-3 border-b border-slate-100"
+                    onPress={() => void handleSelect(field, s)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select ${s.description}`}
+                  >
+                    <Text className="text-slate-800" numberOfLines={1}>
+                      {s.description}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+
+            {activeField === field &&
+            inputText[field].trim() &&
+            !loadingSuggestions &&
+            searchedOnce[field] &&
+            suggestions.length === 0 ? (
+              <Text className="text-xs text-slate-500">No matches found.</Text>
+            ) : null}
+
+            {/* Show resolved indicator once user selected a suggestion */}
+            {values[field] ? (
+              <Text className="text-xs text-green-600">
+                ✓ Location confirmed
+              </Text>
+            ) : null}
+          </View>
+        ))}
 
         {error ? <Text className="text-sm text-red-500">{error}</Text> : null}
 

@@ -2,11 +2,18 @@ import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
-import { apiClient } from '@/lib/api-client';
-import { postDetect, type DetectionResult, type DetectResponse } from './detection-api';
+import {
+  type DetectionResult,
+  type DetectResponse,
+  postDetect,
+} from './detection-api';
 import { DANGER_CLASSES, MEDIUM_CLASSES } from './detection-classes';
+import { apiClient } from '@/lib/api-client';
 
 function dangerLevel(detections: DetectionResult[]): 'high' | 'medium' | 'low' {
+  for (const d of detections) {
+    if (d.proximity === 'very_near') return 'high';
+  }
   for (const d of detections) {
     if (DANGER_CLASSES.has(d.name.toLowerCase())) return 'high';
   }
@@ -14,6 +21,50 @@ function dangerLevel(detections: DetectionResult[]): 'high' | 'medium' | 'low' {
     if (MEDIUM_CLASSES.has(d.name.toLowerCase())) return 'medium';
   }
   return 'low';
+}
+
+function directionFromBox(
+  box: [number, number, number, number],
+  imageWidth: number,
+): 'left' | 'center' | 'right' {
+  const centerX = (box[0] + box[2]) / 2;
+  const third = Math.max(1, imageWidth) / 3;
+  if (centerX < third) return 'left';
+  if (centerX > third * 2) return 'right';
+  return 'center';
+}
+
+function buildDetailedPrompt(
+  detections: DetectionResult[],
+  imageWidth: number,
+): string {
+  if (!detections.length) return 'Path is clear.';
+
+  const rank = (d: DetectionResult): number => {
+    const [x1, y1, x2, y2] = d.box;
+    const area = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+    const proximityScore =
+      d.proximity === 'very_near' ? 100 : d.proximity === 'near' ? 60 : 20;
+    return proximityScore + area + d.confidence * 10;
+  };
+
+  const sorted = [...detections].sort((a, b) => rank(b) - rank(a)).slice(0, 3);
+  const lead = sorted[0];
+  const leadDir = directionFromBox(lead.box, imageWidth);
+  const leadUrgency =
+    lead.proximity === 'very_near'
+      ? 'Warning. Very close'
+      : lead.proximity === 'near'
+        ? 'Caution. Nearby'
+        : 'Detected';
+
+  const extras = sorted.slice(1).map((d) => {
+    const dir = directionFromBox(d.box, imageWidth);
+    return `${d.name} ${dir}`;
+  });
+
+  const extraPart = extras.length ? `. Also ${extras.join(', ')}` : '';
+  return `${leadUrgency} ${lead.name} ${leadDir}${extraPart}.`;
 }
 
 async function fireHaptic(danger: 'high' | 'medium' | 'low'): Promise<void> {
@@ -34,7 +85,14 @@ type Options = {
   maxScansPerHour: number;
   hapticEnabled: boolean;
   enabled: boolean;
-  captureImage: () => Promise<{ base64: string; width: number; height: number } | null>;
+  speechRate: number;
+  speechLanguage: string;
+  captureImage: () => Promise<{
+    base64: string;
+    uri: string;
+    width: number;
+    height: number;
+  } | null>;
 };
 
 type LiveDetectionState = {
@@ -43,26 +101,22 @@ type LiveDetectionState = {
   lastDetections: DetectionResult[];
   imageSize: { width: number; height: number } | null;
   errorCount: number;
+  requestCount: number;
+  lastError: string | null;
+  lastSuccessAt: number | null;
+  triggerNow: () => Promise<void>;
   reset: () => void;
 };
 
-const MIN_TTS_INTERVAL_MS = 2500;
 const MAX_CONSECUTIVE_ERRORS = 3;
-const SIMILARITY_THRESHOLD = 0.85;
-
-function wordOverlap(a: string, b: string): number {
-  const setA = new Set(a.toLowerCase().split(/\s+/));
-  const setB = new Set(b.toLowerCase().split(/\s+/));
-  let intersection = 0;
-  for (const w of setA) if (setB.has(w)) intersection++;
-  return intersection / Math.max(setA.size, setB.size, 1);
-}
 
 export function useLiveDetection({
   intervalSec,
   maxScansPerHour,
   hapticEnabled,
   enabled,
+  speechRate,
+  speechLanguage,
   captureImage,
 }: Options) {
   const [state, setState] = useState<Omit<LiveDetectionState, 'reset'>>({
@@ -71,15 +125,20 @@ export function useLiveDetection({
     lastDetections: [],
     imageSize: null,
     errorCount: 0,
+    requestCount: 0,
+    lastError: null,
+    lastSuccessAt: null,
+    triggerNow: async () => {},
   });
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hourResetRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scansThisHourRef = useRef(0);
-  const lastSpeechAtRef = useRef(0);
-  const lastDescriptionRef = useRef<string | null>(null);
   const consecutiveErrorsRef = useRef(0);
   const isActiveRef = useRef(true);
+  // Tracks whether detection should be running so the AppState listener can restart it
+  const enabledRef = useRef(enabled);
+  const rateLimitSpokenRef = useRef(false);
 
   const stopInterval = useCallback(() => {
     if (intervalRef.current) {
@@ -93,23 +152,25 @@ export function useLiveDetection({
     setState((s) => ({ ...s, errorCount: 0 }));
   }, []);
 
-  const speak = useCallback((text: string) => {
-    const now = Date.now();
-    if (now - lastSpeechAtRef.current < MIN_TTS_INTERVAL_MS) return;
-    if (
-      lastDescriptionRef.current !== null &&
-      wordOverlap(text, lastDescriptionRef.current) > SIMILARITY_THRESHOLD
-    ) {
-      return;
-    }
-    lastSpeechAtRef.current = now;
-    lastDescriptionRef.current = text;
-    Speech.speak(text, { language: 'en-AU', rate: 1.0 });
-  }, []);
+  const speak = useCallback(
+    (text: string) => {
+      Speech.speak(text, { language: speechLanguage, rate: speechRate });
+    },
+    [speechLanguage, speechRate],
+  );
 
   const runOnce = useCallback(async () => {
     if (!isActiveRef.current) return;
-    if (scansThisHourRef.current >= maxScansPerHour) return;
+    const safeMaxScans = Math.max(1, maxScansPerHour || 30);
+    if (scansThisHourRef.current >= safeMaxScans) {
+      if (!rateLimitSpokenRef.current) {
+        rateLimitSpokenRef.current = true;
+        Speech.speak('Hourly scan limit reached. Detection will resume next hour.', {
+          language: speechLanguage, rate: speechRate,
+        });
+      }
+      return;
+    }
     if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
       stopInterval();
       setState((s) => ({ ...s, isRunning: false }));
@@ -117,53 +178,103 @@ export function useLiveDetection({
     }
 
     scansThisHourRef.current += 1;
+    setState((s) => ({ ...s, requestCount: s.requestCount + 1 }));
 
     const capture = await captureImage();
-    if (!capture) return;
+    if (!capture) {
+      setState((s) => ({
+        ...s,
+        errorCount: s.errorCount + 1,
+        lastError: 'Camera capture failed (no frame/base64)',
+      }));
+      return;
+    }
 
     const { base64, width: imgWidth, height: imgHeight } = capture;
 
     try {
       const result: DetectResponse = await postDetect(base64);
+      const danger = dangerLevel(result.detections);
       consecutiveErrorsRef.current = 0;
-      const desc = result.scene_description;
+      const desc = buildDetailedPrompt(result.detections, imgWidth);
       setState((s) => ({
         ...s,
         lastDescription: desc,
         lastDetections: result.detections,
         imageSize: { width: imgWidth, height: imgHeight },
         errorCount: 0,
+        lastError: null,
+        lastSuccessAt: Date.now(),
       }));
       speak(desc);
-      if (hapticEnabled) {
-        await fireHaptic(dangerLevel(result.detections));
+      if (danger === 'high' || danger === 'medium') {
+        try {
+          await apiClient.post('/detection/user', {
+            sceneDescription: result.scene_description || desc,
+            detections: result.detections,
+          });
+        } catch (saveErr) {
+          if (__DEV__) {
+            console.warn('[useLiveDetection] save hazard failed:', saveErr);
+          }
+        }
       }
-
-      // Fire-and-forget: save to API — silently swallow failures (offline-safe)
-      apiClient
-        .post('/detection/user', {
-          sceneDescription: desc,
-          detections: result.detections,
-        })
-        .catch(() => {});
+      if (hapticEnabled) {
+        await fireHaptic(danger);
+      }
     } catch (err) {
       consecutiveErrorsRef.current += 1;
-      console.warn('[useLiveDetection] detect error:', err);
-      setState((s) => ({ ...s, errorCount: s.errorCount + 1 }));
+      if (__DEV__) {
+        console.warn('[useLiveDetection] detect error:', err);
+      }
+      setState((s) => ({
+        ...s,
+        errorCount: s.errorCount + 1,
+        lastError: err instanceof Error ? err.message : 'Detect request failed',
+      }));
     }
   }, [captureImage, hapticEnabled, maxScansPerHour, speak, stopInterval]);
 
+  // Keep ref in sync so the AppState listener can check current enabled value
   useEffect(() => {
-    const sub = AppState.addEventListener('change', (status: AppStateStatus) => {
-      isActiveRef.current = status === 'active';
-    });
-    return () => sub.remove();
-  }, []);
+    enabledRef.current = enabled;
+  }, [enabled]);
 
   useEffect(() => {
-    hourResetRef.current = setInterval(() => {
-      scansThisHourRef.current = 0;
-    }, 60 * 60 * 1000);
+    const sub = AppState.addEventListener(
+      'change',
+      (status: AppStateStatus) => {
+        const wasActive = isActiveRef.current;
+        isActiveRef.current = status === 'active';
+        // Restart the detection interval when the app returns to the foreground
+        // while detection is supposed to be running
+        if (
+          status === 'active' &&
+          !wasActive &&
+          enabledRef.current &&
+          consecutiveErrorsRef.current < MAX_CONSECUTIVE_ERRORS &&
+          !intervalRef.current
+        ) {
+          void runOnce();
+          intervalRef.current = setInterval(
+            () => { void runOnce(); },
+            Math.max(2, intervalSec || 10) * 1000,
+          );
+          setState((s) => ({ ...s, isRunning: true }));
+        }
+      },
+    );
+    return () => sub.remove();
+  }, [runOnce, intervalSec]);
+
+  useEffect(() => {
+    hourResetRef.current = setInterval(
+      () => {
+        scansThisHourRef.current = 0;
+        rateLimitSpokenRef.current = false;
+      },
+      60 * 60 * 1000,
+    );
     return () => {
       if (hourResetRef.current) clearInterval(hourResetRef.current);
     };
@@ -179,12 +290,14 @@ export function useLiveDetection({
 
     consecutiveErrorsRef.current = 0;
     setState((s) => ({ ...s, isRunning: true, errorCount: 0 }));
+    // Trigger immediately so users don't wait for the first interval tick.
+    void runOnce();
     intervalRef.current = setInterval(() => {
       void runOnce();
-    }, intervalSec * 1000);
+    }, Math.max(2, intervalSec || 10) * 1000);
 
     return stopInterval;
   }, [enabled, intervalSec, runOnce, stopInterval]);
 
-  return { ...state, reset };
+  return { ...state, reset, triggerNow: runOnce };
 }
